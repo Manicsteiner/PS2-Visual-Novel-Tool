@@ -1,0 +1,232 @@
+extends Control
+
+@onready var zero_load_exe: FileDialog = $ZEROLoadEXE
+@onready var zero_load_pac: FileDialog = $ZEROLoadPAC
+@onready var zero_load_folder: FileDialog = $ZEROLoadFOLDER
+
+var exe_path: String
+var chose_folder:bool = false
+var folder_path:String
+
+var chose_pac:bool = false
+var selected_file: String
+
+var out_decomp:bool = false
+
+
+func _process(_delta: float) -> void:
+	if chose_pac and chose_folder:
+		extractBin()
+		chose_folder = false
+		chose_pac = false
+		selected_file = ""
+	
+	
+func _on_load_exe_pressed() -> void:
+	zero_load_exe.visible = true
+
+
+func _on_zero_load_exe_file_selected(path: String) -> void:
+	zero_load_exe.visible = false
+	exe_path = path
+
+
+func _on_load_pac_pressed() -> void:
+	zero_load_pac.visible = true
+
+
+func _on_zero_load_pac_file_selected(path: String) -> void:
+	zero_load_pac.visible = false
+	zero_load_folder.visible = true
+	selected_file = path
+	chose_pac = true
+
+
+func _on_zero_load_folder_dir_selected(dir: String) -> void:
+	zero_load_folder.visible = false
+	folder_path = dir
+	chose_folder = true
+	
+	
+func extractBin() -> void:
+	var f_name: String
+	var hash1: int
+	var hash2: int
+	var offset: int
+	var exe_start: int
+	var exe_file: FileAccess
+	var in_file: FileAccess
+	var out_file: FileAccess
+	var f_size: int
+	var id: int
+	var null_byte: int
+	var null_32: int
+	var type: int
+	var buff: PackedByteArray
+	var lzr_bytes: int
+	var is_pac_bin: bool
+	
+	if selected_file.get_file() == "PAC.BIN":
+		is_pac_bin = true
+	elif selected_file.ends_with(".PAC"):
+		is_pac_bin = false
+	
+	match is_pac_bin:
+		true:
+			if exe_path == "":
+				OS.alert("Load an EXE (SLPM_XXX.XX) first.")
+				return
+				
+			if exe_path.get_file() == "SLPM_666.18": # Yumemishi
+				exe_start = 0xBB9E0
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_669.43": # Final Approach 2 - 1st Priority
+				exe_start = 0xBDCD8
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_656.07": # 3LDK - Shiawase ni Narouyo
+				exe_start = 0x91200
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_656.71": # Double Wish
+				exe_start = 0x9C940
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif  exe_path.get_file() == "SLPS_257.19": # Happiness! De-Lucks
+				exe_start = 0xF92B8
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			else:
+				OS.alert("Unknown EXE found.")
+				return
+			
+			exe_file.seek(exe_start)
+			in_file = FileAccess.open(selected_file, FileAccess.READ)
+			while true:
+				hash1 = exe_file.get_32()
+				hash2 = exe_file.get_32()
+				offset = exe_file.get_32() * 0x800
+				f_size = exe_file.get_32()
+				null_byte = exe_file.get_8()
+				type = exe_file.get_8()
+				id = exe_file.get_16()
+				null_32 = exe_file.get_32()
+				
+				if f_size < 0 or f_size == 0xFFFFFFFF:
+					break
+					
+				in_file.seek(offset)
+				buff = in_file.get_buffer(f_size)
+				
+				lzr_bytes = ComFuncs.swapNumber(buff.decode_u32(0), "32")
+				if lzr_bytes == 0x4C5A5300: #LZS
+					f_size = buff.decode_u32(4)
+					buff = buff.slice(8)
+					buff = ComFuncs.decompLZSS(buff, buff.size(), f_size)
+					
+				if type == 0x0A:
+					f_name = "MOV%05d.PSS" % id
+				elif type == 0x0C:
+					f_name = "ANM%05d.BIN" % id
+				elif type == 0xFA:
+					var num: int = 0
+					var tak_data_start: int = buff.decode_u32(0)
+					var tak_data_comp_size = buff.decode_u32(4)
+					var i: int = 0
+					
+					while tak_data_start != tak_data_comp_size:
+						var header_check: int = ComFuncs.swapNumber(buff.decode_u32(tak_data_start), "32")
+						if header_check == 0x4C5A5300: #LZS
+							var tak_data: PackedByteArray = (PackedByteArray(buff.slice(tak_data_start, tak_data_start + tak_data_comp_size)))
+							var tak_decomp_size: int = tak_data.decode_u32(0x4)
+							tak_data = tak_data.slice(8)
+							tak_data = ComFuncs.decompLZSS(tak_data, tak_data_comp_size, tak_decomp_size)
+							
+							header_check = ComFuncs.swapNumber(tak_data.decode_u32(0), "32")
+							if header_check == 0x54494D32: #TIM2
+								f_name = "TAK%05d_%02d.TM2" % [id, num]
+							else:
+								f_name = "TAK%05d_%02d.BIN" % [id, num]
+								
+							out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+							out_file.store_buffer(tak_data)
+							out_file.close()
+							tak_data.clear()
+							i += 0xC
+							num += 1
+						else:
+							var tak_data: PackedByteArray = (PackedByteArray(buff.slice(tak_data_start, tak_data_start + tak_data_comp_size)))
+							
+							f_name = "TAK%05d_%02d.BIN" % [id, num]
+							out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+							out_file.store_buffer(tak_data)
+							out_file.close()
+							tak_data.clear()
+							i += 0xC
+							num += 1
+						print("0x%08X " % tak_data_start + "0x%08X " % tak_data_comp_size + folder_path + "/%s" % f_name)
+						tak_data_start = buff.decode_u32(i)
+						tak_data_comp_size = buff.decode_u32(i + 4)
+					f_name = "TAK%05d.BIN" % id
+				elif type == 0x01:
+					f_name = "VIS%05d.TM2" % id
+				elif type == 0x02:
+					f_name = "STR%05d.VGS" % id
+				elif type == 0x06:
+					f_name = "_SE%05d.HBD" % id
+				elif type == 0x08:
+					f_name = "VCE%05d.HBD" % id
+				elif type == 0x10:
+					# todo
+					f_name = "SRE%05d.BIN" % id
+				elif type == 0xFF:
+					f_name = "DMY%05d.BIN" % id
+				elif type == 0x67:
+					f_name = "FNT%05d.BIN" % id
+				else:
+					f_name = "UNK%05d.BIN" % id
+					
+				
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				buff.clear()
+				
+				print("0x%08X " % offset + "0x%08X " % f_size + "0x%02X " % type + folder_path + "/%s" % f_name)
+				
+		false:
+			in_file = FileAccess.open(selected_file, FileAccess.READ)
+			
+			var pac_bytes: int = in_file.get_32()
+			if pac_bytes != 0x00434150: #PAC
+				OS.alert("Invalid PAC header.")
+				return
+				
+			var name_tbl_off: int = in_file.get_32()
+			var num_files: int = in_file.get_32()
+			var file_tbl: int = in_file.get_position()
+			
+			for files in range(0, num_files):
+				in_file.seek((files * 8) + file_tbl)
+				offset = in_file.get_32()
+				f_size = in_file.get_32()
+				
+				in_file.seek((files * 0x40) + name_tbl_off)
+				f_name = in_file.get_line()
+				
+				in_file.seek(offset)
+				buff = in_file.get_buffer(f_size)
+				
+				lzr_bytes = ComFuncs.swapNumber(buff.decode_u32(0), "32")
+				if lzr_bytes == 0x4C5A5300: #LZS
+					f_size = buff.decode_u32(4)
+					buff = buff.slice(8)
+					buff = ComFuncs.decompLZSS(buff, buff.size(), f_size)
+					
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				buff.clear()
+				
+				print("0x%08X " % offset + "0x%08X " % f_size + folder_path + "/%s" % f_name)
+				
+
+	print_rich("[color=green]Finished![/color]")

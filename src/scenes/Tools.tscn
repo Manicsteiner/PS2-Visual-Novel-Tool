@@ -1,0 +1,69 @@
+[gd_scene load_steps=2 format=3 uid="uid://cyrsdqk4jl768"]
+
+[ext_resource type="Script" path="res://src/scenes/tools.gd" id="1_gd2p8"]
+
+[node name="Tools" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_gd2p8")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.5
+offset_top = -15.5
+offset_right = 70.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="LoadBIN" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+tooltip_text = "Extract from PFW3 archive."
+text = "Search In Files"
+
+[node name="FILELoadFolder" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -152.0
+offset_top = 36.0
+offset_right = 154.0
+offset_bottom = 67.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="TM2Toggle" type="CheckBox" parent="HBoxContainer2"]
+layout_mode = 2
+text = "TIM2"
+
+[node name="BMPToggle" type="CheckBox" parent="HBoxContainer2"]
+layout_mode = 2
+text = "BMP"
+
+[connection signal="toggled" from="HBoxContainer2/TM2Toggle" to="." method="_on_tm_2_toggle_toggled"]
+[connection signal="toggled" from="HBoxContainer2/BMPToggle" to="." method="_on_bmp_toggle_toggled"]

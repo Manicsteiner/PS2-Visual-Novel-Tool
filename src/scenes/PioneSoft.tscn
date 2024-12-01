@@ -1,0 +1,89 @@
+[gd_scene load_steps=2 format=3 uid="uid://b58muftj2st80"]
+
+[ext_resource type="Script" path="res://src/scenes/pioneSoft.gd" id="1_6rbh0"]
+
+[node name="PioneSoft" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("1_6rbh0")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -69.0
+offset_top = -15.5
+offset_right = 69.0
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="LoadSAF" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract .SAF Files"
+
+[node name="LoadEXE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract Script SAF From EXE"
+
+[node name="decompButton" type="CheckBox" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -152.0
+offset_top = 60.0
+offset_right = 154.0
+offset_bottom = 91.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Output Decompressed Files (Debug)"
+
+[node name="PIONELoadSAF" type="FileDialog" parent="."]
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.SAF")
+use_native_dialog = true
+
+[node name="PIONELoadEXE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("SLPM_655.25")
+use_native_dialog = true
+
+[node name="PIONELoadFOLDER" type="FileDialog" parent="."]
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[connection signal="pressed" from="HBoxContainer/LoadSAF" to="." method="_on_load_saf_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
+[connection signal="toggled" from="decompButton" to="." method="_on_decomp_button_toggled"]
+[connection signal="files_selected" from="PIONELoadSAF" to="." method="_on_pione_load_saf_files_selected"]
+[connection signal="file_selected" from="PIONELoadEXE" to="." method="_on_pione_load_exe_file_selected"]
+[connection signal="dir_selected" from="PIONELoadFOLDER" to="." method="_on_pione_load_folder_dir_selected"]
