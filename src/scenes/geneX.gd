@@ -99,7 +99,7 @@ func extractBin() -> void:
 						width = buff.decode_u16(0x10)
 						height = buff.decode_u16(0x12)
 						
-						var png: Image = convert_rgb555_to_image(buff.slice(0x14), width, height, true)
+						var png: Image = ComFuncs.convert_rgb555_to_image(buff.slice(0x14), width, height, true)
 						png.save_png(folder_path + "/%s" % f_name + "_%04d" % files + ".png")
 					elif image_type == 9:
 						# 16 bit palette 0x200 size
@@ -259,40 +259,6 @@ func makeTGAHeader(color_map_type: int, image_type: int, color_entry_start:int, 
 	return header
 	
 	
-func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, swap_color_order: bool) -> Image:
-	# Create a blank Image object
-	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
-	
-	# Ensure the input buffer size matches the image dimensions
-	if input_buffer.size() != width * height * 2:
-		push_error("Input buffer size does not match image dimensions!")
-		return img
-	
-	# Loop through the input buffer and set pixels
-	var idx: int = 0
-	for y in range(height):
-		for x in range(width):
-			# Read a 16-bit value (2 bytes per pixel)
-			var pixel_16: int = input_buffer.decode_u16(idx)
-			idx += 2
-
-			# Extract RGB values from RGB555 format
-			var r: int = ((pixel_16 >> 10) & 0x1F) * 8
-			var g: int = ((pixel_16 >> 5) & 0x1F) * 8
-			var b: int = (pixel_16 & 0x1F) * 8
-
-			# Swap color order if requested
-			if swap_color_order:
-				var temp: int = r
-				r = b
-				b = temp
-
-			# Set pixel color
-			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, 1.0)
-			img.set_pixel(x, y, color)
-
-	return img
-	
 func rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, palette_type: String) -> Image:
 	# Define palette properties based on the type
 	var palette_offset: int = 0
@@ -360,7 +326,6 @@ func rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, pal
 				image.set_pixel(x, y, palette[palette_idx])
 
 	return image
-
 
 
 func decompLZSS2(buffer: PackedByteArray, zsize: int, size: int) -> PackedByteArray:

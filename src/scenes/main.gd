@@ -22,6 +22,7 @@ enum {
 	ICHIGOHUNDRED,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	MAIHIME,
 	MISSINGBLUE,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
@@ -178,6 +179,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = REGISTA
 		var next_scene: PackedScene = load("res://src/scenes/Regista.tscn")
 		sceneChanger(next_scene)
+	elif index == MAIHIME:
+		game_type_sub_text.text = "Supports 'Mai-HiME: Unmei no Keitouju'."
+		game_type_selector.select(MAIHIME)
+		game_type = MAIHIME
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
 	elif index == MISSINGBLUE:
 		game_type_sub_text.text = "Supports 'Missing Blue'."
 		game_type_selector.select(MISSINGBLUE)
@@ -224,6 +231,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)

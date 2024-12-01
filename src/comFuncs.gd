@@ -29,6 +29,42 @@ func convert_rgba_5551_to_rgba8(image_data: PackedByteArray, palette_data: Packe
 			
 	return img
 	
+
+func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, swap_color_order: bool) -> Image:
+	# Create a blank Image object
+	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+	
+	# Ensure the input buffer size matches the image dimensions
+	if input_buffer.size() != width * height * 2:
+		push_error("Input buffer size does not match image dimensions!")
+		return img
+	
+	# Loop through the input buffer and set pixels
+	var idx: int = 0
+	for y in range(height):
+		for x in range(width):
+			# Read a 16-bit value (2 bytes per pixel)
+			var pixel_16: int = input_buffer.decode_u16(idx)
+			idx += 2
+
+			# Extract RGB values from RGB555 format
+			var r: int = ((pixel_16 >> 10) & 0x1F) * 8
+			var g: int = ((pixel_16 >> 5) & 0x1F) * 8
+			var b: int = (pixel_16 & 0x1F) * 8
+
+			# Swap color order if requested
+			if swap_color_order:
+				var temp: int = r
+				r = b
+				b = temp
+
+			# Set pixel color
+			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, 1.0)
+			img.set_pixel(x, y, color)
+
+	return img
+	
+	
 func expand_palette_to_1024(palette_data: PackedByteArray) -> Array:
 	var expanded_palette: PackedByteArray
 	var palette_size: int = palette_data.size() / 2  # Each color is 16 bits (2 bytes)
