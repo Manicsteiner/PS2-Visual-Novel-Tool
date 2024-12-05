@@ -13,6 +13,11 @@ enum {
 	COLORFULAQUA,
 	DABLACK,
 	DAWHITE,
+	DCTWO,
+	DCFS,
+	DCIF,
+	DCORIGIN,
+	DCPS,
 	DOUBLEWISH,
 	EF,
 	FINALA2,
@@ -20,12 +25,15 @@ enum {
 	FUTAKOIJIMA,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
+	HAPPYBREED,
 	HAPPYDELUCKS,
+	HARUKAZEPS,
 	HOOLIGAN, 
 	ICHIGOHUNDRED,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
 	MAIHIME,
+	METALWOLF,
 	MISSINGBLUE,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
@@ -33,8 +41,11 @@ enum {
 	PIA3, 
 	REGISTA, # temp value
 	SAISHUUSHIKEN,
+	SAKURASESTU,
 	STRAWBERRYPANIC,
+	SUIKA,
 	SWEETLEGACY, 
+	TRUETEARS,
 	YATOHIME,
 	YUMEMISHI,
 	ZEROSYSTEM}
@@ -68,6 +79,48 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == DCTWO:
+		game_type_sub_text.text = "Supports 'D.C. II P.S.: Da Capo II Plus Situation'."
+		game_type_selector.select(DCTWO)
+		game_type = DCTWO
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == DCFS:
+		game_type_sub_text.text = "Supports 'D.C.F.S.: Da Capo Four Seasons'."
+		game_type_selector.select(DCFS)
+		game_type = DCFS
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == DCIF:
+		game_type_sub_text.text = "Supports 'D.C.I.F.: Da Capo Innocent Finale'."
+		game_type_selector.select(DCIF)
+		game_type = DCIF
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == DCORIGIN:
+		game_type_sub_text.text = "Supports 'D.C.: The Origin'."
+		game_type_selector.select(DCORIGIN)
+		game_type = DCORIGIN
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == DCPS:
+		game_type_sub_text.text = "Supports D.C.P.S.: Da Capo Plus Situation."
+		game_type_selector.select(DCPS)
+		game_type = DCPS
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == DABLACK:
+		game_type_sub_text.text = "Supports 'D-A: Black' (except character images)."
+		game_type_selector.select(DABLACK)
+		game_type = DABLACK
+		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
+		sceneChanger(next_scene)
+	elif index == DAWHITE:
+		game_type_sub_text.text = "Supports 'D-A: White' (except character images)."
+		game_type_selector.select(DAWHITE)
+		game_type = DAWHITE
+		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
 		sceneChanger(next_scene)
 	elif index == DOUBLEWISH:
 		game_type_sub_text.text = "Supports 'Double Wish'."
@@ -111,29 +164,29 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = GINNOECLIPSE
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == HAPPYBREED:
+		game_type_sub_text.text = "Supports 'Happy Breeding: Cheerful Party'."
+		game_type_selector.select(HAPPYBREED)
+		game_type = HAPPYBREED
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == HAPPYDELUCKS:
 		game_type_sub_text.text = "Supports 'Happiness! De-Lucks'."
 		game_type_selector.select(HAPPYDELUCKS)
 		game_type = HAPPYDELUCKS
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == HARUKAZEPS:
+		game_type_sub_text.text = "Supports 'Harukaze P.S: Plus Situation'."
+		game_type_selector.select(HARUKAZEPS)
+		game_type = HARUKAZEPS
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
 	elif index == ICHIGOHUNDRED:
 		game_type_sub_text.text = "Supports 'Ichigo 100% Strawberry Diary'."
 		game_type_selector.select(ICHIGOHUNDRED)
 		game_type = ICHIGOHUNDRED
 		var next_scene: PackedScene = load("res://src/scenes/AlphaUnit.tscn")
-		sceneChanger(next_scene)
-	elif index == DABLACK:
-		game_type_sub_text.text = "Supports 'D-A: Black' (except character images)."
-		game_type_selector.select(DABLACK)
-		game_type = DABLACK
-		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
-		sceneChanger(next_scene)
-	elif index == DAWHITE:
-		game_type_sub_text.text = "Supports 'D-A: White' (except character images)."
-		game_type_selector.select(DAWHITE)
-		game_type = DAWHITE
-		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
 		sceneChanger(next_scene)
 	elif index == ANGELWISH:
 		game_type_sub_text.text = "Supports 'Angel Wish: Kimi no Egao ni Chu!' (most images)."
@@ -165,17 +218,35 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SAISHUUSHIKEN
 		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
 		sceneChanger(next_scene)
+	elif index == SAKURASESTU:
+		game_type_sub_text.text = "Supports 'Sakura ~Setsugekka~'."
+		game_type_selector.select(SAKURASESTU)
+		game_type = SAKURASESTU
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == STRAWBERRYPANIC:
 		game_type_sub_text.text = "Supports 'Strawberry Panic!'."
 		game_type_selector.select(STRAWBERRYPANIC)
 		game_type = STRAWBERRYPANIC
 		var next_scene: PackedScene = load("res://src/scenes/MediaWorks.tscn")
 		sceneChanger(next_scene)
+	elif index == SUIKA:
+		game_type_sub_text.text = "Supports 'Suika A.S+: Eternal Name'."
+		game_type_selector.select(SUIKA)
+		game_type = SUIKA
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETLEGACY:
 		game_type_sub_text.text = "Supports 'Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi' (most images)."
 		game_type_selector.select(SWEETLEGACY)
 		game_type = SWEETLEGACY
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
+		sceneChanger(next_scene)
+	elif index == TRUETEARS:
+		game_type_sub_text.text = "Supports 'True Tears'."
+		game_type_selector.select(TRUETEARS)
+		game_type = TRUETEARS
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
 		sceneChanger(next_scene)
 	elif index == OJOUSAMAKUMI:
 		game_type_sub_text.text = "Supports 'Ojousama Kumikyoku: Sweet Concert'."
@@ -219,6 +290,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = MISSINGBLUE
 		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
 		sceneChanger(next_scene)
+	elif index == METALWOLF:
+		game_type_sub_text.text = "Supports 'Metal Wolf REV'."
+		game_type_selector.select(METALWOLF)
+		game_type = METALWOLF
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == YATOHIME:
 		game_type_sub_text.text = "Supports 'Yatohime Zankikou'."
 		game_type_selector.select(YATOHIME)
@@ -250,19 +327,27 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
 	game_type_selector.add_item("D-A:  White", DAWHITE)
+	game_type_selector.add_item("D.C. II P.S.: Da Capo II Plus Situation", DCTWO)
+	game_type_selector.add_item("D.C.F.S.: Da Capo Four Seasons", DCFS)
+	game_type_selector.add_item("D.C.I.F.: Da Capo Innocent Finale", DCIF)
+	game_type_selector.add_item("D.C.P.S.: Da Capo Plus Situation", DCPS)
+	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
-	game_type_selector.add_item("Final Approach 2 - 1st Priority")
+	game_type_selector.add_item("Final Approach 2 - 1st Priority", FINALA2)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
+	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
+	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
@@ -270,8 +355,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
+	game_type_selector.add_item("Sakura ~Setsugekka~", SAKURASESTU)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
+	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
+	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)

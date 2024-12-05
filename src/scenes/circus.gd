@@ -114,7 +114,7 @@ func makeFiles() -> void:
 				new_file.store_buffer(mem_file)
 				new_file.close()
 				mem_file.clear()
-				print("0x%X " % file_off, "0x%X " % file_size, "%s " % archive_name, "%s" % file_name)
+				print("0x%08X 0x%08X %s %s" % [file_off, file_size, archive_name, file_name])
 		
 		file.close()
 		i += 1

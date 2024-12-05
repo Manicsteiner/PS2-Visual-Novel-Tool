@@ -63,6 +63,8 @@ func extractBin() -> void:
 		exe_end = 0x98588
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
+	print_rich("[color=yellow]Extracting files...[/color]")
+	
 	in_file = FileAccess.open(selected_bin, FileAccess.READ)
 	
 	exe_file.seek(exe_start)
@@ -187,7 +189,7 @@ func extractBin() -> void:
 			i += 1
 			continue
 		elif i == 4 or i == 6:
-			#Write VGMStream txth settings.
+			# Write VGMStream txth settings for voice and sfx files.
 			var string: String
 			
 			ext = ".txth"
@@ -312,7 +314,7 @@ func decompressRLE(input: PackedByteArray) -> PackedByteArray:
 	var control_byte: int
 	var repeat_byte: int
 	var output = PackedByteArray()
-	var input_index = 0
+	var input_index: int = 0
 	var tim2_hex: int = 0x324D4954
 	#var block_size: int
 
@@ -392,8 +394,8 @@ func decompressRLE(input: PackedByteArray) -> PackedByteArray:
 	
 func decompressRLE_ef(input: PackedByteArray) -> PackedByteArray:
 	var output = PackedByteArray()
-	var input_index = 0
-	var block_size = 0
+	var input_index: int = 0
+	#var block_size: int = 0
 	var control_byte: int
 	var repeat_byte: int
 	var tim2_hex: int = 0x324D4954
@@ -405,7 +407,7 @@ func decompressRLE_ef(input: PackedByteArray) -> PackedByteArray:
 	else:
 		state = input.decode_u32(0x18)
 
-	block_size = state if input[3] <= 1 else (state & 0xff00ff00 | (~state & 0xff00ff))
+	#block_size = state if input[3] <= 1 else (state & 0xff00ff00 | (~state & 0xff00ff))
 
 	# Start processing the input
 	input_index = 0x1C  # Adjust for state pointer location
@@ -475,7 +477,6 @@ func decompressRLE_ef(input: PackedByteArray) -> PackedByteArray:
 	# Add TIM2 header
 	output.encode_u32(0, tim2_hex)
 	return output
-
 
 
 func _on_file_load_exe_file_selected(path: String) -> void:
