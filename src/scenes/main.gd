@@ -10,12 +10,15 @@ extends Control
 enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
 	ANGELWISH,
+	COLORFULAQUA,
 	DABLACK,
 	DAWHITE,
 	DOUBLEWISH,
+	EF,
 	FINALA2,
 	FUTAKOI,
 	FUTAKOIJIMA,
+	GIFTPRISIM,
 	GINNOECLIPSE, 
 	HAPPYDELUCKS,
 	HOOLIGAN, 
@@ -29,6 +32,7 @@ enum {
 	PATISSERIE,
 	PIA3, 
 	REGISTA, # temp value
+	SAISHUUSHIKEN,
 	STRAWBERRYPANIC,
 	SWEETLEGACY, 
 	YATOHIME,
@@ -59,11 +63,23 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == COLORFULAQUA:
+		game_type_sub_text.text = "Supports 'Colorful Aquarium: My Little Mermaid'."
+		game_type_selector.select(COLORFULAQUA)
+		game_type = COLORFULAQUA
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
 	elif index == DOUBLEWISH:
 		game_type_sub_text.text = "Supports 'Double Wish'."
 		game_type_selector.select(DOUBLEWISH)
 		game_type = DOUBLEWISH
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == EF:
+		game_type_sub_text.text = "Supports 'ef: A Fairy Tale of the Two'."
+		game_type_selector.select(EF)
+		game_type = EF
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == FINALA2:
 		game_type_sub_text.text = "Supports 'Final Approach 2 - 1st Priority'."
@@ -82,6 +98,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(FUTAKOIJIMA)
 		game_type = FUTAKOIJIMA
 		var next_scene: PackedScene = load("res://src/scenes/AlphaUnit.tscn")
+		sceneChanger(next_scene)
+	elif index == GIFTPRISIM:
+		game_type_sub_text.text = "Supports 'Gift: Prism'."
+		game_type_selector.select(GIFTPRISIM)
+		game_type = GIFTPRISIM
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
 		sceneChanger(next_scene)
 	elif index == GINNOECLIPSE:
 		game_type_sub_text.text = "Supports 'Gin no Eclipse'."
@@ -136,6 +158,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(HOOLIGAN)
 		game_type = HOOLIGAN
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
+		sceneChanger(next_scene)
+	elif index == SAISHUUSHIKEN:
+		game_type_sub_text.text = "Supports 'Saishuu Shiken Kujira: Alive'."
+		game_type_selector.select(SAISHUUSHIKEN)
+		game_type = SAISHUUSHIKEN
+		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
 		sceneChanger(next_scene)
 	elif index == STRAWBERRYPANIC:
 		game_type_sub_text.text = "Supports 'Strawberry Panic!'."
@@ -219,12 +247,15 @@ func initMenuItems() -> void:
 	
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
 	game_type_selector.add_item("D-A:  White", DAWHITE)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
+	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("Final Approach 2 - 1st Priority")
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
+	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
@@ -238,6 +269,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
 	game_type_selector.add_item("Regista Games", REGISTA)
+	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
