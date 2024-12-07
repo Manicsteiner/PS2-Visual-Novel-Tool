@@ -32,10 +32,13 @@ enum {
 	HARUKAZEPS,
 	HOOLIGAN, 
 	HOKENSHITSU,
+	HURRAH,
 	ICHIGOHUNDRED,
+	IINAZUKE,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
 	LOVEDOLL,
+	MAGICAL,
 	MAIHIME,
 	METALWOLF,
 	MISSINGBLUE,
@@ -47,11 +50,13 @@ enum {
 	REGISTA, # temp value
 	SAISHUUSHIKEN,
 	SAKURASESTU,
+	STARTRAIN,
 	STRAWBERRYPANIC,
 	SUIKA,
 	SWEETLEGACY, 
 	TRUETEARS,
 	YATOHIME,
+	YUMEMI,
 	YUMEMISHI,
 	ZEROSYSTEM}
 	
@@ -205,6 +210,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HOKENSHITSU
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == HURRAH:
+		game_type_sub_text.text = "Supports 'Hurrah! Sailor'."
+		game_type_selector.select(HURRAH)
+		game_type = HURRAH
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
+	elif index == IINAZUKE:
+		game_type_sub_text.text = "Supports 'Iinazuke'."
+		game_type_selector.select(IINAZUKE)
+		game_type = IINAZUKE
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == ICHIGOHUNDRED:
 		game_type_sub_text.text = "Supports 'Ichigo 100% Strawberry Diary'."
 		game_type_selector.select(ICHIGOHUNDRED)
@@ -245,6 +262,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Sakura ~Setsugekka~'."
 		game_type_selector.select(SAKURASESTU)
 		game_type = SAKURASESTU
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == STARTRAIN:
+		game_type_sub_text.text = "Supports 'StarTRain: Your Past Makes Your Future'."
+		game_type_selector.select(STARTRAIN)
+		game_type = STARTRAIN
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == STRAWBERRYPANIC:
@@ -313,6 +336,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = LOVEDOLL
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == MAGICAL:
+		game_type_sub_text.text = "Supports 'Magical Tale: Chiicha na Mahoutsukai'"
+		game_type_selector.select(MAGICAL)
+		game_type = MAGICAL
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == MAIHIME:
 		game_type_sub_text.text = "Supports 'Mai-HiME: Unmei no Keitouju'."
 		game_type_selector.select(MAIHIME)
@@ -335,6 +364,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Yatohime Zankikou'."
 		game_type_selector.select(YATOHIME)
 		game_type = YATOHIME
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == YUMEMI:
+		game_type_sub_text.text = "Supports 'Yumemi Hakusho: Second Dream'."
+		game_type_selector.select(YUMEMI)
+		game_type = YUMEMI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == YUMEMISHI:
@@ -381,10 +416,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
+	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
+	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
+	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
@@ -396,11 +434,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura ~Setsugekka~", SAKURASESTU)
+	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
+	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)
 	return

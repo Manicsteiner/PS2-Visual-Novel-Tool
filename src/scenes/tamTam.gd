@@ -5,7 +5,6 @@ extends Control
 @onready var remove_alpha_button: CheckBox = $VBoxContainer/removeAlphaButton
 
 var folder_path:String
-var exe_path: String
 var selected_files: PackedStringArray
 var chose_files: bool = false
 var chose_folder: bool = false
@@ -94,6 +93,7 @@ func extract() -> void:
 			
 		buff.clear()
 		in_file.close()
+		
 	print_rich("[color=green]Finished![/color]")
 
 func decompressBmp(compressed_data: PackedByteArray) -> PackedByteArray:
@@ -233,89 +233,6 @@ func decompressBmp(compressed_data: PackedByteArray) -> PackedByteArray:
 
 		# Swap rows
 		for col in range(padded_row_size):
-			var temp: int = decompressed_data.decode_u8(top_row_start + col)
-			decompressed_data.encode_u8(top_row_start + col, decompressed_data.decode_u8(bottom_row_start + col))
-			decompressed_data.encode_u8(bottom_row_start + col, temp)
-
-	# Return the vertically flipped buffer
-	return decompressed_data
-
-
-func decompress_bmp_8bpp_with_flip(compressed_data: PackedByteArray) -> PackedByteArray:
-	# Read the BMP file header information
-	var width = compressed_data.decode_u16(0x12)  # Offset 0x12: Width
-	var height = compressed_data.decode_u16(0x16)  # Offset 0x16: Height
-	var bpp = compressed_data.decode_u16(0x1C)  # Offset 0x1C: Bits Per Pixel
-
-	# Check if the image is 8bpp
-	if bpp != 8:
-		print("Only 8bpp BMP supported!")
-		return PackedByteArray()
-
-	# Read the palette (256 entries, each 4 bytes)
-	var palette_offset = 0x36
-	var palette = compressed_data.slice(palette_offset, palette_offset + 256 * 4)
-
-	# Calculate row size and padded row size
-	var row_size = width  # 1 byte per pixel
-	var padded_row_size = (row_size + 3) & ~3  # Align to 4-byte boundary
-
-	# Prepare buffers for decompression
-	var decompressed_data = PackedByteArray()
-	decompressed_data.resize(height * padded_row_size * 4)  # Final size: BGRA (4 bytes per pixel)
-
-	var read_pos = palette_offset + 256 * 4  # Start of pixel data
-	var write_pos = 0  # Start writing at the top of the image
-
-	# Decompress image data (top to bottom)
-	while read_pos < compressed_data.size():
-		var control_byte = compressed_data[read_pos]
-		read_pos += 1
-
-		if control_byte & 0x80 == 0:  # Literal data
-			for i in range(control_byte):
-				var index = compressed_data[read_pos]
-				read_pos += 1
-
-				# Extract BGRA color from the palette
-				var b = palette[index * 4 + 0]
-				var g = palette[index * 4 + 1]
-				var r = palette[index * 4 + 2]
-				var a = palette[index * 4 + 3]
-
-				# Write the color to decompressed data
-				decompressed_data.encode_u8(write_pos + 0, b)
-				decompressed_data.encode_u8(write_pos + 1, g)
-				decompressed_data.encode_u8(write_pos + 2, r)
-				decompressed_data.encode_u8(write_pos + 3, a)
-				write_pos += 4
-		else:  # Repeated data
-			var repeat_count = control_byte & 0x7F
-			var index = compressed_data[read_pos]
-			read_pos += 1
-
-			# Extract BGRA color from the palette
-			var b = palette[index * 4 + 0]
-			var g = palette[index * 4 + 1]
-			var r = palette[index * 4 + 2]
-			var a = palette[index * 4 + 3]
-
-			for i in range(repeat_count):
-				if write_pos >= decompressed_data.size():
-					return decompressed_data
-				decompressed_data.encode_u8(write_pos + 0, b)
-				decompressed_data.encode_u8(write_pos + 1, g)
-				decompressed_data.encode_u8(write_pos + 2, r)
-				decompressed_data.encode_u8(write_pos + 3, a)
-				write_pos += 4
-
-	# Flip the image vertically
-	for row in range(height / 2):
-		var top_row_start = row * padded_row_size * 4
-		var bottom_row_start = (height - 1 - row) * padded_row_size * 4
-
-		# Swap rows
-		for col in range(padded_row_size * 4):
 			var temp: int = decompressed_data.decode_u8(top_row_start + col)
 			decompressed_data.encode_u8(top_row_start + col, decompressed_data.decode_u8(bottom_row_start + col))
 			decompressed_data.encode_u8(bottom_row_start + col, temp)

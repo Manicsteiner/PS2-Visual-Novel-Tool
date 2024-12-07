@@ -98,6 +98,15 @@ func extractBin() -> void:
 			elif exe_path.get_file() == "SLPM_664.40": # Hokenshitsu he Youkoso
 				exe_start = 0xADC10
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_550.71": # Yumemi Hakusho: Second Dream
+				exe_start = 0xBBA48
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_667.32": # Iinazuke
+				exe_start = 0xC0418
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_659.65": # Magical Tale: Chiicha na Mahoutsukai
+				exe_start = 0x9E658
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			else:
 				OS.alert("Unknown EXE found.")
 				return
