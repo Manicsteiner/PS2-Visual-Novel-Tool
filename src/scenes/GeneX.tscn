@@ -34,10 +34,10 @@ text = "Extract .BIN"
 
 [node name="decompButton" type="CheckBox" parent="."]
 layout_mode = 0
-offset_left = 424.0
-offset_top = 352.0
-offset_right = 730.0
-offset_bottom = 383.0
+offset_left = 512.0
+offset_top = 392.0
+offset_right = 818.0
+offset_bottom = 423.0
 text = "Output Decompressed Files (Debug)"
 
 [node name="GENELoadBIN" type="FileDialog" parent="."]

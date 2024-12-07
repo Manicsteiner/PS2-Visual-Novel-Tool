@@ -22,4 +22,6 @@ ComFuncs="*res://src/comFuncs.gd"
 
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/subwindows/embed_subwindows=false

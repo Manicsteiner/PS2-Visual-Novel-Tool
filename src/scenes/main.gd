@@ -20,7 +20,9 @@ enum {
 	DCPS,
 	DOUBLEWISH,
 	EF,
+	FANATIC,
 	FINALA2,
+	FINALIST,
 	FUTAKOI,
 	FUTAKOIJIMA,
 	GIFTPRISIM,
@@ -29,14 +31,17 @@ enum {
 	HAPPYDELUCKS,
 	HARUKAZEPS,
 	HOOLIGAN, 
+	HOKENSHITSU,
 	ICHIGOHUNDRED,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	LOVEDOLL,
 	MAIHIME,
 	METALWOLF,
 	MISSINGBLUE,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
+	OUKA,
 	PATISSERIE,
 	PIA3, 
 	REGISTA, # temp value
@@ -134,6 +139,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = EF
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
+	elif index == FANATIC:
+		game_type_sub_text.text = "Supports 'F: Fanatic'."
+		game_type_selector.select(FANATIC)
+		game_type = FANATIC
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == FINALIST:
+		game_type_sub_text.text = "Supports 'Finalist' (temp)."
+		game_type_selector.select(FINALIST)
+		game_type = FINALIST
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
 	elif index == FINALA2:
 		game_type_sub_text.text = "Supports 'Final Approach 2 - 1st Priority'."
 		game_type_selector.select(FINALA2)
@@ -181,6 +198,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(HARUKAZEPS)
 		game_type = HARUKAZEPS
 		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
+		sceneChanger(next_scene)
+	elif index == HOKENSHITSU:
+		game_type_sub_text.text = "Supports 'Hokenshitsu he Youkoso'."
+		game_type_selector.select(HOKENSHITSU)
+		game_type = HOKENSHITSU
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == ICHIGOHUNDRED:
 		game_type_sub_text.text = "Supports 'Ichigo 100% Strawberry Diary'."
@@ -260,6 +283,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = ORANGEPOCKET
 		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
 		sceneChanger(next_scene)
+	elif index == OUKA:
+		game_type_sub_text.text = "Supports 'Ouka: Kokoro Kagayakaseru Sakura'."
+		game_type_selector.select(OUKA)
+		game_type = OUKA
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
 	elif index == PATISSERIE:
 		game_type_sub_text.text = "Supports 'Patisserie na Nyanko: Hatsukoi wa Ichigo Aji'."
 		game_type_selector.select(PATISSERIE)
@@ -277,6 +306,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(REGISTA)
 		game_type = REGISTA
 		var next_scene: PackedScene = load("res://src/scenes/Regista.tscn")
+		sceneChanger(next_scene)
+	elif index == LOVEDOLL:
+		game_type_sub_text.text = "Supports 'Love Doll: Lovely Idol'."
+		game_type_selector.select(LOVEDOLL)
+		game_type = LOVEDOLL
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == MAIHIME:
 		game_type_sub_text.text = "Supports 'Mai-HiME: Unmei no Keitouju'."
@@ -334,7 +369,9 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
+	game_type_selector.add_item("F: Fanatic", FANATIC)
 	game_type_selector.add_item("Final Approach 2 - 1st Priority", FINALA2)
+	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
@@ -343,14 +380,17 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
+	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
+	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
 	game_type_selector.add_item("Regista Games", REGISTA)
