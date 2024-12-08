@@ -47,6 +47,7 @@ enum {
 	OUKA,
 	PATISSERIE,
 	PIA3, 
+	PRISMARK,
 	REGISTA, # temp value
 	SAISHUUSHIKEN,
 	SAKURASESTU,
@@ -324,6 +325,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PIA3
 		var next_scene: PackedScene = load("res://src/scenes/AlphaUnit.tscn")
 		sceneChanger(next_scene)
+	elif index == PRISMARK:
+		game_type_sub_text.text = "Supports 'Prism Ark: Awake' (archive extraction, some images except PA_CG.DAT compressed images)."
+		game_type_selector.select(PRISMARK)
+		game_type = PRISMARK
+		var next_scene: PackedScene = load("res://src/scenes/PrismArk.tscn")
+		sceneChanger(next_scene)
 	elif index == REGISTA:
 		game_type_sub_text.text = "Basic support for Regista games."
 		game_type_selector.select(REGISTA)
@@ -431,6 +438,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
+	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura ~Setsugekka~", SAKURASESTU)
@@ -443,4 +451,6 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)
+	#for i in range(game_type_selector.item_count):
+		#print("* %s" % game_type_selector.get_item_text(i))
 	return

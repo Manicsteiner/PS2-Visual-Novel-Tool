@@ -9,18 +9,7 @@ var chose_files: bool = false
 var chose_folder: bool = false
 var remove_alpha: bool = false
 
-#func _ready() -> void:
-	#var buff: PackedByteArray
-	#var in_file: FileAccess
-	#var out_file: FileAccess
-	#var buff2: PackedByteArray
-	#
-	#in_file = FileAccess.open("F:/Games/Notes/Furasera/CRIWARE_LOGO.TOTEXP_P.raw", FileAccess.READ)
-	#out_file = FileAccess.open("F:/Games/Notes/Furasera/CRIWARE_LOGO.TOTEXP_P.DEC", FileAccess.WRITE)
-	#buff = in_file.get_buffer(in_file.get_length())
-	#for a in range(0, buff.size(), 0x10):
-		#buff2.append(buff.decode_u32(a + 0xC))
-	#out_file.store_buffer(buff2)
+
 func _process(_delta: float) -> void:
 	if chose_files and chose_folder:
 		convertImages()

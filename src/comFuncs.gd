@@ -605,7 +605,7 @@ func unswizzle_palette(palBuffer: PackedByteArray, bpp: int) -> PackedByteArray:
 					
 		4:
 			# Initialize a new ByteArray with size 32
-			newPal.resize(32)
+			newPal.resize(64)
 			
 			var i:int = 0
 			
