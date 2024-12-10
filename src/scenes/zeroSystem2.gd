@@ -62,6 +62,10 @@ func extractBin() -> void:
 		exe_start = 0x98438
 		exe_end = 0x98588
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
+	elif exe_path.get_file() == "SLPM_551.95": # Princess Lover! Eternal Love for My Lady
+		exe_start = 0xA0A00
+		exe_end = 0xA0B20
+		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
 	print_rich("[color=yellow]Extracting files...[/color]")
 	

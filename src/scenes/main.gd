@@ -18,6 +18,7 @@ enum {
 	DCIF,
 	DCORIGIN,
 	DCPS,
+	DOKOHE,
 	DOUBLEWISH,
 	EF,
 	FANATIC,
@@ -42,19 +43,27 @@ enum {
 	MAIHIME,
 	METALWOLF,
 	MISSINGBLUE,
+	NATSUIROKOMACHI,
+	NORTHWIND,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
 	OUKA,
 	PATISSERIE,
+	PHANTOMINFERNO, 
 	PIA3, 
+	PRINCESSLOVER,
 	PRISMARK,
+	QUILT,
 	REGISTA, # temp value
+	ROZENDUEL,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
+	SCHOOLNI,
 	STARTRAIN,
 	STRAWBERRYPANIC,
 	SUIKA,
 	SWEETLEGACY, 
+	TROUBLEFORTUNE,
 	TRUETEARS,
 	YATOHIME,
 	YUMEMI,
@@ -132,6 +141,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(DAWHITE)
 		game_type = DAWHITE
 		var next_scene: PackedScene = load("res://src/scenes/TonkinHouse.tscn")
+		sceneChanger(next_scene)
+	elif index == DOKOHE:
+		game_type_sub_text.text = "Supports 'Doko he Iku no, Anohi'."
+		game_type_selector.select(DOKOHE)
+		game_type = DOKOHE
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == DOUBLEWISH:
 		game_type_sub_text.text = "Supports 'Double Wish'."
@@ -253,6 +268,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HOOLIGAN
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
 		sceneChanger(next_scene)
+	elif index == NORTHWIND:
+		game_type_sub_text.text = "Supports 'North Wind: Eien no Yakusoku."
+		game_type_selector.select(NORTHWIND)
+		game_type = NORTHWIND
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
+	elif index == ROZENDUEL:
+		game_type_sub_text.text = "Supports 'Rozen Maiden: duellwalzer' (most images)."
+		game_type_selector.select(ROZENDUEL)
+		game_type = ROZENDUEL
+		var next_scene: PackedScene = load("res://src/scenes/RozenDuel.tscn")
+		sceneChanger(next_scene)
 	elif index == SAISHUUSHIKEN:
 		game_type_sub_text.text = "Supports 'Saishuu Shiken Kujira: Alive'."
 		game_type_selector.select(SAISHUUSHIKEN)
@@ -260,9 +287,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/Circus.tscn")
 		sceneChanger(next_scene)
 	elif index == SAKURASESTU:
-		game_type_sub_text.text = "Supports 'Sakura ~Setsugekka~'."
+		game_type_sub_text.text = "Supports 'Sakura: Setsugekka'."
 		game_type_selector.select(SAKURASESTU)
 		game_type = SAKURASESTU
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == SCHOOLNI:
+		game_type_sub_text.text = "Supports 'School Rumble Ni-Gakki'."
+		game_type_selector.select(SCHOOLNI)
+		game_type = SCHOOLNI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == STARTRAIN:
@@ -288,6 +321,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SWEETLEGACY)
 		game_type = SWEETLEGACY
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
+		sceneChanger(next_scene)
+	elif index == NATSUIROKOMACHI:
+		game_type_sub_text.text = "Supports 'Natsuiro Komachi."
+		game_type_selector.select(NATSUIROKOMACHI)
+		game_type = NATSUIROKOMACHI
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == PHANTOMINFERNO:
+		game_type_sub_text.text = "Supports 'Phantom: Phantom of Inferno'."
+		game_type_selector.select(PHANTOMINFERNO)
+		game_type = PHANTOMINFERNO
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == QUILT:
+		game_type_sub_text.text = "Supports 'Quilt: Anata to Tsumugu Yume to Koi no Dress."
+		game_type_selector.select(QUILT)
+		game_type = QUILT
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == TRUETEARS:
 		game_type_sub_text.text = "Supports 'True Tears'."
@@ -367,6 +418,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = METALWOLF
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == TROUBLEFORTUNE:
+		game_type_sub_text.text = "Supports 'Trouble Fortune Company:  Happy Cure'."
+		game_type_selector.select(TROUBLEFORTUNE)
+		game_type = TROUBLEFORTUNE
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == PRINCESSLOVER:
+		game_type_sub_text.text = "Supports 'Princess Lover! Eternal Love for My Lady'."
+		game_type_selector.select(PRINCESSLOVER)
+		game_type = PRINCESSLOVER
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
 	elif index == YATOHIME:
 		game_type_sub_text.text = "Supports 'Yatohime Zankikou'."
 		game_type_selector.select(YATOHIME)
@@ -409,6 +472,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("D.C.I.F.: Da Capo Innocent Finale", DCIF)
 	game_type_selector.add_item("D.C.P.S.: Da Capo Plus Situation", DCPS)
 	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
+	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
@@ -433,19 +497,27 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
+	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
+	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
+	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
+	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
+	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
+	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
-	game_type_selector.add_item("Sakura ~Setsugekka~", SAKURASESTU)
+	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
+	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
+	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)

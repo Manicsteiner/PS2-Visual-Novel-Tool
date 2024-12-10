@@ -43,7 +43,11 @@ func convertImages() -> void:
 			height = buff.decode_u16(0x0C) - 1 #???
 			bpp = 32
 			
-			buff = buff.slice(0x10)
+			if Main.game_type == Main.NORTHWIND:
+				buff = buff.slice(0x20)
+			else:
+				buff = buff.slice(0x10)
+				
 			buff = ComFuncs.rgba_to_bgra(buff)
 			if remove_alpha:
 				for a in range(0, buff.size(), 4):
