@@ -11,6 +11,7 @@ A simple tool that allows extracting and converting various image formats from P
 * D.C.I.F.: Da Capo Innocent Finale
 * D.C.P.S.: Da Capo Plus Situation
 * D.C.: The Origin
+* Doko he Iku no, Anohi
 * Double Wish (WWish)
 * ef: A Fairy Tale of the Two
 * F: Fanatic
@@ -35,19 +36,27 @@ A simple tool that allows extracting and converting various image formats from P
 * Mai-HiME: Unmei no Keitouju
 * Metal Wolf REV
 * Missing Blue
+* Natsuiro Komachi
+* North Wind: Eien no Yakusoku
 * Ojousama Kumikyoku: Sweet Concert
 * Orange Pocket:  Root
 * Ouka: Kokoro Kagayakaseru Sakura
 * Patisserie na Nyanko: Hatsukoi wa Ichigo Aji
+* Phantom: Phantom of Inferno
 * Pia Carrot he Youkoso!! 3: Round Summer
+* Princess Lover! Eternal Love for My Lady
 * Prism Ark: Awake
+* Quilt: Anata to Tsumugu Yume to Koi no Dress
 * Regista Games
+* Rozen Maiden: duellwalzer
 * Saishuu Shiken Kujira: Alive
-* Sakura ~Setsugekka~
+* Sakura: Setsugekka
+* School Rumble Ni-Gakki
 * StarTRain: Your Past Makes Your Future
 * Strawberry Panic!
 * Suika A.S+: Eternal Name
 * Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi
+* Trouble Fortune Company:  Happy Cure
 * True Tears
 * Yatohime Zankikou
 * Yumemi Hakusho: Second Dream
