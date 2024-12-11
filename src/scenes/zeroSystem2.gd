@@ -67,7 +67,7 @@ func extractBin() -> void:
 		exe_end = 0xA0B20
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
-	print_rich("[color=yellow]Extracting files...[/color]")
+	print_rich("[color=yellow]Extracting files. Please wait...[/color]")
 	
 	in_file = FileAccess.open(selected_bin, FileAccess.READ)
 	

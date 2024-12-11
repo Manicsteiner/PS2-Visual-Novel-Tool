@@ -27,6 +27,11 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 28
 
+[node name="LoadEXE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+tooltip_text = "Extract from PFW3 archive."
+text = "Load EXE"
+
 [node name="LoadGSL" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 tooltip_text = "Extract from PFW3 archive."
@@ -51,10 +56,21 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="removeAlphaButton" type="CheckBox" parent="VBoxContainer"]
-visible = false
+[node name="UnswizzlePalButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
-text = "Remove Alpha Channel in Images"
+button_pressed = true
+text = "Unswizzle Palettes In Images"
+
+[node name="FILELoadEXE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("SLPM_665.43")
+use_native_dialog = true
 
 [node name="FILELoadGSL" type="FileDialog" parent="."]
 auto_translate_mode = 1
@@ -88,8 +104,11 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
+[connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadGSL" to="." method="_on_load_gsl_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadBIN" to="." method="_on_load_bin_pressed"]
+[connection signal="toggled" from="VBoxContainer/UnswizzlePalButton" to="." method="_on_unswizzle_pal_button_toggled"]
+[connection signal="file_selected" from="FILELoadEXE" to="." method="_on_file_load_exe_file_selected"]
 [connection signal="files_selected" from="FILELoadGSL" to="." method="_on_file_load_gsl_files_selected"]
 [connection signal="files_selected" from="FILELoadBIN" to="." method="_on_file_load_bin_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

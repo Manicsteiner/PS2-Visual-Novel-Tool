@@ -66,6 +66,7 @@ enum {
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	YATOHIME,
+	YOJINBO,
 	YUMEMI,
 	YUMEMISHI,
 	ZEROSYSTEM}
@@ -436,6 +437,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YATOHIME
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == YOJINBO:
+		game_type_sub_text.text = "Supports 'Yo-Jin-Bo - Unmei no Freude' (most images)."
+		game_type_selector.select(YOJINBO)
+		game_type = YOJINBO
+		var next_scene: PackedScene = load("res://src/scenes/RozenDuel.tscn")
+		sceneChanger(next_scene)
 	elif index == YUMEMI:
 		game_type_sub_text.text = "Supports 'Yumemi Hakusho: Second Dream'."
 		game_type_selector.select(YUMEMI)
@@ -520,6 +527,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
+	game_type_selector.add_item("Yo-Jin-Bo - Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)
