@@ -58,6 +58,7 @@ enum {
 	PRINCESSPRINCESS,
 	PRISAGA,
 	PRISMARK,
+	PUREPURE,
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
@@ -294,9 +295,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
 		sceneChanger(next_scene)
 	elif index == NORTHWIND:
-		game_type_sub_text.text = "Supports 'North Wind: Eien no Yakusoku."
+		game_type_sub_text.text = "Supports 'North Wind: Eien no Yakusoku'."
 		game_type_selector.select(NORTHWIND)
 		game_type = NORTHWIND
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
+	elif index == PUREPURE:
+		game_type_sub_text.text = "Supports 'Pure Pure - Mimi to Shippo no Monogatari'."
+		game_type_selector.select(PUREPURE)
+		game_type = PUREPURE
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
 	elif index == ROZENDUEL:
@@ -561,6 +568,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
 	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
+	game_type_selector.add_item("Pure Pure - Mimi to Shippo no Monogatari", PUREPURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
