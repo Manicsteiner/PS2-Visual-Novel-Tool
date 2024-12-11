@@ -24,6 +24,7 @@ enum {
 	FANATIC,
 	FINALA2,
 	FINALIST,
+	FUKAKUTEI,
 	FUTAKOI,
 	FUTAKOIJIMA,
 	GIFTPRISIM,
@@ -36,6 +37,7 @@ enum {
 	HURRAH,
 	ICHIGOHUNDRED,
 	IINAZUKE,
+	JUUJIGEN,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
 	LOVEDOLL,
@@ -43,6 +45,7 @@ enum {
 	MAIHIME,
 	METALWOLF,
 	MISSINGBLUE,
+	MYSTEREET,
 	NATSUIROKOMACHI,
 	NORTHWIND,
 	OJOUSAMAKUMI,
@@ -52,12 +55,15 @@ enum {
 	PHANTOMINFERNO, 
 	PIA3, 
 	PRINCESSLOVER,
+	PRINCESSPRINCESS,
+	PRISAGA,
 	PRISMARK,
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
+	SCHOOLLOVE,
 	SCHOOLNI,
 	STARTRAIN,
 	STRAWBERRYPANIC,
@@ -179,6 +185,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = FINALA2
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == FUKAKUTEI:
+		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
+		game_type_selector.select(FUKAKUTEI)
+		game_type = FUKAKUTEI
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == FUTAKOI:
 		game_type_sub_text.text = "Supports 'Futakoi'."
 		game_type_selector.select(FUTAKOI)
@@ -233,6 +245,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HURRAH
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
+	elif index == JUUJIGEN:
+		game_type_sub_text.text = "Supports 'Juujigen Rippoutai Cipher: Game of Survival'."
+		game_type_selector.select(JUUJIGEN)
+		game_type = JUUJIGEN
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == IINAZUKE:
 		game_type_sub_text.text = "Supports 'Iinazuke'."
 		game_type_selector.select(IINAZUKE)
@@ -250,6 +268,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(ANGELWISH)
 		game_type = ANGELWISH
 		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == MYSTEREET:
+		game_type_sub_text.text = "Supports 'Mystereet: Yasogami Kaoru no Jiken File'."
+		game_type_selector.select(MYSTEREET)
+		game_type = MYSTEREET
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == KIRAKIRA:
 		game_type_sub_text.text = "Supports 'Kira Kira: Rock 'N' Roll Show'."
@@ -335,6 +359,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PHANTOMINFERNO
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == PRINCESSPRINCESS:
+		game_type_sub_text.text = "Supports 'Princess Princess: Himetachi no Abunai Houkago'."
+		game_type_selector.select(PRINCESSPRINCESS)
+		game_type = PRINCESSPRINCESS
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == QUILT:
 		game_type_sub_text.text = "Supports 'Quilt: Anata to Tsumugu Yume to Koi no Dress."
 		game_type_selector.select(QUILT)
@@ -389,6 +419,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = REGISTA
 		var next_scene: PackedScene = load("res://src/scenes/Regista.tscn")
 		sceneChanger(next_scene)
+	elif index == SCHOOLLOVE:
+		game_type_sub_text.text = "Supports 'School Love! Koi to Kibou no Metronome'."
+		game_type_selector.select(SCHOOLLOVE)
+		game_type = SCHOOLLOVE
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == LOVEDOLL:
 		game_type_sub_text.text = "Supports 'Love Doll: Lovely Idol'."
 		game_type_selector.select(LOVEDOLL)
@@ -430,6 +466,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(PRINCESSLOVER)
 		game_type = PRINCESSLOVER
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == PRISAGA:
+		game_type_sub_text.text = "Supports 'Pri-Saga! Princess wo Sagase!'."
+		game_type_selector.select(PRISAGA)
+		game_type = PRISAGA
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == YATOHIME:
 		game_type_sub_text.text = "Supports 'Yatohime Zankikou'."
@@ -485,6 +527,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("F: Fanatic", FANATIC)
 	game_type_selector.add_item("Final Approach 2 - 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
+	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
@@ -495,6 +538,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
+	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
@@ -504,6 +548,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
+	game_type_selector.add_item("Mystereet: Yasogami Kaoru no Jiken File", MYSTEREET)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
@@ -513,12 +558,15 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
+	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
+	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
+	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
