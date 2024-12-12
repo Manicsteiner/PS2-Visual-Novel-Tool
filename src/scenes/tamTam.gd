@@ -21,7 +21,13 @@ func _ready() -> void:
 		remove_alpha_button.visible = true
 		load_dat.visible = true
 		load_bind.visible = false
-	elif Main.game_type == Main.DEARMYFRIEND:
+	elif (
+	Main.game_type == Main.DEARMYFRIEND or 
+	Main.game_type == Main.NATSUIROHOSHI or 
+	Main.game_type == Main.CASTLEFANTASIA or 
+	Main.game_type == Main.ANGELSFEATHER or
+	Main.game_type == Main.MENATWORK3
+	):
 		remove_alpha_button.visible = false
 		load_dat.visible = false
 		load_bind.visible = true
@@ -105,7 +111,13 @@ func extract() -> void:
 				out_file.close()
 				
 			buff.clear()
-	elif Main.game_type == Main.DEARMYFRIEND:
+	elif (
+	Main.game_type == Main.DEARMYFRIEND or 
+	Main.game_type == Main.NATSUIROHOSHI or 
+	Main.game_type == Main.CASTLEFANTASIA or 
+	Main.game_type == Main.ANGELSFEATHER or
+	Main.game_type == Main.MENATWORK3
+	):
 		for i in range(0, selected_files.size()):
 			in_file = FileAccess.open(selected_files[i], FileAccess.READ)
 			f_name = selected_files[i].get_file()
@@ -194,7 +206,7 @@ func extract() -> void:
 				elif f_id == 24:
 					f_ext = ".end"
 				else:
-					print_rich("[color=yellow]Unknown file id in %s![/color]" % f_name)
+					push_error("Unknown file id in %s!" % f_name)
 					f_ext = ".UNK"
 					
 				f_name += f_ext

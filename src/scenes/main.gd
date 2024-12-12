@@ -9,7 +9,9 @@ extends Control
 
 enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
+	ANGELSFEATHER,
 	ANGELWISH,
+	CASTLEFANTASIA,
 	COLORFULAQUA,
 	DABLACK,
 	DAWHITE,
@@ -44,9 +46,12 @@ enum {
 	LOVEDOLL,
 	MAGICAL,
 	MAIHIME,
+	MENATWORK3,
 	METALWOLF,
 	MISSINGBLUE,
+	MOEKAN,
 	MYSTEREET,
+	NATSUIROHOSHI,
 	NATSUIROKOMACHI,
 	NORTHWIND,
 	OJOUSAMAKUMI,
@@ -108,6 +113,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == MENATWORK3:
+		game_type_sub_text.text = "Supports 'Men at Work! 3: Ai to Seishun no Hunter Gakuen'."
+		game_type_selector.select(MENATWORK3)
+		game_type = MENATWORK3
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
+	elif index == ANGELSFEATHER:
+		game_type_sub_text.text = "Supports 'Angel's Feather'."
+		game_type_selector.select(ANGELSFEATHER)
+		game_type = ANGELSFEATHER
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
+	elif index == CASTLEFANTASIA:
+		game_type_sub_text.text = "Supports 'Castle Fantasia: Erencia Senki - Plus Stories'."
+		game_type_selector.select(CASTLEFANTASIA)
+		game_type = CASTLEFANTASIA
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
 		sceneChanger(next_scene)
 	elif index == DCTWO:
 		game_type_sub_text.text = "Supports 'D.C. II P.S.: Da Capo II Plus Situation'."
@@ -179,6 +202,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Dear My Friend: Love Like Powdery Snow'."
 		game_type_selector.select(DEARMYFRIEND)
 		game_type = DEARMYFRIEND
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
+	elif index == MOEKAN:
+		game_type_sub_text.text = "Supports 'Moekan: Moekko Company'."
+		game_type_selector.select(MOEKAN)
+		game_type = MOEKAN
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == NATSUIROHOSHI:
+		game_type_sub_text.text = "Supports 'Natsuiro: Hoshikuzu no Memory'."
+		game_type_selector.select(NATSUIROHOSHI)
+		game_type = NATSUIROHOSHI
 		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
 		sceneChanger(next_scene)
 	elif index == FINALIST:
@@ -526,7 +561,9 @@ func initMenuItems() -> void:
 	# Menu items must be in alphabetical order based on their enum value.
 	
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
+	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
 	game_type_selector.add_item("D-A:  White", DAWHITE)
@@ -561,9 +598,12 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
+	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
 	game_type_selector.add_item("Mystereet: Yasogami Kaoru no Jiken File", MYSTEREET)
+	game_type_selector.add_item("Natsuiro: Hoshikuzu no Memory", NATSUIROHOSHI)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
