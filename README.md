@@ -11,12 +11,14 @@ A simple tool that allows extracting and converting various image formats from P
 * D.C.I.F.: Da Capo Innocent Finale
 * D.C.P.S.: Da Capo Plus Situation
 * D.C.: The Origin
+* Dear My Friend: Love Like Powdery Snow
 * Doko he Iku no, Anohi
 * Double Wish (WWish)
 * ef: A Fairy Tale of the Two
 * F: Fanatic
 * Final Approach 2 - 1st Priority
 * Finalist
+* Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File
 * Futakoi
 * Futakoijima: Koi to Mizugi no Survival
 * Gift: Prism
@@ -27,6 +29,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Hooligan: Kimi no Naka no Yuuki
 * Hokenshitsu he Youkoso
 * Hurrah! Sailor
+* Juujigen Rippoutai Cipher: Game of Survival
 * Ichigo 100% Strawberry Diary
 * Iinazuke
 * Kira Kira: Rock 'N' Roll Show
@@ -36,6 +39,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Mai-HiME: Unmei no Keitouju
 * Metal Wolf REV
 * Missing Blue
+* Mystereet: Yasogami Kaoru no Jiken File
 * Natsuiro Komachi
 * North Wind: Eien no Yakusoku
 * Ojousama Kumikyoku: Sweet Concert
@@ -45,12 +49,16 @@ A simple tool that allows extracting and converting various image formats from P
 * Phantom: Phantom of Inferno
 * Pia Carrot he Youkoso!! 3: Round Summer
 * Princess Lover! Eternal Love for My Lady
+* Princess Princess: Himetachi no Abunai Houkago
+* Pri-Saga! Princess wo Sagase!
 * Prism Ark: Awake
+* Pure Pure - Mimi to Shippo no Monogatari
 * Quilt: Anata to Tsumugu Yume to Koi no Dress
 * Regista Games
 * Rozen Maiden: duellwalzer
 * Saishuu Shiken Kujira: Alive
 * Sakura: Setsugekka
+* School Love! Koi to Kibou no Metronome
 * School Rumble Ni-Gakki
 * StarTRain: Your Past Makes Your Future
 * Strawberry Panic!
@@ -59,6 +67,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Trouble Fortune Company:  Happy Cure
 * True Tears
 * Yatohime Zankikou
+* Yo-Jin-Bo - Unmei no Freude
 * Yumemi Hakusho: Second Dream
 * Yumemishi
 * Zero System Games
