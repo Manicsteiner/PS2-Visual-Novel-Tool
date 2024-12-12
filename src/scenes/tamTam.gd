@@ -3,6 +3,11 @@ extends Control
 @onready var file_load_dat: FileDialog = $FILELoadDAT
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
 @onready var remove_alpha_button: CheckBox = $VBoxContainer/removeAlphaButton
+@onready var load_dat: Button = $HBoxContainer/LoadDAT
+@onready var decomp_button: CheckBox = $VBoxContainer/decompButton
+@onready var load_bind: Button = $HBoxContainer/LoadBIND
+@onready var file_load_bind: FileDialog = $FILELoadBIND
+
 
 var folder_path:String
 var selected_files: PackedStringArray
@@ -14,8 +19,17 @@ var remove_alpha: bool = false
 func _ready() -> void:
 	if Main.game_type == Main.OUKA:
 		remove_alpha_button.visible = true
+		load_dat.visible = true
+		load_bind.visible = false
+	elif Main.game_type == Main.DEARMYFRIEND:
+		remove_alpha_button.visible = false
+		load_dat.visible = false
+		load_bind.visible = true
+		decomp_button.visible = false
 	else:
 		remove_alpha_button.visible = false
+		load_dat.visible = false
+		load_bind.visible = false
 		
 		
 func _process(_delta: float) -> void:
@@ -33,15 +47,14 @@ func extract() -> void:
 	var f_name: String
 	var png: Image
 	var offset: int
-	
-	for i in range(0, selected_files.size()):
-		in_file = FileAccess.open(selected_files[i], FileAccess.READ)
-		f_name = selected_files[i].get_file()
+		
+	if Main.game_type == Main.OUKA:
+		for i in range(0, selected_files.size()):
+			in_file = FileAccess.open(selected_files[i], FileAccess.READ)
+			f_name = selected_files[i].get_file()
 		
 		
-		buff = in_file.get_buffer(in_file.get_length())
-		
-		if Main.game_type == Main.OUKA:
+			buff = in_file.get_buffer(in_file.get_length())
 			var width: int = buff.decode_u16(0x12)
 			var height: int = buff.decode_u16(0x16)
 			var bpp: int = buff.decode_u16(0x1C)
@@ -64,6 +77,7 @@ func extract() -> void:
 				#print("0x%08X 0x%08X %s/%s" % [offset, buff.size(), folder_path, f_name])
 				print("0x%08X %s/%s" % [buff.size(), folder_path, f_name])
 				in_file.close()
+				buff.clear()
 				continue
 			else:
 				print("Unknown BPP %02d in %s" % [bpp, f_name])
@@ -76,6 +90,7 @@ func extract() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
+				buff.clear()
 				continue
 			
 			#print("0x%08X 0x%08X %s/%s" % [offset, buff.size(), folder_path, f_name])
@@ -88,11 +103,116 @@ func extract() -> void:
 				in_file.get_length()
 				out_file.store_buffer(buff)
 				out_file.close()
-		else:
-			pass
+				
+			buff.clear()
+	elif Main.game_type == Main.DEARMYFRIEND:
+		for i in range(0, selected_files.size()):
+			in_file = FileAccess.open(selected_files[i], FileAccess.READ)
+			f_name = selected_files[i].get_file()
 			
-		buff.clear()
-		in_file.close()
+			var dat_tbl: String = selected_files[i].get_base_dir() + "/BIND.TBL"
+			var dat_tbl_file: FileAccess = FileAccess.open(dat_tbl, FileAccess.READ)
+			
+			if dat_tbl_file == null:
+				OS.alert("Couldn't load BIND.TBL. Make sure it is in the same directory as BIND.DAT")
+				continue
+				
+			var f_offset: int = 0
+			var f_ext: String
+			var pos: int = 0
+			var files: int = 0
+			var last_off: int = 0
+			while pos < dat_tbl_file.get_length():
+				dat_tbl_file.seek(pos)
+				
+				var name_size: int = dat_tbl_file.get_8() - 2
+				if name_size == 0xFF or name_size < 0:
+					break
+					
+				var name_bytes: PackedByteArray = dat_tbl_file.get_buffer(name_size)
+				f_name = name_bytes.get_string_from_ascii()
+				
+				var f_id: int = dat_tbl_file.get_8()
+				var f_size_u: int = dat_tbl_file.get_8() << 16
+				var f_size_m: int = dat_tbl_file.get_8() << 8
+				var f_size_l: int = dat_tbl_file.get_8()
+				var f_size: int = (f_size_u + f_size_m) + f_size_l
+				
+				if f_size == 0 or f_size < 0:
+					break
+				
+				buff = in_file.get_buffer(f_size)
+					
+				if f_id == 0:
+					f_ext = ".als"
+				elif f_id == 1:
+					f_ext = ".ant"
+				elif f_id == 2:
+					f_ext = ".bak"
+				elif f_id == 3:
+					f_ext = ".bin"
+				elif f_id == 4:
+					f_ext = ".bmp"
+				elif f_id == 5:
+					f_ext = ".map"
+				elif f_id == 6:
+					f_ext = ".dat"
+				elif f_id == 7:
+					f_ext = ".db"
+				elif f_id == 8:
+					f_ext = ".ega"
+				elif f_id == 9:
+					f_ext = ".ani"
+				elif f_id == 10:
+					f_ext = ".nmp"
+				elif f_id == 11:
+					f_ext = ".tbl"
+				elif f_id == 12:
+					f_ext = ".scr"
+				elif f_id == 13:
+					f_ext = ".log"
+				elif f_id == 14:
+					f_ext = ".txt"
+				elif f_id == 15:
+					f_ext = ".ini"
+				elif f_id == 16:
+					f_ext = ".bat"
+				elif f_id == 17:
+					f_ext = ".adx"
+				elif f_id == 18:
+					f_ext = ".m"
+				elif f_id == 19:
+					f_ext = ".egz"
+				elif f_id == 20:
+					f_ext = ".bnd"
+				elif f_id == 21:
+					f_ext = ".ahx"
+				elif f_id == 22:
+					f_ext = ".ico"
+				elif f_id == 23:
+					f_ext = ".mes"
+				elif f_id == 24:
+					f_ext = ".end"
+				else:
+					print_rich("[color=yellow]Unknown file id in %s![/color]" % f_name)
+					f_ext = ".UNK"
+					
+				f_name += f_ext
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
+				
+				files += 1
+				
+				f_offset = (in_file.get_position() + 0x7FF) / 0x800 * 0x800
+				in_file.seek(f_offset)
+				
+				pos = dat_tbl_file.get_position()
+					
+	else:
+		pass
 		
 	print_rich("[color=green]Finished![/color]")
 
@@ -263,3 +383,14 @@ func _on_decomp_button_toggled(_toggled_on: bool) -> void:
 
 func _on_remove_alpha_button_toggled(_toggled_on: bool) -> void:
 	remove_alpha = !remove_alpha
+
+
+func _on_load_bind_pressed() -> void:
+	file_load_bind.visible = true
+
+
+func _on_file_load_bind_files_selected(paths: PackedStringArray) -> void:
+	selected_files = paths
+	file_load_bind.visible = false
+	file_load_folder.visible = true
+	chose_files = true

@@ -18,6 +18,7 @@ enum {
 	DCIF,
 	DCORIGIN,
 	DCPS,
+	DEARMYFRIEND,
 	DOKOHE,
 	DOUBLEWISH,
 	EF,
@@ -173,6 +174,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(FANATIC)
 		game_type = FANATIC
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == DEARMYFRIEND:
+		game_type_sub_text.text = "Supports 'Dear My Friend: Love Like Powdery Snow'."
+		game_type_selector.select(DEARMYFRIEND)
+		game_type = DEARMYFRIEND
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
 		sceneChanger(next_scene)
 	elif index == FINALIST:
 		game_type_sub_text.text = "Supports 'Finalist' (temp)."
@@ -528,6 +535,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("D.C.I.F.: Da Capo Innocent Finale", DCIF)
 	game_type_selector.add_item("D.C.P.S.: Da Capo Plus Situation", DCPS)
 	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
+	game_type_selector.add_item("Dear My Friend: Love Like Powdery Snow", DEARMYFRIEND)
 	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
@@ -587,6 +595,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)
+	#print(game_type_selector.item_count)
 	#for i in range(game_type_selector.item_count):
 		#print("* %s" % game_type_selector.get_item_text(i))
 	return

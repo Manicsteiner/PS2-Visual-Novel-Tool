@@ -32,6 +32,10 @@ theme_override_constants/separation = 28
 layout_mode = 2
 text = "Decompress .BMPs"
 
+[node name="LoadBIND" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract BIND.DAT"
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -65,6 +69,17 @@ access = 2
 filters = PackedStringArray("*.BMP")
 use_native_dialog = true
 
+[node name="FILELoadBIND" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.DAT")
+use_native_dialog = true
+
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open a Directory"
@@ -76,7 +91,9 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadDAT" to="." method="_on_load_dat_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadBIND" to="." method="_on_load_bind_pressed"]
 [connection signal="toggled" from="VBoxContainer/decompButton" to="." method="_on_decomp_button_toggled"]
 [connection signal="toggled" from="VBoxContainer/removeAlphaButton" to="." method="_on_remove_alpha_button_toggled"]
 [connection signal="files_selected" from="FILELoadDAT" to="." method="_on_file_load_dat_files_selected"]
+[connection signal="files_selected" from="FILELoadBIND" to="." method="_on_file_load_bind_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]
