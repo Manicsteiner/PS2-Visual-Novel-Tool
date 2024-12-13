@@ -11,6 +11,7 @@ enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
 	ANGELSFEATHER,
 	ANGELWISH,
+	BINCHOUTAN,
 	CASTLEFANTASIA,
 	COLORFULAQUA,
 	DABLACK,
@@ -107,6 +108,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == BINCHOUTAN:
+		game_type_sub_text.text = "Supports 'Binchou-Tan: Shiawasegoyomi'."
+		game_type_selector.select(BINCHOUTAN)
+		game_type = BINCHOUTAN
+		var next_scene: PackedScene = load("res://src/scenes/Marvelous.tscn")
 		sceneChanger(next_scene)
 	elif index == COLORFULAQUA:
 		game_type_sub_text.text = "Supports 'Colorful Aquarium: My Little Mermaid'."
@@ -563,6 +570,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
