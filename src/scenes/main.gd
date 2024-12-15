@@ -31,6 +31,7 @@ enum {
 	FUKAKUTEI,
 	FUTAKOI,
 	FUTAKOIJIMA,
+	GALAXYANGEL,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
 	HAPPYBREED,
@@ -73,10 +74,12 @@ enum {
 	SAKURASESTU,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SORAIROFUUKIN,
 	STARTRAIN,
 	STRAWBERRYPANIC,
 	SUIKA,
 	SWEETLEGACY, 
+	TENHIRO,
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	YATOHIME,
@@ -120,6 +123,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGEL:
+		game_type_sub_text.text = "Supports 'Galaxy Angel' (most images)."
+		game_type_selector.select(GALAXYANGEL)
+		game_type = GALAXYANGEL
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == MENATWORK3:
 		game_type_sub_text.text = "Supports 'Men at Work! 3: Ai to Seishun no Hunter Gakuen'."
@@ -187,10 +196,22 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = DOKOHE
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == SORAIROFUUKIN:
+		game_type_sub_text.text = "Supports 'Sorairo no Fuukin Remix'."
+		game_type_selector.select(SORAIROFUUKIN)
+		game_type = SORAIROFUUKIN
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == DOUBLEWISH:
 		game_type_sub_text.text = "Supports 'Double Wish'."
 		game_type_selector.select(DOUBLEWISH)
 		game_type = DOUBLEWISH
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == TENHIRO:
+		game_type_sub_text.text = "Supports 'Tenohira wo Taiyou ni - Eikyuu no Kizuna'."
+		game_type_selector.select(TENHIRO)
+		game_type = TENHIRO
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == EF:
@@ -590,6 +611,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
+	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
@@ -632,10 +654,12 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
+	game_type_selector.add_item("Tenohira wo Taiyou ni - Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)

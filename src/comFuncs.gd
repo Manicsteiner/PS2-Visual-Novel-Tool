@@ -706,6 +706,7 @@ func convert_rgb_to_bgr(input: PackedByteArray) -> PackedByteArray:
 	
 	return output
 	
+	
 func convert_rgb565_to_rgb555(input: PackedByteArray) -> PackedByteArray:
 	var output = PackedByteArray()
 	
@@ -805,6 +806,7 @@ func rgb565_to_bgr565(rgb565_data: PackedByteArray) -> PackedByteArray:
 		bgr565_data.append(bgr565_pixel)
 	
 	return bgr565_data
+
 
 func rgb_to_bgr(rgb_data: PackedByteArray) -> PackedByteArray:
 	var bgr_data = PackedByteArray()
