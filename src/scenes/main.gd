@@ -32,6 +32,8 @@ enum {
 	FUTAKOI,
 	FUTAKOIJIMA,
 	GALAXYANGEL,
+	GALAXYANGELETERNAL,
+	GALAXYANGELMOON,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
 	HAPPYBREED,
@@ -66,6 +68,7 @@ enum {
 	PRINCESSPRINCESS,
 	PRISAGA,
 	PRISMARK,
+	PRIVATENURSE,
 	PUREPURE,
 	QUILT,
 	REGISTA, # temp value
@@ -128,6 +131,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Galaxy Angel' (most images)."
 		game_type_selector.select(GALAXYANGEL)
 		game_type = GALAXYANGEL
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGELETERNAL:
+		game_type_sub_text.text = "Supports 'Galaxy Angel: Eternal Lovers' (most images)."
+		game_type_selector.select(GALAXYANGELETERNAL)
+		game_type = GALAXYANGELETERNAL
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGELMOON:
+		game_type_sub_text.text = "Supports 'Galaxy Angel: Moonlit Lovers' (most images)."
+		game_type_selector.select(GALAXYANGELMOON)
+		game_type = GALAXYANGELMOON
 		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == MENATWORK3:
@@ -314,6 +329,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Hurrah! Sailor'."
 		game_type_selector.select(HURRAH)
 		game_type = HURRAH
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
+	elif index == PRIVATENURSE:
+		game_type_sub_text.text = "Supports 'Private Nurse: Maria'."
+		game_type_selector.select(PRIVATENURSE)
+		game_type = PRIVATENURSE
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
 	elif index == JUUJIGEN:
@@ -612,6 +633,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
+	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
+	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
@@ -646,6 +669,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
 	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
+	game_type_selector.add_item("Private Nurse: Maria", PRIVATENURSE)
 	game_type_selector.add_item("Pure Pure - Mimi to Shippo no Monogatari", PUREPURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)

@@ -322,6 +322,7 @@ func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
 	var output_buffer: PackedByteArray
 	var output_size: int = input_data.decode_u32(4)
 	var dic: PackedByteArray
+	var header: PackedByteArray = input_data.slice(0, 8)
 	var sp: int
 	var v0: int
 	var v1: int
@@ -338,60 +339,128 @@ func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
 	var t7: int
 	var t8: int
 	var t9: int = 0 #output buffer
-	#do header check for other header, doesn't seem needed as I think that function is unused
-	t2 = 8
-	t8 = 0
-	t6 = 0xFEE
-	t7 = 0
-	dic.resize(0x1000)
+	var do_decompress: bool = true
+	var byte_0: int = header[0]
+	var byte_1: int = header[1]
+	var byte_2: int = header[2]
+	var byte_3: int = header[3]
+	
 	output_buffer.resize(output_size)
-	while t8 < output_size:
-		t7 >>= 1
-		v0 = t7 & 0x0100
-		if v0 != 0:
-			a1 = t7 & 1
-			v0 = t0 < t2
-			if a1 == 0:
-				if v0 == 0:
-					return output_buffer
-				v0 = a3 + t2
-				t2 += 1
-				if v0 >= input_data.size():
-					return output_buffer
-				v1 = input_data.decode_u8(v0)
-				a0 = t0 < t2
-				if a0 == 0:
-					return output_buffer
-				t3 = v1 ^ 0x72
-				v0 = a3 + t2
-				t2 += 1
-				if v0 >= input_data.size():
-					return output_buffer
-				v1 = input_data.decode_u8(v0)
-				t5 = 0
-				t1 = v1 ^ 0x72
-				a0 = t1 & 0xF
-				v0 = t1 & 0xF0
-				t1 = a0 + 2
-				v0 <<= 4
-				v1 = t1 < a1
-				t3 |= v0
-				if v1 != 0:
-					continue
-				t4 = 0
-				t5 = 0
-				while t4 == 0:
-					v0 = t3 + t5
-					t5 += 1
-					a0 = output_size
-					v0 &= 0x0FFF
-					v1 = sp + v0
-					v0 = 0
-					a0 = t8 < a0
-					t4 = t1 < t5
+	
+	# Check if first 4 bytes indicate "ARZ"
+	# "ARZ" (ASCII values: 0x41, 0x52, 0x5A)
+	if byte_0 == 0x41 and byte_1 == 0x52 and byte_2 == 0x5A:
+		# Validate byte 3
+		if (byte_3 + 0xD0) & 0xFF < 0x0A:
+			do_decompress = false  # Decrypt only
+		elif (byte_3 + 0x9F) & 0xFF < 0x06:
+			do_decompress = false  # Decrypt only
+	# Alternate check if byte_0 is a space (0x20)
+	if byte_0 == 0x20:
+		if byte_1 == 0x33 and byte_2 == 0x3B:
+			# Validate byte 3 in alternate case
+			if (byte_3 + 0xD0) & 0xFF < 0x0A:
+				do_decompress = true  # Decompress + decrypt
+			elif (byte_3 + 0x9F) & 0xFF < 0x06:
+				do_decompress = true  # Decompress + decrypt
+	# Combine the next 4 bytes into a single value for further validation
+	var combined_value: int = (
+		(header[4] << 24) |
+		(header[5] << 16) |
+		(header[6] << 8) |
+		header[7]
+		)
+		
+	if combined_value <= 0:
+		do_decompress = false  # Decrypt only
+		
+	if !do_decompress:
+		# Do only decrypt
+		var read_off: int = 8
+		var out_off: int = 0
+		while read_off < output_size:
+			if (out_off >= output_size) or (read_off >= input_data.size()):
+				break
+			var byte: int = input_data.decode_u8(read_off) ^ 0x72
+			output_buffer.encode_u8(out_off, byte)
+			out_off += 1
+			read_off += 1
+		return output_buffer
+		
+	elif do_decompress:
+		# Do decompression + decrypt compressed bytes
+		t2 = 8
+		t8 = 0
+		t6 = 0xFEE
+		t7 = 0
+		dic.resize(0x1000)
+		while t8 < output_size:
+			t7 >>= 1
+			v0 = t7 & 0x0100
+			if v0 != 0:
+				a1 = t7 & 1
+				v0 = t0 < t2
+				if a1 == 0:
+					if v0 == 0:
+						return output_buffer
+					v0 = a3 + t2
+					t2 += 1
+					if v0 >= input_data.size():
+						return output_buffer
+					v1 = input_data.decode_u8(v0)
+					a0 = t0 < t2
 					if a0 == 0:
 						return output_buffer
-					a1 = dic.decode_u8(v1)
+					t3 = v1 ^ 0x72
+					v0 = a3 + t2
+					t2 += 1
+					if v0 >= input_data.size():
+						return output_buffer
+					v1 = input_data.decode_u8(v0)
+					t5 = 0
+					t1 = v1 ^ 0x72
+					a0 = t1 & 0xF
+					v0 = t1 & 0xF0
+					t1 = a0 + 2
+					v0 <<= 4
+					v1 = t1 < a1
+					t3 |= v0
+					if v1 != 0:
+						continue
+					t4 = 0
+					t5 = 0
+					while t4 == 0:
+						v0 = t3 + t5
+						t5 += 1
+						a0 = output_size
+						v0 &= 0x0FFF
+						v1 = sp + v0
+						v0 = 0
+						a0 = t8 < a0
+						t4 = t1 < t5
+						if a0 == 0:
+							return output_buffer
+						a1 = dic.decode_u8(v1)
+						v1 = t9 + t8
+						t8 += 1
+						v0 = sp + t6
+						t6 += 1
+						dic.encode_s8(v0, a1)
+						t6 &= 0x0FFF
+						output_buffer.encode_s8(v1, a1)
+					continue
+				v1 = a3 + t2
+				if v0 != 0:
+					t2 += 1
+					a0 = output_size
+					v0 = 0
+					if v1 >= input_data.size():
+						return output_buffer
+					a1 = input_data.decode_u8(v1)
+					a0 = t8 < a0
+					if a0 == 0:
+						return output_buffer
+					a1 ^= 0x72
 					v1 = t9 + t8
 					t8 += 1
 					v0 = sp + t6
@@ -399,75 +468,73 @@ func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
 					dic.encode_s8(v0, a1)
 					t6 &= 0x0FFF
 					output_buffer.encode_s8(v1, a1)
-				continue
-			v1 = a3 + t2
-			if v0 != 0:
-				t2 += 1
-				a0 = output_size
-				v0 = 0
-				if v1 >= input_data.size():
-					return output_buffer
-				a1 = input_data.decode_u8(v1)
-				a0 = t8 < a0
-				if a0 == 0:
-					return output_buffer
-				a1 ^= 0x72
-				v1 = t9 + t8
-				t8 += 1
-				v0 = sp + t6
-				t6 += 1
-				dic.encode_s8(v0, a1)
-				t6 &= 0x0FFF
-				output_buffer.encode_s8(v1, a1)
-				continue
-		else:
-			v0 = t0 < t2
-			if v0 == 0:
-				return output_buffer
-			v1 = a3 + t2
-			t2 += 1
-			v0 = input_data.decode_u8(v1)
-			a1 = v0 ^ 0x72
-			t7 = a1 | 0xFF00
-			a1 = t7 & 1
-			v0 = t0 < t2
-			if a1 == 0:
+					continue
+			else:
+				v0 = t0 < t2
 				if v0 == 0:
 					return output_buffer
-				v0 = a3 + t2
+				v1 = a3 + t2
 				t2 += 1
-				v1 = input_data.decode_u8(v0)
-				a0 = t0 < t2
-				if a0 == 0:
-					return output_buffer
-				t3 = v1 ^ 0x72
-				v0 = a3 + t2
-				t2 += 1
-				v1 = input_data.decode_u8(v0)
-				t5 = 0
-				t1 = v1 ^ 0x72
-				a0 = t1 & 0xF
-				v0 = t1 & 0xF0
-				t1 = a0 + 2
-				v0 <<= 4
-				v1 = t1 < a1
-				t3 |= v0
-				if v1 != 0:
-					continue
-				t4 = 0
-				t5 = 0
-				while t4 == 0:
-					v0 = t3 + t5
-					t5 += 1
-					a0 = output_size
-					v0 &= 0x0FFF
-					v1 = sp + v0
-					v0 = 0
-					a0 = t8 < a0
-					t4 = t1 < t5
+				v0 = input_data.decode_u8(v1)
+				a1 = v0 ^ 0x72
+				t7 = a1 | 0xFF00
+				a1 = t7 & 1
+				v0 = t0 < t2
+				if a1 == 0:
+					if v0 == 0:
+						return output_buffer
+					v0 = a3 + t2
+					t2 += 1
+					v1 = input_data.decode_u8(v0)
+					a0 = t0 < t2
 					if a0 == 0:
 						return output_buffer
-					a1 = dic.decode_u8(v1)
+					t3 = v1 ^ 0x72
+					v0 = a3 + t2
+					t2 += 1
+					v1 = input_data.decode_u8(v0)
+					t5 = 0
+					t1 = v1 ^ 0x72
+					a0 = t1 & 0xF
+					v0 = t1 & 0xF0
+					t1 = a0 + 2
+					v0 <<= 4
+					v1 = t1 < a1
+					t3 |= v0
+					if v1 != 0:
+						continue
+					t4 = 0
+					t5 = 0
+					while t4 == 0:
+						v0 = t3 + t5
+						t5 += 1
+						a0 = output_size
+						v0 &= 0x0FFF
+						v1 = sp + v0
+						v0 = 0
+						a0 = t8 < a0
+						t4 = t1 < t5
+						if a0 == 0:
+							return output_buffer
+						a1 = dic.decode_u8(v1)
+						v1 = t9 + t8
+						t8 += 1
+						v0 = sp + t6
+						t6 += 1
+						dic.encode_s8(v0, a1)
+						t6 &= 0x0FFF
+						output_buffer.encode_s8(v1, a1)
+					continue
+				v1 = a3 + t2
+				if v0 != 0:
+					t2 += 1
+					a0 = output_size
+					v0 = 0
+					a1 = input_data.decode_u8(v1)
+					a0 = t8 < a0
+					if a0 == 0:
+						return output_buffer
+					a1 ^= 0x72
 					v1 = t9 + t8
 					t8 += 1
 					v0 = sp + t6
@@ -475,27 +542,12 @@ func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
 					dic.encode_s8(v0, a1)
 					t6 &= 0x0FFF
 					output_buffer.encode_s8(v1, a1)
-				continue
-			v1 = a3 + t2
-			if v0 != 0:
-				t2 += 1
-				a0 = output_size
-				v0 = 0
-				a1 = input_data.decode_u8(v1)
-				a0 = t8 < a0
-				if a0 == 0:
-					return output_buffer
-				a1 ^= 0x72
-				v1 = t9 + t8
-				t8 += 1
-				v0 = sp + t6
-				t6 += 1
-				dic.encode_s8(v0, a1)
-				t6 &= 0x0FFF
-				output_buffer.encode_s8(v1, a1)
-				continue
-			
-	return output_buffer
+					continue
+				
+		return output_buffer
+		
+	push_error("Decompression error")
+	return PackedByteArray()
 
 
 func _on_load_dat_pressed() -> void:
