@@ -32,6 +32,7 @@ enum {
 	FUTAKOI,
 	FUTAKOIJIMA,
 	GALAXYANGEL,
+	GALAXYANGEL2EI,
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
 	GIFTPRISIM,
@@ -88,8 +89,7 @@ enum {
 	YATOHIME,
 	YOJINBO,
 	YUMEMI,
-	YUMEMISHI,
-	ZEROSYSTEM}
+	YUMEMISHI}
 	
 var game_type:int = FUTAKOI
 
@@ -131,6 +131,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Galaxy Angel' (most images)."
 		game_type_selector.select(GALAXYANGEL)
 		game_type = GALAXYANGEL
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGEL2EI:
+		game_type_sub_text.text = "Supports 'Galaxy Angel II: Eigou Kaiki no Toki' (most images)"
+		game_type_selector.select(GALAXYANGEL2EI)
+		game_type = GALAXYANGEL2EI
 		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == GALAXYANGELETERNAL:
@@ -595,12 +601,6 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUMEMISHI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
-	elif index == ZEROSYSTEM:
-		game_type_sub_text.text = "Supports Zero System games."
-		game_type_selector.select(ZEROSYSTEM)
-		game_type = ZEROSYSTEM
-		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
-		sceneChanger(next_scene)
 		
 func sceneChanger(scene: PackedScene) -> void:
 	get_tree().change_scene_to_packed(scene)
@@ -633,6 +633,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
+	game_type_selector.add_item("Galaxy Angel II: Eigou Kaiki no Toki", GALAXYANGEL2EI)
 	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
@@ -690,7 +691,6 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Yo-Jin-Bo - Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
-	game_type_selector.add_item("Zero System Games", ZEROSYSTEM)
 	#print(game_type_selector.item_count)
 	#for i in range(game_type_selector.item_count):
 		#print("* %s" % game_type_selector.get_item_text(i))
