@@ -88,15 +88,13 @@ func parse_pidx_fsts(file_path: String):
 					continue
 				file.seek(names_offset + f_name_off)
 				var f_name: String = file.get_line()
-				#if f_name.get_extension() != "fac":
-					#continue
 				file.seek(f_offset)
 				if f_name.get_extension() == "bnk":
 					# Kinda dumb, but these aren't compressed
 					f_comp_size = f_dec_size
 				var buff: PackedByteArray = file.get_buffer(f_comp_size)
 				if f_comp_size != f_dec_size and f_comp_size > 0:
-					buff = decompress_lz(buff)
+					buff = decompress_lz(buff, f_comp_size)
 					f_comp_size = f_dec_size # for printing
 					var bytes: int = buff.decode_u32(0)
 					if bytes == 0x20584554: #TEX/20
@@ -108,7 +106,7 @@ func parse_pidx_fsts(file_path: String):
 							out_file.store_buffer(tga)
 					elif f_name.get_extension() == "agi":
 						var img_type: int = buff.decode_u16(0x10)
-						if img_type == 4 or img_type == 9:
+						if img_type == 4 or img_type == 9 or img_type == 0xA:
 							# 8 bit + 0x400 palette size
 							var tga: PackedByteArray = parseAgi(buff)
 							if tga.size() == 0:
@@ -167,7 +165,7 @@ func parse_pidx_fsts(file_path: String):
 			file.seek(f_offset)
 			var buff: PackedByteArray = file.get_buffer(f_comp_size)
 			if f_comp_size != f_dec_size:
-				buff = decompress_lz(buff)
+				buff = decompress_lz(buff, f_comp_size)
 				f_comp_size = f_dec_size # for printing
 				var bytes: int = buff.decode_u32(0)
 				if bytes == 0x20584554: #TEX/20
@@ -270,7 +268,7 @@ func parseFac(data: PackedByteArray) -> Array[PackedByteArray]:
 		if imag_bytes_pos == img_dat.size():
 			break
 			
-	print_rich("[color=green]FAC: GREY + PAL[/color]")
+	print_rich("[color=green]FAC: GREY + PAL (8 bit)[/color]")
 	return out_arr
 	
 	
@@ -282,21 +280,30 @@ func parseAgi(img_dat: PackedByteArray) -> PackedByteArray:
 	var img_size: int = img_dat.decode_u32(0x1C)
 	var pal: PackedByteArray
 	
-	# 0x400 palette
-	if (f_w * f_h) + img_dat_off != img_size:
-		print_rich("[color=red]AGI: Image may be wrong as width * height != image size.")
-	else:
-		print_rich("[color=green]GREY + PAL[/color]")
+	if (f_w * f_h) * 2 == img_dat.size() - img_dat_off:
+		# 16 bit, no pallete
+		print_rich("[color=green]AGI: GREY + PAL (16 bit)[/color]")
+		var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(false, 2, 32, 16, f_w, f_h)
+		var img: PackedByteArray = img_dat.slice(img_dat_off)
+		img = ComFuncs.convert_palette16_bgr_to_rgb(img)
+		tga_hdr.append_array(img)
+		return tga_hdr
 		
-	var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, f_w, f_h)
-	pal = ComFuncs.unswizzle_palette(img_dat.slice(img_size), 32)
-	pal = ComFuncs.rgba_to_bgra(pal)
-	if remove_alpha:
-		for i in range(0, pal.size(), 4):
-			pal.encode_u8(i + 3, 0xFF)
-	tga_hdr.append_array(pal)
-	tga_hdr.append_array(img_dat.slice(img_dat_off, -0x400))
-	return tga_hdr
+	elif (f_w * f_h) + img_dat_off == img_size:
+		# 8 bit, 0x400 palette
+		print_rich("[color=green]GREY + PAL (8 bit)[/color]")
+		var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, f_w, f_h)
+		pal = ComFuncs.unswizzle_palette(img_dat.slice(img_size), 32)
+		pal = ComFuncs.rgba_to_bgra(pal)
+		if remove_alpha:
+			for i in range(0, pal.size(), 4):
+				pal.encode_u8(i + 3, 0xFF)
+		tga_hdr.append_array(pal)
+		tga_hdr.append_array(img_dat.slice(img_dat_off, -0x400))
+		return tga_hdr
+	else:
+		print_rich("[color=red]AGI: Unknown image bpp as width * height != image size.")
+		return PackedByteArray()
 
 
 func parseTexture(img_dat: PackedByteArray) -> PackedByteArray:
@@ -460,7 +467,7 @@ func parseTexture(img_dat: PackedByteArray) -> PackedByteArray:
 	return tga_hdr
 	
 	
-func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
+func decompress_lz(input_data: PackedByteArray, comp_size: int) -> PackedByteArray:
 	# todo: A very small amount of images decompress incorrectly in Galaxy Angel 2. Look at this later
 	var output_buffer: PackedByteArray
 	var output_size: int = input_data.decode_u32(4)
@@ -508,13 +515,17 @@ func decompress_lz(input_data: PackedByteArray) -> PackedByteArray:
 				dec_flag = 1  # Decompress + decrypt
 	# Combine the next 4 bytes into a single value for further validation
 	var combined_value: int = (
-		(header[4] << 24) |
-		(header[5] << 16) |
-		(header[6] << 8) |
-		header[7]
+		(header[7] << 24) |
+		(header[6] << 16) |
+		(header[5] << 8) |
+		header[4]
 		)
 		
 	if combined_value <= 0:
+		push_error("An error likely occured during decompression")
+		return input_data
+		#dec_flag = 0  # Decrypt only
+	if comp_size >= output_size:
 		dec_flag = 0  # Decrypt only
 		
 	if dec_flag == 0:
