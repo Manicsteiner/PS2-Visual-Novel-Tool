@@ -92,6 +92,42 @@ func expand_palette_to_1024(palette_data: PackedByteArray) -> Array:
 
 	return expanded_palette
 	
+	
+func expand_8bit_rgba_palette(input_palette: PackedByteArray, swap_endianness: bool) -> PackedByteArray:
+	# Ensure the input palette is the correct size (0x40 bytes).
+	assert(input_palette.size() == 0x40, "Input palette must be 0x40 bytes in size.")
+	
+	# Prepare the output palette with a size of 0x400 bytes (256 colors * 4 bytes per color).
+	var expanded_palette = PackedByteArray()
+	expanded_palette.resize(0x400)
+	
+	# Expand the palette by repeating each 4-byte RGBA color 16 times.
+	for i in range(16):  # 16 original colors.
+		# Get the RGBA color from the input palette.
+		var color_offset: int = i * 4
+		var r: int = input_palette[color_offset]
+		var g: int = input_palette[color_offset + 1]
+		var b: int = input_palette[color_offset + 2]
+		var a: int = input_palette[color_offset + 3]
+		
+		# Swap endianness if required (convert RGBA to BGRA).
+		if swap_endianness:
+			var temp: int = r
+			r = b
+			b = temp
+		
+		# Write the color 16 times into the expanded palette.
+		for j in range(16):  # Repeat each color 16 times.
+			var expanded_offset: int = (i * 16 + j) * 4
+			expanded_palette[expanded_offset] = r
+			expanded_palette[expanded_offset + 1] = g
+			expanded_palette[expanded_offset + 2] = b
+			expanded_palette[expanded_offset + 3] = a
+	
+	# Return the expanded palette.
+	return expanded_palette
+	
+	
 func create_tiled_image(image_data: PackedByteArray, final_width: int, final_height: int, tile_size: int) -> Image:
 	# Calculate the number of tiles along width and height
 	var tiles_x:int = final_width / tile_size
@@ -341,14 +377,14 @@ func convert_greyscale_4bit_to_rgb8(image_data: PackedByteArray) -> PackedByteAr
 	
 func convert_4bit_greyscale_to_8bit_image(input_data: PackedByteArray, width: int, height: int, swap_endianness: bool) -> Image:
 	# Calculate the size of the image data in bytes (4 bits per pixel).
-	var image_size = width * height / 2
+	var image_size: int = width * height / 2
 	# Extract the 4-bit greyscale image data.
-	var image_data = input_data.slice(0, image_size)
+	var image_data: PackedByteArray = input_data.slice(0, image_size)
 	# Extract the 4-byte RGBA palette from the end of the data.
-	var palette_data = input_data.slice(image_size, image_size + 4)
+	var palette_data: PackedByteArray = input_data.slice(image_size, image_size + 4)
 	
 	# Decode the RGBA palette to use its alpha value.
-	var palette_color = Color(
+	var palette_color: Color = Color(
 		palette_data[0] / 255.0,  # Red
 		palette_data[1] / 255.0,  # Green
 		palette_data[2] / 255.0,  # Blue
@@ -360,11 +396,11 @@ func convert_4bit_greyscale_to_8bit_image(input_data: PackedByteArray, width: in
 	output_data.resize(width * height)
 	
 	# Process each byte in the 4-bit image data.
-	var output_index = 0
+	var output_index: int = 0
 	for byte in image_data:
 		# Extract the two 4-bit values (high nibble and low nibble).
-		var high_nibble = (byte >> 4) & 0xF
-		var low_nibble = byte & 0xF
+		var high_nibble: int = (byte >> 4) & 0xF
+		var low_nibble: int = byte & 0xF
 		
 		# Convert 4-bit values to 8-bit by multiplying by 17 (0x11).
 		output_data[output_index] = high_nibble * 17
@@ -375,14 +411,47 @@ func convert_4bit_greyscale_to_8bit_image(input_data: PackedByteArray, width: in
 	if swap_endianness:
 		for i in range(0, output_data.size(), 2):
 			# Swap consecutive bytes.
-			var temp = output_data[i]
+			var temp: int = output_data[i]
 			output_data[i] = output_data[i + 1]
 			output_data[i + 1] = temp
 	
 	# Create a new Image object and populate it with the 8-bit greyscale data.
-	var image = Image.create_from_data(width, height, false, Image.FORMAT_L8, output_data)
+	var image: Image = Image.create_from_data(width, height, false, Image.FORMAT_L8, output_data)
 	
 	return image
+	
+func convert_4bit_greyscale_to_8bit(input_data: PackedByteArray, width: int, height: int, swap_endianness: bool) -> PackedByteArray:
+	# Calculate the size of the image data in bytes (4 bits per pixel).
+	var image_size: int = width * height / 2
+	# Extract the 4-bit greyscale image data.
+	var image_data: PackedByteArray = input_data.slice(0, image_size)
+	
+	# Prepare the output PackedByteArray for 8-bit data.
+	var output_data = PackedByteArray()
+	output_data.resize(width * height)
+	
+	# Iterate through the 4-bit data and populate the 8-bit output array.
+	var output_index: int = 0
+	for byte in image_data:
+		# Split the byte into two 4-bit nibbles.
+		var high_nibble: int = (byte >> 4) & 0xF
+		var low_nibble: int = byte & 0xF
+		
+		# Scale each 4-bit value to 8-bit (multiply by 17, same as 0x11).
+		output_data[output_index] = high_nibble * 17
+		output_data[output_index + 1] = low_nibble * 17
+		output_index += 2
+	
+	# Handle endianness swapping if needed.
+	if swap_endianness:
+		for i in range(0, output_data.size(), 2):
+			# Swap consecutive bytes.
+			var temp: int = output_data[i]
+			output_data[i] = output_data[i + 1]
+			output_data[i + 1] = temp
+	
+	# Return the 8-bit greyscale data as a PackedByteArray.
+	return output_data
 	
 	
 func combine_greyscale_data_vertically_arr(images_data: PackedByteArray, widths: Array[int], heights: Array[int]) -> PackedByteArray:

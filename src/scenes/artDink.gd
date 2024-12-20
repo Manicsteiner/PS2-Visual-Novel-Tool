@@ -95,7 +95,6 @@ func parse_pidx_fsts(file_path: String):
 				var buff: PackedByteArray = file.get_buffer(f_comp_size)
 				if f_comp_size != f_dec_size and f_comp_size > 0:
 					buff = decompress_lz(buff, f_comp_size)
-					f_comp_size = f_dec_size # for printing
 					var bytes: int = buff.decode_u32(0)
 					if bytes == 0x20584554: #TEX/20
 						var tga: PackedByteArray = parseTexture(buff)
@@ -105,32 +104,11 @@ func parse_pidx_fsts(file_path: String):
 							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
 							out_file.store_buffer(tga)
 					elif f_name.get_extension() == "agi":
-						var img_type: int = buff.decode_u16(0x10)
-						if img_type == 4 or img_type == 9 or img_type == 0xA:
-							# 8 bit + 0x400 palette size
-							var tga: PackedByteArray = parseAgi(buff)
-							if tga.size() == 0:
-								print_rich("[color=red]TGA output failed in %s![/color]" % f_name)
-							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-							out_file.store_buffer(tga)
-						elif img_type == 8:
-							# 4 bit + 0x40 palette size
-							# some junk in the lower right corner of converted images
-							var img_dat_off: int = buff.decode_u32(0x8)
-							var f_w: int = buff.decode_u16(0x18)
-							var f_h: int = buff.decode_u16(0x1A)
-							var img_size: int = buff.decode_u32(0x1C)
-							var img_dat: PackedByteArray = buff.slice(img_dat_off, img_size - img_dat_off)
-							var new_pal: PackedByteArray = buff.slice(img_size) #ComFuncs.unswizzle_palette(buff.slice(img_size), 4)
-							if remove_alpha:
-								for a in range(0, new_pal.size(), 4):
-									new_pal.encode_u8(a + 3, 0xFF)
-							img_dat.append_array(new_pal)
-							var png: Image = ComFuncs.convert_4bit_greyscale_to_8bit_image(img_dat, f_w, f_h, true)
-							png.save_png(folder_path + "/%s" % f_name + ".PNG")
-							print_rich("[color=green]GREY + PAL (4bit)[/color]")
-						else:
-							print_rich("[color=red]Unknown image in file %s![/color]" % f_name)
+						var tga: PackedByteArray = parseAgi(buff)
+						if tga.size() == 0:
+							print_rich("[color=red]TGA output failed in %s! Offset: %08X compressed size: %08X decompressed size: %08X[/color]" % [f_name, f_offset, f_comp_size, f_dec_size])
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
+						out_file.store_buffer(tga)
 					elif f_name.get_extension() == "fac":
 						# Make 8 bit + pal character images
 						var images: Array[PackedByteArray] = parseFac(buff)
@@ -141,6 +119,7 @@ func parse_pidx_fsts(file_path: String):
 				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 				out_file.store_buffer(buff)
 				
+				f_comp_size = f_dec_size # for printing
 				print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name])
 				
 	elif signature == "FSTS":
@@ -156,55 +135,36 @@ func parse_pidx_fsts(file_path: String):
 			file.seek((i * 0x10) + info_offset)
 			var unk32: int = file.get_32() # file id?
 			var f_offset: int = file.get_32()
-			var f_comp_size: int = file.get_32()
 			var f_dec_size: int = file.get_32()
+			var f_comp_size: int = file.get_32()
 			file.seek(last_name_pos)
 			var f_name: String = file.get_line()
 			last_name_pos = file.get_position()
 			
+			if f_name.get_extension() == "bnk":
+				# Kinda dumb, but these aren't compressed
+				f_comp_size = f_dec_size
 			file.seek(f_offset)
 			var buff: PackedByteArray = file.get_buffer(f_comp_size)
-			if f_comp_size != f_dec_size:
+			if f_comp_size != f_dec_size and f_comp_size > 0:
 				buff = decompress_lz(buff, f_comp_size)
-				f_comp_size = f_dec_size # for printing
 				var bytes: int = buff.decode_u32(0)
 				if bytes == 0x20584554: #TEX/20
 					var tga: PackedByteArray = parseTexture(buff)
 					if tga.size() == 0:
-						print_rich("[color=red]TGA output failed in %s![/color]" % f_name)
+						print_rich("[color=red]TGA output failed in %s! Offset: %08X compressed size: %08X decompressed size: %08X[/color]" % [f_name, f_offset, f_comp_size, f_dec_size])
 					else:
 						#dir.make_dir_recursive(f_name.get_base_dir())
 						dir.make_dir_recursive(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name.get_base_dir())
 						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name + ".TGA", FileAccess.WRITE)
 						out_file.store_buffer(tga)
 				elif f_name.get_extension() == "agi":
-					var img_type: int = buff.decode_u16(0x10)
-					if img_type == 4 or img_type == 9:
-						# 8 bit + 0x400 palette size
-						var tga: PackedByteArray = parseAgi(buff)
-						if tga.size() == 0:
-							print_rich("[color=red]TGA output failed in %s![/color]" % f_name)
-						dir.make_dir_recursive(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name.get_base_dir())
-						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-						out_file.store_buffer(tga)
-					elif img_type == 8:
-						# 4 bit + 0x40 palette size
-						var img_dat_off: int = buff.decode_u32(0x8)
-						var f_w: int = buff.decode_u16(0x18)
-						var f_h: int = buff.decode_u16(0x1A)
-						var img_size: int = buff.decode_u32(0x1C)
-						var img_dat: PackedByteArray = buff.slice(img_dat_off, img_size - img_dat_off)
-						var new_pal: PackedByteArray = buff.slice(img_size) #ComFuncs.unswizzle_palette(buff.slice(img_size), 4)
-						if remove_alpha:
-							for a in range(0, new_pal.size(), 4):
-								new_pal.encode_u8(a + 3, 0xFF)
-						img_dat.append_array(new_pal)
-						var png: Image = ComFuncs.convert_4bit_greyscale_to_8bit_image(img_dat, f_w, f_h, true)
-						dir.make_dir_recursive(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name.get_base_dir())
-						png.save_png(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name + ".PNG")
-						print_rich("[color=green]GREY + PAL (4bit)[/color]")
-					else:
-						print_rich("[color=red]Unknown image in file %s![/color]" % f_name)
+					var tga: PackedByteArray = parseAgi(buff)
+					if tga.size() == 0:
+						print_rich("[color=red]TGA output failed in %s! Offset: %08X compressed size: %08X decompressed size: %08X[/color]" % [f_name, f_offset, f_comp_size, f_dec_size])
+					dir.make_dir_recursive(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name.get_base_dir())
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name + ".TGA", FileAccess.WRITE)
+					out_file.store_buffer(tga)
 				elif f_name.get_extension() == "fac":
 						# Make 8 bit + pal character images
 						var images: Array[PackedByteArray] = parseFac(buff)
@@ -219,6 +179,7 @@ func parse_pidx_fsts(file_path: String):
 			var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			
+			f_comp_size = f_dec_size # for printing
 			print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name])
 	else:
 		print("Invalid header in %s" % file_path)
@@ -277,10 +238,10 @@ func parseAgi(img_dat: PackedByteArray) -> PackedByteArray:
 	var img_type: int = img_dat.decode_u16(0x10)
 	var f_w: int = img_dat.decode_u16(0x18)
 	var f_h: int = img_dat.decode_u16(0x1A)
-	var img_size: int = img_dat.decode_u32(0x1C)
+	var img_size: int = img_dat.decode_u32(0x1C) # palette off
 	var pal: PackedByteArray
 	
-	if (f_w * f_h) * 2 == img_dat.size() - img_dat_off:
+	if (f_w * f_h) * 2 == img_dat.size() - img_dat_off and img_size == 0:
 		# 16 bit, no pallete
 		print_rich("[color=green]AGI: GREY + PAL (16 bit)[/color]")
 		var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(false, 2, 32, 16, f_w, f_h)
@@ -291,7 +252,7 @@ func parseAgi(img_dat: PackedByteArray) -> PackedByteArray:
 		
 	elif (f_w * f_h) + img_dat_off == img_size:
 		# 8 bit, 0x400 palette
-		print_rich("[color=green]GREY + PAL (8 bit)[/color]")
+		print_rich("[color=green]AGI: GREY + PAL (8 bit)[/color]")
 		var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, f_w, f_h)
 		pal = ComFuncs.unswizzle_palette(img_dat.slice(img_size), 32)
 		pal = ComFuncs.rgba_to_bgra(pal)
@@ -299,8 +260,22 @@ func parseAgi(img_dat: PackedByteArray) -> PackedByteArray:
 			for i in range(0, pal.size(), 4):
 				pal.encode_u8(i + 3, 0xFF)
 		tga_hdr.append_array(pal)
-		tga_hdr.append_array(img_dat.slice(img_dat_off, -0x400))
+		tga_hdr.append_array(img_dat.slice(img_dat_off, img_size + img_dat_off))
 		return tga_hdr
+	
+	elif (f_w * f_h) / 2 + img_dat_off == img_size:
+		# 4 bit, 0x40 palette
+		print_rich("[color=green]AGI: GREY + PAL (4 bit)[/color]")
+		var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, f_w, f_h)
+		var img: PackedByteArray = ComFuncs.convert_4bit_greyscale_to_8bit(img_dat.slice(img_dat_off, -0x40), f_w, f_h, true)
+		pal = ComFuncs.expand_8bit_rgba_palette(img_dat.slice(img_size), true) #ComFuncs.unswizzle_palette(img_dat.slice(img_size - 0x40), 4)
+		if remove_alpha:
+			for i in range(0, pal.size(), 4):
+				pal.encode_u8(i + 3, 0xFF)
+		tga_hdr.append_array(pal)
+		tga_hdr.append_array(img)
+		return tga_hdr
+		
 	else:
 		print_rich("[color=red]AGI: Unknown image bpp as width * height != image size.")
 		return PackedByteArray()
@@ -498,35 +473,25 @@ func decompress_lz(input_data: PackedByteArray, comp_size: int) -> PackedByteArr
 	output_buffer.resize(output_size)
 	
 	# Check if first 4 bytes indicate "ARZ"
-	# "ARZ" (ASCII values: 0x41, 0x52, 0x5A)
+	# Check for "ARZ" header (0x41, 0x52, 0x5A)
 	if byte_0 == 0x41 and byte_1 == 0x52 and byte_2 == 0x5A:
-		# Validate byte 3
-		if (byte_3 + 0xD0) & 0xFF < 0x0A:
-			dec_flag = 0  # Decrypt only
-		elif (byte_3 + 0x9F) & 0xFF < 0x06:
-			dec_flag = 0   # Decrypt only
-	# Alternate check if byte_0 is a space (0x20)
-	if byte_0 == 0x20:
-		if byte_1 == 0x33 and byte_2 == 0x3B:
-			# Validate byte 3 in alternate case
-			if (byte_3 + 0xD0) & 0xFF < 0x0A:
-				dec_flag = 1   # Decompress + decrypt
-			elif (byte_3 + 0x9F) & 0xFF < 0x06:
-				dec_flag = 1  # Decompress + decrypt
+		# Check byte 3 conditions
+		if (((byte_3 + 0xD0) & 0xFF) < 0x0A) or (((byte_3 + 0x9F) & 0xFF) < 0x06):
+			dec_flag = 0  # Decrypt memory file only
+	# Check for alternative header (" 3;")
+	if byte_0 == 0x20 and byte_1 == 0x33 and byte_2 == 0x3B:
+		# Check byte 3 conditions
+		if (((byte_3 + 0xD0) & 0xFF) < 0x0A) or (((byte_3 + 0x9F) & 0xFF) < 0x06):
+			dec_flag = 1  # Decrypt + decompress
+			
 	# Combine the next 4 bytes into a single value for further validation
-	var combined_value: int = (
-		(header[7] << 24) |
-		(header[6] << 16) |
-		(header[5] << 8) |
-		header[4]
-		)
+	var combined_value: int = ((header[7] << 24) | (header[6] << 16) | (header[5] << 8) | header[4])
 		
 	if combined_value <= 0:
 		push_error("An error likely occured during decompression")
 		return input_data
+	#if comp_size >= output_size:
 		#dec_flag = 0  # Decrypt only
-	if comp_size >= output_size:
-		dec_flag = 0  # Decrypt only
 		
 	if dec_flag == 0:
 		# Do only decrypt
