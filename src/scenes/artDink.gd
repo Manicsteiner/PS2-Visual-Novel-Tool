@@ -88,6 +88,11 @@ func parse_pidx_fsts(file_path: String):
 					continue
 				file.seek(names_offset + f_name_off)
 				var f_name: String = file.get_line()
+				
+				if f_name == "cha999_9999.fac":
+					print_rich("[color=yellow]Skipping %s as this is a blank 4 bit character image and I don't feel like figuring out logic for this type.[/color]" % f_name)
+					continue
+					
 				file.seek(f_offset)
 				if f_name.get_extension() == "bnk":
 					# Kinda dumb, but these aren't compressed
@@ -112,6 +117,8 @@ func parse_pidx_fsts(file_path: String):
 					elif f_name.get_extension() == "fac":
 						# Make 8 bit + pal character images
 						var images: Array[PackedByteArray] = parseFac(buff)
+						if images.size() == 0:
+							push_error("Unexpected end in %s!" % f_name)
 						for a in images.size():
 							var tga: PackedByteArray = images[a]
 							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%02d" % a + ".TGA", FileAccess.WRITE)
@@ -168,6 +175,8 @@ func parse_pidx_fsts(file_path: String):
 				elif f_name.get_extension() == "fac":
 						# Make 8 bit + pal character images
 						var images: Array[PackedByteArray] = parseFac(buff)
+						if images.size() == 0:
+							push_error("Unexpected end in %s!" % f_name)
 						for a in images.size():
 							var tga: PackedByteArray = images[a]
 							dir.make_dir_recursive(folder_path + "/%s" % file_path.get_file() + "/%s" % f_name.get_base_dir())
@@ -195,26 +204,74 @@ func parseFac(data: PackedByteArray) -> Array[PackedByteArray]:
 	var out_arr: Array[PackedByteArray]
 	var hdr_jump: int = 0
 	var pos: int = 0
+	var has_imag: bool = true
 	
 	# Find first IMAG bytes
-	while pos < data.size():
+	var cnt: int = 0
+	while true:
 		var bytes: int = data.decode_u32(pos)
 		if bytes == 0x47414D49: # IMAG
+			has_imag = true
 			break
 		hdr_jump = data.decode_u32(pos + 4)
 		pos += hdr_jump
+		if pos >= data.size():
+			has_imag = false
+			break
+		cnt += 1
+		if cnt == 6:
+			has_imag = false
+			break
 		
-	# Find and append image data.
-	var imag_bytes_pos: int = pos
-	while imag_bytes_pos < data.size():
-		var image_size: int = data.decode_u32(imag_bytes_pos + 4)
-		var image_hdr_start: int = data.decode_u32(imag_bytes_pos + 0x14)
-		var image_hdr_size: int = data.decode_u32(imag_bytes_pos + image_hdr_start)
-		var image_data_start: int = data.decode_u32(imag_bytes_pos + image_hdr_start + 0x8)
-		var width: int = data.decode_u16(imag_bytes_pos + image_hdr_start + 0x18)
-		var height: int = data.decode_u16(imag_bytes_pos + image_hdr_start + 0x1A)
+	if has_imag:
+		# Find and append image data.
+		var imag_bytes_pos: int = pos
+		while imag_bytes_pos < data.size():
+			var image_size: int = data.decode_u32(imag_bytes_pos + 4)
+			var image_hdr_start: int = data.decode_u32(imag_bytes_pos + 0x14)
+			var image_hdr_size: int = data.decode_u32(imag_bytes_pos + image_hdr_start)
+			var image_data_start: int = data.decode_u32(imag_bytes_pos + image_hdr_start + 0x8)
+			var width: int = data.decode_u16(imag_bytes_pos + image_hdr_start + 0x18)
+			var height: int = data.decode_u16(imag_bytes_pos + image_hdr_start + 0x1A)
+			var tga: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, width, height)
+			var img_dat: PackedByteArray = data.slice(imag_bytes_pos + image_hdr_size + image_data_start, (width * height) + imag_bytes_pos + image_hdr_size + image_data_start + 0x400)
+			var pal_dat: PackedByteArray = ComFuncs.unswizzle_palette(img_dat.slice(img_dat.size() - 0x400), 32)
+			pal_dat = ComFuncs.rgba_to_bgra(pal_dat)
+			if remove_alpha:
+				for i in range(0, pal_dat.size(), 4):
+					pal_dat.encode_u8(i + 3, 0xFF)
+			img_dat = img_dat.slice(0, -0x400)
+			tga.append_array(pal_dat)
+			tga.append_array(img_dat)
+			out_arr.append(tga)
+			
+			imag_bytes_pos += image_size
+			if imag_bytes_pos == img_dat.size():
+				break
+			
+		print_rich("[color=green]FAC: GREY + PAL (8 bit)[/color]")
+		return out_arr
+	
+	# GA2 Mugen facs (some).
+	pos = 0x10
+	#while pos < 0x50:
+	while true:
+		var image_off: int = data.decode_u32(pos)
+		var image_size: int = data.decode_u32(pos + 4)
+		var unk32_1: int = data.decode_u32(pos + 8)
+		var unk32_2: int = data.decode_u32(pos + 0xC)
+		var image_data_start: int = data.decode_u32(image_off + 0x8)
+		var width: int = data.decode_u16(image_off + 0x18)
+		var height: int = data.decode_u16(image_off + 0x1A)
+		
+		# dumb check to see if this is the last image or not
+		var bytes: int = data.decode_u32(pos)
+		var bytes2: int = data.decode_u16(pos + 4)
+		if bytes == 0x20 and bytes2 == 0x0001:
+			break
+		
 		var tga: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 32, 8, width, height)
-		var img_dat: PackedByteArray = data.slice(imag_bytes_pos + image_hdr_size + image_data_start, (width * height) + imag_bytes_pos + image_hdr_size + image_data_start + 0x400)
+		var img_dat: PackedByteArray = data.slice(image_off + image_data_start, (width * height) + image_off + image_data_start + 0x400)
 		var pal_dat: PackedByteArray = ComFuncs.unswizzle_palette(img_dat.slice(img_dat.size() - 0x400), 32)
 		pal_dat = ComFuncs.rgba_to_bgra(pal_dat)
 		if remove_alpha:
@@ -224,11 +281,7 @@ func parseFac(data: PackedByteArray) -> Array[PackedByteArray]:
 		tga.append_array(pal_dat)
 		tga.append_array(img_dat)
 		out_arr.append(tga)
-		
-		imag_bytes_pos += image_size
-		if imag_bytes_pos == img_dat.size():
-			break
-			
+		pos += 0x10
 	print_rich("[color=green]FAC: GREY + PAL (8 bit)[/color]")
 	return out_arr
 	

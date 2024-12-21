@@ -12,6 +12,7 @@ enum {
 	ANGELSFEATHER,
 	ANGELWISH,
 	BINCHOUTAN,
+	CAMBRIAN,
 	CASTLEFANTASIA,
 	COLORFULAQUA,
 	DABLACK,
@@ -33,10 +34,12 @@ enum {
 	FUTAKOIJIMA,
 	GALAXYANGEL,
 	GALAXYANGEL2EI,
+	GALAXYANGEL2MU,
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
+	HAKARENA,
 	HAPPYBREED,
 	HAPPYDELUCKS,
 	HARUKAZEPS,
@@ -45,7 +48,9 @@ enum {
 	HURRAH,
 	ICHIGOHUNDRED,
 	IINAZUKE,
+	ITSUKA,
 	JUUJIGEN,
+	KAZEIROSURF,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
 	LOVEDOLL,
@@ -78,10 +83,14 @@ enum {
 	SAKURASESTU,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SHIROGANE,
+	SHUUMATSUSHOUJO,
 	SORAIROFUUKIN,
 	STARTRAIN,
 	STRAWBERRYPANIC,
+	STRIKEWITCHES,
 	SUIKA,
+	SUMOMOMO,
 	SWEETLEGACY, 
 	TENHIRO,
 	TROUBLEFORTUNE,
@@ -89,9 +98,13 @@ enum {
 	YATOHIME,
 	YOJINBO,
 	YUMEMI,
-	YUMEMISHI}
+	YUMEMISHI,
+	ZNTKOAKUMA,
+	ZNTMAIGO,
+	ZNTMUMA
+	}
 	
-var game_type:int = FUTAKOI
+var game_type: int = FUTAKOI
 
 func _ready() -> void:
 	Engine.max_fps = 60
@@ -134,9 +147,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == GALAXYANGEL2EI:
-		game_type_sub_text.text = "Supports 'Galaxy Angel II: Eigou Kaiki no Toki' (most images)"
+		game_type_sub_text.text = "Supports 'Galaxy Angel II: Eigou Kaiki no Toki'"
 		game_type_selector.select(GALAXYANGEL2EI)
 		game_type = GALAXYANGEL2EI
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGEL2MU:
+		game_type_sub_text.text = "Supports 'Galaxy Angel II: Mugen Kairou no Kagi'"
+		game_type_selector.select(GALAXYANGEL2MU)
+		game_type = GALAXYANGEL2MU
 		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == GALAXYANGELETERNAL:
@@ -601,6 +620,66 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUMEMISHI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == CAMBRIAN:
+		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
+		game_type_selector.select(CAMBRIAN)
+		game_type = CAMBRIAN
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == HAKARENA:
+		game_type_sub_text.text = "Supports 'Hakarena Heart: Kimi ga Tame ni Kagayaki wo'"
+		game_type_selector.select(HAKARENA)
+		game_type = HAKARENA
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == KAZEIROSURF:
+		game_type_sub_text.text = "Supports 'Kazeiro Surf'"
+		game_type_selector.select(KAZEIROSURF)
+		game_type = KAZEIROSURF
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == ITSUKA:
+		game_type_sub_text.text = "Supports 'Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~'"
+		game_type_selector.select(ITSUKA)
+		game_type = ITSUKA
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == STRIKEWITCHES:
+		game_type_sub_text.text = "Supports 'Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days'"
+		game_type_selector.select(STRIKEWITCHES)
+		game_type = STRIKEWITCHES
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == SUMOMOMO:
+		game_type_sub_text.text = "Supports 'Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!'"
+		game_type_selector.select(SUMOMOMO)
+		game_type = SUMOMOMO
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == SHUUMATSUSHOUJO:
+		game_type_sub_text.text = "Supports 'Shuumatsu Shoujo Gensou Alicematic: Apocalypse'"
+		game_type_selector.select(SHUUMATSUSHOUJO)
+		game_type = SHUUMATSUSHOUJO
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == ZNTKOAKUMA:
+		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Koakuma to Harukaze no Concerto'"
+		game_type_selector.select(ZNTKOAKUMA)
+		game_type = ZNTKOAKUMA
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == ZNTMAIGO:
+		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Maigo no Period to Ikusen no Symphony'"
+		game_type_selector.select(ZNTMAIGO)
+		game_type = ZNTMAIGO
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == ZNTMUMA:
+		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Muma ga Tsumugu Yokaze no Fantasy'"
+		game_type_selector.select(ZNTMUMA)
+		game_type = ZNTMUMA
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
 		
 func sceneChanger(scene: PackedScene) -> void:
 	get_tree().change_scene_to_packed(scene)
@@ -613,6 +692,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
+	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
@@ -634,10 +714,12 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
 	game_type_selector.add_item("Galaxy Angel II: Eigou Kaiki no Toki", GALAXYANGEL2EI)
+	game_type_selector.add_item("Galaxy Angel II: Mugen Kairou no Kagi", GALAXYANGEL2MU)
 	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
+	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
@@ -647,6 +729,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
+	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
+	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
@@ -671,7 +755,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
 	game_type_selector.add_item("Private Nurse: Maria", PRIVATENURSE)
-	game_type_selector.add_item("Pure Pure - Mimi to Shippo no Monogatari", PUREPURE)
+	game_type_selector.add_item("Pure Pure: Mimi to Shippo no Monogatari", PUREPURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
@@ -679,18 +763,25 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
+	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
+	game_type_selector.add_item("Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days", STRIKEWITCHES)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
+	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
-	game_type_selector.add_item("Tenohira wo Taiyou ni - Eikyuu no Kizuna", TENHIRO)
+	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
-	game_type_selector.add_item("Yo-Jin-Bo - Unmei no Freude", YOJINBO)
+	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
+	game_type_selector.add_item("Zero no Tsukaima: Koakuma to Harukaze no Concerto", ZNTKOAKUMA)
+	game_type_selector.add_item("Zero no Tsukaima: Maigo no Period to Ikusen no Symphony", ZNTMAIGO)
+	game_type_selector.add_item("Zero no Tsukaima: Muma ga Tsumugu Yokaze no Fantasy", ZNTMUMA)
 	#print(game_type_selector.item_count)
 	#for i in range(game_type_selector.item_count):
 		#print("* %s" % game_type_selector.get_item_text(i))
