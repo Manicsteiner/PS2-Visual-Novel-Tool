@@ -33,6 +33,8 @@ func socioMakeFiles() -> void:
 	var i: int
 	var files: int
 	
+	# todo: images that have header magic "T" that appear mostly blank
+	
 	loaded_array_size = selected_files.size()
 	start_off = 0
 	seek_hed = 0
@@ -56,6 +58,12 @@ func socioMakeFiles() -> void:
 				i += 1
 				seek_hed += 4
 				continue
+			# for debugging
+			#if i != 295:
+				#start_off = (((start_off + file_size) + 0x7FF) >> 11) * 0x800
+				#i += 1
+				#seek_hed += 4
+				#continue
 				
 			mem_file.resize(file_size)
 			
@@ -87,16 +95,26 @@ func socioMakeFiles() -> void:
 						out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".BMP", FileAccess.WRITE)
 					else:
 						out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".BIN", FileAccess.WRITE)
-				elif mem_file.decode_u32(9) == 0x324D4954:
+				elif mem_file.decode_u32(9) == 0x324D4954: #TIM2
 					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".TM2", FileAccess.WRITE)
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
-				elif mem_file.decode_u16(9) == 0x4D42:
+				elif mem_file.decode_u16(9) == 0x4D42: #BMP
 					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".BMP", FileAccess.WRITE)
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
+				elif mem_file.decode_u16(9) == 0x4D54: #TM split headers
+					if decomp_file:
+						mem_file.resize(mem_file.decode_u32(0))
+						var dec_size: int = mem_file.decode_u32(0)
+						var split_size: int = dec_size / 2
+						mem_file = decompressFile(mem_file, dec_size, 8)
+						
+						print_rich("[color=green]Combined split TIM2 image in %s[/color]" % i)
+						mem_file = combineSplitTIM2(mem_file, split_size)
+					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".TM2", FileAccess.WRITE)
 				else:
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
@@ -120,8 +138,18 @@ func socioMakeFiles() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
-func decompressFile(buffer:PackedByteArray, decompressed_size:int, off:int) -> PackedByteArray:
-	var out_buffer:PackedByteArray
+func combineSplitTIM2(data: PackedByteArray, part_size: int) -> PackedByteArray:
+	var tm2_data: PackedByteArray
+	
+	for part in range(0, part_size):
+		tm2_data.append(data.decode_u8(part))
+		tm2_data.append(data.decode_u8(part + part_size))
+		
+	return tm2_data
+	
+	
+func decompressFile(buffer: PackedByteArray, decompressed_size: int, off: int) -> PackedByteArray:
+	var out_buffer: PackedByteArray
 	var v0:int
 	var v1:int
 	var a0:int
