@@ -84,7 +84,7 @@ func socioMakeFiles() -> void:
 				else:
 					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".BIN", FileAccess.WRITE)
 			elif archive_id == "NORMAL.BIN" or archive_id == "SCENE_ID.BIN" or archive_id == "SCENEDAT.BIN":
-				if archive_size == 0x2F06800 and archive_id == "NORMAL.BIN": #Cambrian QTS check as these aren't compressed
+				if Main.game_type == Main.CAMBRIAN and archive_id == "NORMAL.BIN": #Cambrian QTS check as these aren't compressed
 					if mem_file.decode_u32(0) == 0x324D4954: #TIM2
 						out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".TM2", FileAccess.WRITE)
 					elif mem_file.decode_u32(0) == 0x4B434150: #PACK

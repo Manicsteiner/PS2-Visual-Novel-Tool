@@ -35,6 +35,7 @@ enum {
 	GALAXYANGEL,
 	GALAXYANGEL2EI,
 	GALAXYANGEL2MU,
+	GALAXYANGEL2ZE,
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
 	GIFTPRISIM,
@@ -156,6 +157,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Galaxy Angel II: Mugen Kairou no Kagi'"
 		game_type_selector.select(GALAXYANGEL2MU)
 		game_type = GALAXYANGEL2MU
+		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
+		sceneChanger(next_scene)
+	elif index == GALAXYANGEL2ZE:
+		game_type_sub_text.text = "Supports 'Galaxy Angel II: Zettai Ryouiki no Tobira'"
+		game_type_selector.select(GALAXYANGEL2ZE)
+		game_type = GALAXYANGEL2ZE
 		var next_scene: PackedScene = load("res://src/scenes/ArtDink.tscn")
 		sceneChanger(next_scene)
 	elif index == GALAXYANGELETERNAL:
@@ -715,6 +722,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
 	game_type_selector.add_item("Galaxy Angel II: Eigou Kaiki no Toki", GALAXYANGEL2EI)
 	game_type_selector.add_item("Galaxy Angel II: Mugen Kairou no Kagi", GALAXYANGEL2MU)
+	game_type_selector.add_item("Galaxy Angel II: Zettai Ryouiki no Tobira", GALAXYANGEL2ZE)
 	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
