@@ -71,6 +71,7 @@ enum {
 	PATISSERIE,
 	PHANTOMINFERNO, 
 	PIA3, 
+	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
 	PRINCESSPRINCESS,
 	PRISAGA,
@@ -96,6 +97,7 @@ enum {
 	TENHIRO,
 	TROUBLEFORTUNE,
 	TRUETEARS,
+	TSUKIWAHIGASHI, 
 	YATOHIME,
 	YOJINBO,
 	YUMEMI,
@@ -627,6 +629,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUMEMISHI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == TSUKIWAHIGASHI:
+		game_type_sub_text.text = "Supports 'Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary'."
+		game_type_selector.select(TSUKIWAHIGASHI)
+		game_type = TSUKIWAHIGASHI
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == PRINCESSHOLIDAY:
+		game_type_sub_text.text = "Supports 'Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya'."
+		game_type_selector.select(PRINCESSHOLIDAY)
+		game_type = PRINCESSHOLIDAY
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -758,6 +772,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
+	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
 	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
@@ -783,6 +798,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
+	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
