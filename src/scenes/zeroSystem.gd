@@ -111,7 +111,10 @@ func extractBin() -> void:
 				exe_start = 0xB7790
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			elif exe_path.get_file() == "SLPM_666.25": # Trouble Fortune Company:  Happy Cure
-				exe_start = 0xB7790
+				exe_start = 0xC3E60
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_663.76": # KimiSuta: Kimi to Study
+				exe_start = 0xB14F8
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			else:
 				OS.alert("Unknown EXE found.")

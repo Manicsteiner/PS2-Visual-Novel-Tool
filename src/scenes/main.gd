@@ -12,6 +12,8 @@ enum {
 	ANGELSFEATHER,
 	ANGELWISH,
 	BINCHOUTAN,
+	CAFELINDBERGHSUMMER,
+	CAFELITTLEWISH,
 	CAMBRIAN,
 	CASTLEFANTASIA,
 	COLORFULAQUA,
@@ -27,6 +29,7 @@ enum {
 	DOUBLEWISH,
 	EF,
 	FANATIC,
+	FINALA,
 	FINALA2,
 	FINALIST,
 	FUKAKUTEI,
@@ -52,9 +55,12 @@ enum {
 	ITSUKA,
 	JUUJIGEN,
 	KAZEIROSURF,
+	KIMISUTA,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	LOSTPASSAGE,
 	LOVEDOLL,
+	MAGI,
 	MAGICAL,
 	MAIHIME,
 	MENATWORK3,
@@ -245,6 +251,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = DOKOHE
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == MAGI:
+		game_type_sub_text.text = "Supports 'Ma-Gi: Marginal'."
+		game_type_selector.select(MAGI)
+		game_type = MAGI
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == LOSTPASSAGE:
+		game_type_sub_text.text = "Supports 'Lost Passage: Ushinawareta Hitofushi'."
+		game_type_selector.select(LOSTPASSAGE)
+		game_type = LOSTPASSAGE
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == SORAIROFUUKIN:
 		game_type_sub_text.text = "Supports 'Sorairo no Fuukin Remix'."
 		game_type_selector.select(SORAIROFUUKIN)
@@ -299,8 +317,14 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = FINALIST
 		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
 		sceneChanger(next_scene)
+	elif index == FINALA:
+		game_type_sub_text.text = "Supports 'Final Approach'."
+		game_type_selector.select(FINALA)
+		game_type = FINALA
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == FINALA2:
-		game_type_sub_text.text = "Supports 'Final Approach 2 - 1st Priority'."
+		game_type_sub_text.text = "Supports 'Final Approach 2: 1st Priority'."
 		game_type_selector.select(FINALA2)
 		game_type = FINALA2
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
@@ -339,6 +363,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Happy Breeding: Cheerful Party'."
 		game_type_selector.select(HAPPYBREED)
 		game_type = HAPPYBREED
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == CAFELINDBERGHSUMMER:
+		game_type_sub_text.text = "Supports 'Cafe Lindbergh: Summer Season'."
+		game_type_selector.select(CAFELINDBERGHSUMMER)
+		game_type = CAFELINDBERGHSUMMER
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == CAFELITTLEWISH:
+		game_type_sub_text.text = "Supports 'Cafe Little Wish: Mahou no Recipe'."
+		game_type_selector.select(CAFELITTLEWISH)
+		game_type = CAFELITTLEWISH
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == HAPPYDELUCKS:
@@ -623,6 +659,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUMEMI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == KIMISUTA:
+		game_type_sub_text.text = "Supports 'KimiSuta: Kimi to Study'."
+		game_type_selector.select(KIMISUTA)
+		game_type = KIMISUTA
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == YUMEMISHI:
 		game_type_sub_text.text = "Supports 'Yumemishi'."
 		game_type_selector.select(YUMEMISHI)
@@ -713,6 +755,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
+	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
+	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
@@ -728,7 +772,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
-	game_type_selector.add_item("Final Approach 2 - 1st Priority", FINALA2)
+	game_type_selector.add_item("Final Approach", FINALA)
+	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
@@ -753,9 +798,12 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
+	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
+	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
