@@ -25,6 +25,7 @@ enum {
 	DCORIGIN,
 	DCPS,
 	DEARMYFRIEND,
+	DIGI,
 	DOKOHE,
 	DOUBLEWISH,
 	EF,
@@ -148,6 +149,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == DIGI:
+		game_type_sub_text.text = "Supports 'Di Gi Charat Fantasy: Excellent'"
+		game_type_selector.select(DIGI)
+		game_type = DIGI
+		var next_scene: PackedScene = load("res://src/scenes/DiGiCharat.tscn")
 		sceneChanger(next_scene)
 	elif index == GALAXYANGEL:
 		game_type_sub_text.text = "Supports 'Galaxy Angel' (most images)."
@@ -768,6 +775,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("D.C.P.S.: Da Capo Plus Situation", DCPS)
 	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
 	game_type_selector.add_item("Dear My Friend: Love Like Powdery Snow", DEARMYFRIEND)
+	game_type_selector.add_item("Di Gi Charat Fantasy: Excellent", DIGI)
 	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
