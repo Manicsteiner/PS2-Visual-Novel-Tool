@@ -64,6 +64,7 @@ enum {
 	MAGI,
 	MAGICAL,
 	MAIHIME,
+	MEMORIESOFF6NEXT,
 	MENATWORK3,
 	METALWOLF,
 	MISSINGBLUE,
@@ -102,6 +103,7 @@ enum {
 	SUMOMOMO,
 	SWEETLEGACY, 
 	TENHIRO,
+	TENTAMA1ST,
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
@@ -137,6 +139,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == MEMORIESOFF6NEXT:
+		game_type_sub_text.text = "Supports 'Memories Off 6: Next Relation'."
+		game_type_selector.select(MEMORIESOFF6NEXT)
+		game_type = MEMORIESOFF6NEXT
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == TENTAMA1ST:
+		game_type_sub_text.text = "Supports 'Tentama: 1st Sunny Side'."
+		game_type_selector.select(TENTAMA1ST)
+		game_type = TENTAMA1ST
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == BINCHOUTAN:
 		game_type_sub_text.text = "Supports 'Binchou-Tan: Shiawasegoyomi'."
@@ -814,6 +828,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Memories Off 6: Next Relation", MEMORIESOFF6NEXT)
 	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
@@ -852,6 +867,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
+	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)

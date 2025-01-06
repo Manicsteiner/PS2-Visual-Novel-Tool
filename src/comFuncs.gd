@@ -612,7 +612,7 @@ func decompress_raw_zlib(compressed_data: PackedByteArray, dec_size: int, is_zli
 	return out
 	
 	
-func swap32(num) -> int:
+func swap32(num: int) -> int:
 	var swapped:int
 	
 	swapped = ((num>>24)&0xff) | ((num<<8)&0xff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000)
