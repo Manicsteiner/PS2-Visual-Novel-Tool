@@ -64,7 +64,11 @@ enum {
 	MAGI,
 	MAGICAL,
 	MAIHIME,
+	MEMORIESOFF5EN,
+	MEMORIESOFF5TO,
 	MEMORIESOFF6NEXT,
+	MEMORIESOFF6TWAVE,
+	MEMORIESOFFSOREAGAIN,
 	MENATWORK3,
 	METALWOLF,
 	MISSINGBLUE,
@@ -109,6 +113,7 @@ enum {
 	TSUKIWAHIGASHI, 
 	YATOHIME,
 	YOJINBO,
+	YRMEMORIES,
 	YUMEMI,
 	YUMEMISHI,
 	ZNTKOAKUMA,
@@ -140,10 +145,40 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == MEMORIESOFFSOREAGAIN:
+		game_type_sub_text.text = "Supports 'Memories Off: Sorekara Again'."
+		game_type_selector.select(MEMORIESOFFSOREAGAIN)
+		game_type = MEMORIESOFFSOREAGAIN
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
 	elif index == MEMORIESOFF6NEXT:
 		game_type_sub_text.text = "Supports 'Memories Off 6: Next Relation'."
 		game_type_selector.select(MEMORIESOFF6NEXT)
 		game_type = MEMORIESOFF6NEXT
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == YRMEMORIES:
+		game_type_sub_text.text = "Supports 'Your Memories Off: Girl's Style'."
+		game_type_selector.select(YRMEMORIES)
+		game_type = YRMEMORIES
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MEMORIESOFF6TWAVE:
+		game_type_sub_text.text = "Supports 'Memories Off 6: T-Wave'."
+		game_type_selector.select(MEMORIESOFF6TWAVE)
+		game_type = MEMORIESOFF6TWAVE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MEMORIESOFF5EN:
+		game_type_sub_text.text = "Supports 'Memories Off 5: Encore'."
+		game_type_selector.select(MEMORIESOFF5EN)
+		game_type = MEMORIESOFF5EN
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MEMORIESOFF5TO:
+		game_type_sub_text.text = "Supports 'Memories Off 5: Togireta Film'."
+		game_type_selector.select(MEMORIESOFF5TO)
+		game_type = MEMORIESOFF5TO
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == TENTAMA1ST:
@@ -828,7 +863,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Memories Off 5: Encore", MEMORIESOFF5EN)
+	game_type_selector.add_item("Memories Off 5: Togireta Film", MEMORIESOFF5TO)
 	game_type_selector.add_item("Memories Off 6: Next Relation", MEMORIESOFF6NEXT)
+	game_type_selector.add_item("Memories Off 6: T-Wave", MEMORIESOFF6TWAVE)
+	game_type_selector.add_item("Memories Off: Sorekara Again", MEMORIESOFFSOREAGAIN)
 	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
@@ -873,6 +912,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
+	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero no Tsukaima: Koakuma to Harukaze no Concerto", ZNTKOAKUMA)
