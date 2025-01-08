@@ -23,24 +23,15 @@ func extractAFS() -> void:
 	var in_file: FileAccess
 	var out_file: FileAccess
 	var buff: PackedByteArray
-	var arc_size: int
 	var num_files: int
 	var off_tbl: int
 	var name_tbl: int
 	var name_tbl_size: int
 	var f_offset: int
 	var f_name: String
-	var name_size: int
 	var f_size: int
 	var f_ext: String
 	var ext: String
-	var tga_header: PackedByteArray
-	var tga_img: PackedByteArray
-	var swap: PackedByteArray
-	var width: int
-	var height: int
-	var bpp: int
-	var pal: PackedByteArray
 	
 	for i in range(0, selected_files.size()):
 		in_file = FileAccess.open(selected_files[i], FileAccess.READ)
@@ -54,6 +45,16 @@ func extractAFS() -> void:
 		name_tbl = in_file.get_32()
 		name_tbl_size = in_file.get_32()
 		
+		if name_tbl == 0 or name_tbl_size == 0:
+			# check for odd cases where name table isn't the last in the offset table
+			in_file.seek(8)
+			f_offset = in_file.get_32()
+			
+			in_file.seek(f_offset - 8)
+			name_tbl = in_file.get_32()
+			name_tbl_size = in_file.get_32()
+			if name_tbl == 0 or name_tbl_size == 0:
+				print_rich("[color=red]Couldn't find name table in %s" % selected_files[i])
 		
 		for files in range(num_files - 1):
 			in_file.seek((files * 8) + off_tbl)
@@ -61,9 +62,10 @@ func extractAFS() -> void:
 			f_offset = in_file.get_32()
 			f_size = in_file.get_32()
 			
-			in_file.seek((files * 0x30) + name_tbl)
-			f_name = in_file.get_line()
-			f_ext = f_name.get_extension()
+			if name_tbl != 0 or name_tbl_size != 0:
+				in_file.seek((files * 0x30) + name_tbl)
+				f_name = in_file.get_line()
+				f_ext = f_name.get_extension()
 				
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
@@ -82,56 +84,8 @@ func extractAFS() -> void:
 					out_file.store_buffer(buff)
 					
 					# TIM2 search
-					var color: String
-					var search_results: PackedInt32Array
-					var tm2_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.READ)
+					ComFuncs.tim2_scan_file(FileAccess.open(folder_path + "/%s" % f_name, FileAccess.READ))
 					
-					var pos: int = 0
-					var last_pos: int = 0
-					var f_id: int = 0
-					var entry_count: int = 0
-					tm2_file.seek(pos)
-					
-					while tm2_file.get_position() < tm2_file.get_length():
-						tm2_file.seek(pos)
-						if tm2_file.eof_reached():
-							break
-							
-						var tm2_bytes: int = tm2_file.get_32()
-						last_pos = tm2_file.get_position()
-						if tm2_bytes == 0x324D4954:
-							search_results.append(last_pos - 4)
-							
-							tm2_file.seek(last_pos + 0xC) #TIM2 size at 0x10
-							var tm2_size: int = tm2_file.get_32()
-								
-							tm2_file.seek(search_results[entry_count]) #Go back to TIM2 header
-							var tm2_buff: PackedByteArray = tm2_file.get_buffer(tm2_size + 0x10)
-							
-							last_pos = tm2_file.get_position()
-							if !last_pos % 16 == 0: #align to 0x10 boundary
-								last_pos = (last_pos + 15) & ~15
-								
-							out_file = FileAccess.open(folder_path + "/%s" % f_name + "_%04d" % entry_count + ".TM2", FileAccess.WRITE)
-							out_file.store_buffer(tm2_buff)
-							out_file.close()
-							tm2_buff.clear()
-							
-							#print("0x%08X " % search_results[entry_count], "0x%08X " % tm2_size + "%s" % folder_path + "/%s" % f_name + "_%04d" % f_id + ".TM2")
-							entry_count += 1
-						else:
-							if !last_pos % 16 == 0: #align to 0x10 boundary
-								last_pos = (last_pos + 15) & ~15
-								
-						pos = last_pos
-						f_id += 1
-					
-					if entry_count > 0:
-						color = "green"
-					else:
-						color = "red"
-						
-					print_rich("[color=%s]Found %d TIM2 entries[/color]" % [color, search_results.size()])
 					print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 					continue
 				else:

@@ -976,6 +976,63 @@ func colorBGRAToRGBA(image_data:PackedByteArray, has_alpha:bool) -> PackedByteAr
 				#i += 2
 	return image_data
 	
+func tim2_scan_file(in_file: FileAccess) -> void:
+	# Scans a file for TIM2 images and extracts them based on input path.
+	# Appends _XXXX.TM2 to the file name and saves the result to disk as a new file.
+	
+	var search_results: PackedInt32Array
+	var tm2_file: FileAccess = in_file
+	var in_file_path: String = tm2_file.get_path_absolute()
+	
+	var pos: int = 0
+	var last_pos: int = 0
+	var f_id: int = 0
+	var entry_count: int = 0
+	tm2_file.seek(pos)
+	
+	while tm2_file.get_position() < tm2_file.get_length():
+		tm2_file.seek(pos)
+		if tm2_file.eof_reached():
+			break
+			
+		var tm2_bytes: int = tm2_file.get_32()
+		last_pos = tm2_file.get_position()
+		if tm2_bytes == 0x324D4954:
+			search_results.append(last_pos - 4)
+			
+			tm2_file.seek(last_pos + 0xC) #TIM2 size at 0x10
+			var tm2_size: int = tm2_file.get_32()
+				
+			tm2_file.seek(search_results[entry_count]) #Go back to TIM2 header
+			var tm2_buff: PackedByteArray = tm2_file.get_buffer(tm2_size + 0x10)
+			
+			last_pos = tm2_file.get_position()
+			if !last_pos % 16 == 0: #align to 0x10 boundary
+				last_pos = (last_pos + 15) & ~15
+				
+			var out_file: FileAccess = FileAccess.open(in_file_path + "_%04d" % entry_count + ".TM2", FileAccess.WRITE)
+			out_file.store_buffer(tm2_buff)
+			out_file.close()
+			tm2_buff.clear()
+			
+			entry_count += 1
+		else:
+			if !last_pos % 16 == 0: #align to 0x10 boundary
+				last_pos = (last_pos + 15) & ~15
+				
+		pos = last_pos
+		f_id += 1
+	
+	#var color: String
+	#if entry_count > 0:
+		#color = "green"
+	#else:
+		#color = "red"
+		
+	#print_rich("[color=%s]Found %d TIM2 entries[/color]" % [color, search_results.size()])
+	return
+	
+	
 func swapNumber(num:int, bit_swap:String) -> int:
 	var swapped:int
 	

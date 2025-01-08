@@ -45,12 +45,14 @@ enum {
 	GIFTPRISIM,
 	GINNOECLIPSE, 
 	HAKARENA,
+	HAKUSHAKU,
 	HAPPYBREED,
 	HAPPYDELUCKS,
 	HARUKAZEPS,
 	HOOLIGAN, 
 	HOKENSHITSU,
 	HURRAH,
+	HYAKKO,
 	ICHIGOHUNDRED,
 	IINAZUKE,
 	ITSUKA,
@@ -59,8 +61,11 @@ enum {
 	KIMISUTA,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	LNOKISETSU,
 	LOSTPASSAGE,
 	LOVEDOLL,
+	LUXBEVIL,
+	MABINOSTYLE,
 	MAGI,
 	MAGICAL,
 	MAIHIME,
@@ -73,6 +78,8 @@ enum {
 	METALWOLF,
 	MISSINGBLUE,
 	MOEKAN,
+	MONOCHROME,
+	MYMARRYMAYBE,
 	MYSTEREET,
 	NATSUIROHOSHI,
 	NATSUIROKOMACHI,
@@ -83,6 +90,7 @@ enum {
 	PATISSERIE,
 	PHANTOMINFERNO, 
 	PIA3, 
+	PIZZICATOPOLKA,
 	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
 	PRINCESSPRINCESS,
@@ -108,6 +116,7 @@ enum {
 	SWEETLEGACY, 
 	TENHIRO,
 	TENTAMA1ST,
+	TENTAMA2,
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
@@ -144,6 +153,54 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == MABINOSTYLE:
+		game_type_sub_text.text = "Supports 'Mabino x Style'."
+		game_type_selector.select(MABINOSTYLE)
+		game_type = MABINOSTYLE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == LUXBEVIL:
+		game_type_sub_text.text = "Supports 'Luxury & Beauty: Lucian Bee's - Evil Violet'."
+		game_type_selector.select(LUXBEVIL)
+		game_type = LUXBEVIL
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == HAKUSHAKU:
+		game_type_sub_text.text = "Supports 'Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete'."
+		game_type_selector.select(HAKUSHAKU)
+		game_type = HAKUSHAKU
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == LNOKISETSU:
+		game_type_sub_text.text = "Supports 'L no Kisetsu 2: Invisible Memories!'."
+		game_type_selector.select(LNOKISETSU)
+		game_type = LNOKISETSU
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == HYAKKO:
+		game_type_sub_text.text = "Supports 'Hyakko: Yorozuya Jikenbo!'."
+		game_type_selector.select(HYAKKO)
+		game_type = HYAKKO
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == PIZZICATOPOLKA:
+		game_type_sub_text.text = "Supports 'Pizzicato Polka: Suisei Genya'."
+		game_type_selector.select(PIZZICATOPOLKA)
+		game_type = PIZZICATOPOLKA
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MYMARRYMAYBE:
+		game_type_sub_text.text = "Supports 'My Merry Maybe'."
+		game_type_selector.select(MYMARRYMAYBE)
+		game_type = MYMARRYMAYBE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MONOCHROME:
+		game_type_sub_text.text = "Supports 'Monochrome'."
+		game_type_selector.select(MONOCHROME)
+		game_type = MONOCHROME
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MEMORIESOFFSOREAGAIN:
 		game_type_sub_text.text = "Supports 'Memories Off: Sorekara Again'."
@@ -187,6 +244,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = TENTAMA1ST
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
+	elif index == TENTAMA2:
+		game_type_sub_text.text = "Supports 'Tentama 2: Wins'."
+		game_type_selector.select(TENTAMA2)
+		game_type = TENTAMA2
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
 	elif index == BINCHOUTAN:
 		game_type_sub_text.text = "Supports 'Binchou-Tan: Shiawasegoyomi'."
 		game_type_selector.select(BINCHOUTAN)
@@ -200,7 +263,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == DIGI:
-		game_type_sub_text.text = "Supports 'Di Gi Charat Fantasy: Excellent'"
+		game_type_sub_text.text = "Supports 'Di Gi Charat Fantasy: Excellent' (most images)."
 		game_type_selector.select(DIGI)
 		game_type = DIGI
 		var next_scene: PackedScene = load("res://src/scenes/DiGiCharat.tscn")
@@ -844,12 +907,14 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
+	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
+	game_type_selector.add_item("Hyakko: Yorozuya Jikenbo!", HYAKKO)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
@@ -858,8 +923,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
+	game_type_selector.add_item("Luxury & Beauty: Lucian Bee's - Evil Violet", LUXBEVIL)
+	game_type_selector.add_item("Mabino x Style", MABINOSTYLE)
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
@@ -872,6 +940,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
+	game_type_selector.add_item("Monochrome", MONOCHROME)
+	game_type_selector.add_item("My Merry Maybe", MYMARRYMAYBE)
 	game_type_selector.add_item("Mystereet: Yasogami Kaoru no Jiken File", MYSTEREET)
 	game_type_selector.add_item("Natsuiro: Hoshikuzu no Memory", NATSUIROHOSHI)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
@@ -882,6 +952,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
+	game_type_selector.add_item("Pizzicato Polka: Suisei Genya", PIZZICATOPOLKA)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
@@ -907,6 +978,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
+	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
