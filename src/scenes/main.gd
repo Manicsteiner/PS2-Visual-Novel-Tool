@@ -9,6 +9,7 @@ extends Control
 
 enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
+	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
 	ANGELSFEATHER,
 	ANGELWISH,
 	BINCHOUTAN,
@@ -77,9 +78,13 @@ enum {
 	MENATWORK3,
 	METALWOLF,
 	MISSINGBLUE,
+	MIZUNOSENRITSU,
+	MIZUNOSENRITSU2,
 	MOEKAN,
 	MONOCHROME,
+	MONOCHROMEFACTOR,
 	MYMARRYMAYBE,
+	MYMARRYWITHBE,
 	MYSTEREET,
 	NATSUIROHOSHI,
 	NATSUIROKOMACHI,
@@ -101,16 +106,20 @@ enum {
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
+	RYUUKOKU,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SEPARATEHEARTS,
 	SHIROGANE,
+	SKIPBEAT,
 	SHUUMATSUSHOUJO,
 	SORAIROFUUKIN,
 	STARTRAIN,
 	STRAWBERRYPANIC,
 	STRIKEWITCHES,
+	SUIGETSUMAYOI,
 	SUIKA,
 	SUMOMOMO,
 	SWEETLEGACY, 
@@ -120,6 +129,8 @@ enum {
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
+	WEARE,
+	WHITEBREATH,
 	YATOHIME,
 	YOJINBO,
 	YRMEMORIES,
@@ -153,6 +164,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == TWELVERIVEN:
+		game_type_sub_text.text = "Supports '12Riven: The Psi-Climinal of Integral'."
+		game_type_selector.select(TWELVERIVEN)
+		game_type = TWELVERIVEN
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MIZUNOSENRITSU:
+		game_type_sub_text.text = "Supports 'Mizu no Senritsu'."
+		game_type_selector.select(MIZUNOSENRITSU)
+		game_type = MIZUNOSENRITSU
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MIZUNOSENRITSU2:
+		game_type_sub_text.text = "Supports 'Mizu no Senritsu 2: Hi no Kioku'."
+		game_type_selector.select(MIZUNOSENRITSU2)
+		game_type = MIZUNOSENRITSU2
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MABINOSTYLE:
 		game_type_sub_text.text = "Supports 'Mabino x Style'."
@@ -196,10 +225,22 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = MYMARRYMAYBE
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
+	elif index == MYMARRYWITHBE:
+		game_type_sub_text.text = "Supports 'My Merry May with be'."
+		game_type_selector.select(MYMARRYWITHBE)
+		game_type = MYMARRYWITHBE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
 	elif index == MONOCHROME:
 		game_type_sub_text.text = "Supports 'Monochrome'."
 		game_type_selector.select(MONOCHROME)
 		game_type = MONOCHROME
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == MONOCHROMEFACTOR:
+		game_type_sub_text.text = "Supports 'Monochrome Factor: Cross Road'."
+		game_type_selector.select(MONOCHROMEFACTOR)
+		game_type = MONOCHROMEFACTOR
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MEMORIESOFFSOREAGAIN:
@@ -212,6 +253,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Memories Off 6: Next Relation'."
 		game_type_selector.select(MEMORIESOFF6NEXT)
 		game_type = MEMORIESOFF6NEXT
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == RYUUKOKU:
+		game_type_sub_text.text = "Supports 'Ryuu Koku'."
+		game_type_selector.select(RYUUKOKU)
+		game_type = RYUUKOKU
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == YRMEMORIES:
@@ -238,6 +285,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = MEMORIESOFF5TO
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
+	elif index == SEPARATEHEARTS:
+		game_type_sub_text.text = "Supports 'Separate Hearts'."
+		game_type_selector.select(SEPARATEHEARTS)
+		game_type = SEPARATEHEARTS
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == SKIPBEAT:
+		game_type_sub_text.text = "Supports 'Skip Beat!'."
+		game_type_selector.select(SKIPBEAT)
+		game_type = SKIPBEAT
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == SUIGETSUMAYOI:
+		game_type_sub_text.text = "Supports 'Suigetsu: Mayoi Gokoro'."
+		game_type_selector.select(SUIGETSUMAYOI)
+		game_type = SUIGETSUMAYOI
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
 	elif index == TENTAMA1ST:
 		game_type_sub_text.text = "Supports 'Tentama: 1st Sunny Side'."
 		game_type_selector.select(TENTAMA1ST)
@@ -248,6 +313,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Tentama 2: Wins'."
 		game_type_selector.select(TENTAMA2)
 		game_type = TENTAMA2
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == WEARE:
+		game_type_sub_text.text = "Supports 'WeAre*'."
+		game_type_selector.select(WEARE)
+		game_type = WEARE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == WHITEBREATH:
+		game_type_sub_text.text = "Supports 'White Breath: Kizuna'."
+		game_type_selector.select(WHITEBREATH)
+		game_type = WHITEBREATH
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == BINCHOUTAN:
@@ -871,6 +948,7 @@ func initMenuItems() -> void:
 	# Menu items must be in alphabetical order based on their enum value.
 	
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
+	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
@@ -939,9 +1017,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
+	game_type_selector.add_item("Mizu no Senritsu", MIZUNOSENRITSU)
+	game_type_selector.add_item("Mizu no Senritsu 2: Hi no Kioku", MIZUNOSENRITSU2)
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
 	game_type_selector.add_item("Monochrome", MONOCHROME)
+	game_type_selector.add_item("Monochrome Factor: Cross Road", MONOCHROMEFACTOR)
 	game_type_selector.add_item("My Merry Maybe", MYMARRYMAYBE)
+	game_type_selector.add_item("My Merry May with be", MYMARRYWITHBE)
 	game_type_selector.add_item("Mystereet: Yasogami Kaoru no Jiken File", MYSTEREET)
 	game_type_selector.add_item("Natsuiro: Hoshikuzu no Memory", NATSUIROHOSHI)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
@@ -963,16 +1045,20 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
+	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
+	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days", STRIKEWITCHES)
+	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
@@ -982,6 +1068,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
+	game_type_selector.add_item("WeAre*", WEARE)
+	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)

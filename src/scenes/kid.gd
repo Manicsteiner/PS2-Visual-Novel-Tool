@@ -66,6 +66,8 @@ func extractAFS() -> void:
 				in_file.seek((files * 0x30) + name_tbl)
 				f_name = in_file.get_line()
 				f_ext = f_name.get_extension()
+			else:
+				f_name = "%04d" % files
 				
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
