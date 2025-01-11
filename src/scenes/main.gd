@@ -91,6 +91,7 @@ enum {
 	NORTHWIND,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
+	OTOMENOJIJOU,
 	OUKA,
 	PATISSERIE,
 	PHANTOMINFERNO, 
@@ -451,6 +452,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Ma-Gi: Marginal'."
 		game_type_selector.select(MAGI)
 		game_type = MAGI
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == OTOMENOJIJOU:
+		game_type_sub_text.text = "Supports 'Otome no Jijou'."
+		game_type_selector.select(OTOMENOJIJOU)
+		game_type = OTOMENOJIJOU
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == LOSTPASSAGE:
@@ -1030,6 +1037,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
+	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)

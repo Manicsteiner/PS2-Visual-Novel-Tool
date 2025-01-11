@@ -116,6 +116,9 @@ func extractBin() -> void:
 			elif exe_path.get_file() == "SLPM_663.76": # KimiSuta: Kimi to Study
 				exe_start = 0xB14F8
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_665.08": # Otome no Jijou
+				exe_start = 0xBEC78
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			else:
 				OS.alert("Unknown EXE found.")
 				return
