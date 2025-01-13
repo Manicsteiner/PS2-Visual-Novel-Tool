@@ -6,12 +6,13 @@ extends Control
 @onready var pione_load_exe: FileDialog = $PIONELoadEXE
 
 
-var chose_file:bool = false
-var chose_folder:bool = false
-var folder_path:String
-var chose_saf:bool = false
-var usr_files:PackedStringArray
-var out_decomp:bool = false
+var chose_file: bool = false
+var chose_folder: bool = false
+var folder_path: String
+var chose_saf: bool = false
+var usr_files: PackedStringArray
+var out_filenames: bool = true
+var out_decomp: bool = false
 var exe_path: String = ""
 
 func _ready() -> void:
@@ -96,11 +97,11 @@ func makeFiles() -> void:
 			f_size = file.get_32()
 			dec_size = file.get_32()
 			
-			# dumb check for not putting Shift-JIS text in names because Godot does not support that encoding.
-			if saf_type == 1:
+			# Needs Shift-JIS decoding to UTF8 for properly handling.
+			if out_filenames:
 				f_name = file.get_line()
-			elif saf_type == 2:
-				f_name = str(saf_files)
+			else:
+				f_name = "%04d" % saf_files
 				
 			file.seek(f_offset)
 			if f_size != dec_size:
@@ -141,16 +142,8 @@ func makeFiles() -> void:
 					continue
 					
 				pallete_data = ComFuncs.unswizzle_palette(buff.slice(0x10, 0x410), 32)
+				pallete_data = ComFuncs.rgba_to_bgra(pallete_data)
 				image_data = buff.slice(0x410)
-				
-				swap.resize(4)
-				for j in range(0, pallete_data.size(), 4):
-					swap[0] = pallete_data.decode_u8(j)
-					swap[1] = pallete_data.decode_u8(j + 1)
-					swap[2] = pallete_data.decode_u8(j + 2)
-					pallete_data.encode_u8(j, swap[2])
-					pallete_data.encode_u8(j + 1, swap[1])
-					pallete_data.encode_u8(j + 2, swap[0])
 					
 				has_palette = true
 				bits_per_color = 32
@@ -249,3 +242,7 @@ func _on_pione_load_exe_file_selected(path: String) -> void:
 	pione_load_folder.visible = true
 	exe_path = path
 	
+
+
+func _on_filename_button_toggled(_toggled_on: bool) -> void:
+	out_filenames = !out_filenames

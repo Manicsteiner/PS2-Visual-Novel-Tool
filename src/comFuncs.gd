@@ -590,10 +590,10 @@ func decompress_raw_zlib(compressed_data: PackedByteArray, dec_size: int, is_zli
 	var part: Array
 	var bytes_left: int
 	var gzip_stream: StreamPeerGZIP = StreamPeerGZIP.new()
-	# This isn't fail safe, as this can write junk data on < 0x100 size items. Need a better method in the future.
+	# This isn't fail safe, as this can write junk data on certain items. Need a better method in the future.
 	
 	gzip_stream.start_decompression(is_zlib, dec_size)
-	if compressed_data.size() < 0x100:
+	if compressed_data.size() <= 0x800:
 		gzip_stream.put_data(compressed_data)
 		part = gzip_stream.get_data(dec_size)
 		out.append_array(part[1])

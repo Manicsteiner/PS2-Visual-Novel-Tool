@@ -58,6 +58,7 @@ enum {
 	IINAZUKE,
 	INTERLUDE,
 	ITSUKA,
+	JEWELSOCEAN,
 	JUUJIGEN,
 	KAZEIROSURF,
 	KIMISUTA,
@@ -648,6 +649,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = ANGELWISH
 		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
 		sceneChanger(next_scene)
+	elif index == JEWELSOCEAN:
+		game_type_sub_text.text = "Supports 'Jewels Ocean: Star of Sierra Leone'."
+		game_type_selector.select(JEWELSOCEAN)
+		game_type = JEWELSOCEAN
+		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == MYSTEREET:
 		game_type_sub_text.text = "Supports 'Mystereet: Yasogami Kaoru no Jiken File'."
 		game_type_selector.select(MYSTEREET)
@@ -1018,6 +1025,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
+	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)

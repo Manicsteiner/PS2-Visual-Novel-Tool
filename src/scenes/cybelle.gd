@@ -245,6 +245,8 @@ func interludeMakeFiles() -> void:
 		header_file.close()
 		file.close()
 		
+	print_rich("[color=green]Finished![/color]")
+		
 func interludeDecodeImage(buffer:PackedByteArray, dimension_x:int, dimension_y:int, unk_bytes:int, off:int) -> PackedByteArray:
 	var out_buffer:PackedByteArray
 	var v0:int
