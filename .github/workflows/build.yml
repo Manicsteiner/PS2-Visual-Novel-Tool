@@ -17,7 +17,7 @@ jobs:
         uses: krynv/build-godot-action@v1.0.0
         with:
           name: PS2.Visual.Novel.Tool
-          preset: windows
+          preset: Windows Desktop
           debugMode: "false"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
