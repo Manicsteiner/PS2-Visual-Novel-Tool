@@ -56,6 +56,7 @@ enum {
 	HYAKKO,
 	ICHIGOHUNDRED,
 	IINAZUKE,
+	INTERLUDE,
 	ITSUKA,
 	JUUJIGEN,
 	KAZEIROSURF,
@@ -112,6 +113,7 @@ enum {
 	SAKURASESTU,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
 	SHIROGANE,
 	SKIPBEAT,
@@ -501,6 +503,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(DEARMYFRIEND)
 		game_type = DEARMYFRIEND
 		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
+	elif index == INTERLUDE:
+		game_type_sub_text.text = "Supports 'Interlude'."
+		game_type_selector.select(INTERLUDE)
+		game_type = INTERLUDE
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == SENTIMENTALPRELUDE:
+		game_type_sub_text.text = "Supports 'Sentimental Prelude'."
+		game_type_selector.select(SENTIMENTALPRELUDE)
+		game_type = SENTIMENTALPRELUDE
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
 		sceneChanger(next_scene)
 	elif index == MOEKAN:
 		game_type_sub_text.text = "Supports 'Moekan: Moekko Company'."
@@ -1000,10 +1014,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
 	game_type_selector.add_item("Hyakko: Yorozuya Jikenbo!", HYAKKO)
-	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
+	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
+	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
@@ -1058,6 +1073,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
