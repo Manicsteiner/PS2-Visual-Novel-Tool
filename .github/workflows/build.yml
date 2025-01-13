@@ -16,7 +16,7 @@ jobs:
         id: build
         uses: krynv/build-godot-action@v1.0.0
         with:
-          name: PS2.Visual.Novel.Tool
+          name: PS2.Visual.Novel.Tool.exe
           preset: Windows Desktop
           debugMode: "false"
       - name: Upload Artifact
@@ -37,9 +37,10 @@ jobs:
 
       - name: Re-zip artifacts
         run: |
+          TAG_NAME=$(basename "$GITHUB_REF")
           cd assets
           for dir in */ ; do
-            zip -r "${dir%/}.zip" "$dir"
+            zip -r "${dir%/}.$TAG_NAME.zip" "$dir"
           done
         shell: bash
 
