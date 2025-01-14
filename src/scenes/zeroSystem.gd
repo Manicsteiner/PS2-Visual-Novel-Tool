@@ -219,41 +219,82 @@ func extractBin() -> void:
 				print("0x%08X " % offset + "0x%08X " % f_size + "0x%02X " % type + folder_path + "/%s" % f_name)
 				
 		false:
-			in_file = FileAccess.open(selected_file, FileAccess.READ)
-			
-			var pac_bytes: int = in_file.get_32()
-			if pac_bytes != 0x00434150: #PAC
-				OS.alert("Invalid PAC header.")
-				return
+			if Main.game_type == Main.NATSUIROSUNADOKEI:
+				var f_ext: String
 				
-			var name_tbl_off: int = in_file.get_32()
-			var num_files: int = in_file.get_32()
-			var file_tbl: int = in_file.get_position()
-			
-			for files in range(0, num_files):
-				in_file.seek((files * 8) + file_tbl)
-				offset = in_file.get_32()
-				f_size = in_file.get_32()
-				
-				in_file.seek((files * 0x40) + name_tbl_off)
-				f_name = in_file.get_line()
-				
-				in_file.seek(offset)
-				buff = in_file.get_buffer(f_size)
-				
-				lzr_bytes = ComFuncs.swapNumber(buff.decode_u32(0), "32")
-				if lzr_bytes == 0x4C5A5300: #LZS
-					f_size = buff.decode_u32(4)
-					buff = buff.slice(8)
-					buff = ComFuncs.decompLZSS(buff, buff.size(), f_size)
+				in_file = FileAccess.open(selected_file, FileAccess.READ)
+				var pac_hed: FileAccess = FileAccess.open(selected_file.get_basename() + ".HED", FileAccess.READ)
+				if pac_hed == null:
+					OS.alert("Couldn't find .HED file for %s!" % selected_file)
+					return
 					
-				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-				out_file.store_buffer(buff)
-				out_file.close()
+				var unk_32: int = pac_hed.get_32()
+				var next_pos: int = pac_hed.get_position()
+				while pac_hed.get_position() < pac_hed.get_length():
+					pac_hed.seek(next_pos)
+					offset = pac_hed.get_32()
+					f_size = pac_hed.get_32()
+					var f_id: int = pac_hed.get_32()
+					
+					next_pos = pac_hed.get_position()
+					if pac_hed.eof_reached():
+						break
+					
+					in_file.seek(offset)
+					buff = in_file.get_buffer(f_size)
+					
+					var bytes: int = ComFuncs.swapNumber(buff.decode_u32(0), "32")
+					if bytes == 0x54494D32:
+						f_ext = ".TM2"
+					elif bytes == 0x49454353:
+						f_ext = ".HBD"
+					else:
+						f_ext = ".BIN"
+					
+					f_name = "/%08d" % f_id + f_ext
+					out_file = FileAccess.open(folder_path + "%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+					buff.clear()
+					
+					print("0x%08X " % offset + "0x%08X " % f_size + folder_path + "%s" % f_name)
+			else:
+				in_file = FileAccess.open(selected_file, FileAccess.READ)
 				
-				buff.clear()
+				var pac_bytes: int = in_file.get_32()
+				if pac_bytes != 0x00434150: #PAC
+					OS.alert("Invalid PAC header.")
+					return
+					
+				var name_tbl_off: int = in_file.get_32()
+				var num_files: int = in_file.get_32()
+				var file_tbl: int = in_file.get_position()
 				
-				print("0x%08X " % offset + "0x%08X " % f_size + folder_path + "/%s" % f_name)
+				for files in range(0, num_files):
+					in_file.seek((files * 8) + file_tbl)
+					offset = in_file.get_32()
+					f_size = in_file.get_32()
+					
+					in_file.seek((files * 0x40) + name_tbl_off)
+					f_name = in_file.get_line()
+					
+					in_file.seek(offset)
+					buff = in_file.get_buffer(f_size)
+					
+					lzr_bytes = ComFuncs.swapNumber(buff.decode_u32(0), "32")
+					if lzr_bytes == 0x4C5A5300: #LZS
+						f_size = buff.decode_u32(4)
+						buff = buff.slice(8)
+						buff = ComFuncs.decompLZSS(buff, buff.size(), f_size)
+						
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+					buff.clear()
+					
+					print("0x%08X " % offset + "0x%08X " % f_size + folder_path + "/%s" % f_name)
 				
 
 	print_rich("[color=green]Finished![/color]")
