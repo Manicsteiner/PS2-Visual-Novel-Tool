@@ -91,6 +91,7 @@ enum {
 	NATSUIROHOSHI,
 	NATSUIROKOMACHI,
 	NATSUIROSUNADOKEI,
+	NETTAITEIKIATSU,
 	NORTHWIND,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
@@ -590,6 +591,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = NATSUIROSUNADOKEI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == NETTAITEIKIATSU:
+		game_type_sub_text.text = "Supports 'Nettai Teikiatsu Shoujo'."
+		game_type_selector.select(NETTAITEIKIATSU)
+		game_type = NETTAITEIKIATSU
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
 	elif index == CAFELINDBERGHSUMMER:
 		game_type_sub_text.text = "Supports 'Cafe Lindbergh: Summer Season'."
 		game_type_selector.select(CAFELINDBERGHSUMMER)
@@ -1065,6 +1072,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuiro: Hoshikuzu no Memory", NATSUIROHOSHI)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
 	game_type_selector.add_item("Natsuiro no Sunadokei", NATSUIROSUNADOKEI)
+	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
