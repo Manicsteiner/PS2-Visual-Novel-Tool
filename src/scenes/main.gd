@@ -10,12 +10,15 @@ extends Control
 enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
 	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
+	AIR,
 	ANGELSFEATHER,
 	ANGELWISH,
+	ARABIANS,
 	BINCHOUTAN,
 	CAFELINDBERGHSUMMER,
 	CAFELITTLEWISH,
 	CAMBRIAN,
+	CANVAS1,
 	CASTLEFANTASIA,
 	COLORFULAQUA,
 	DABLACK,
@@ -30,6 +33,7 @@ enum {
 	DOKOHE,
 	DOUBLEWISH,
 	EF,
+	ELYSION,
 	FANATIC,
 	FINALA,
 	FINALA2,
@@ -60,10 +64,12 @@ enum {
 	ITSUKA,
 	JEWELSOCEAN,
 	JUUJIGEN,
+	KANON,
 	KAZEIROSURF,
 	KIMISUTA,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	LITTLEBUSTERS,
 	LNOKISETSU,
 	LOSTPASSAGE,
 	LOVEDOLL,
@@ -100,6 +106,7 @@ enum {
 	PHANTOMINFERNO, 
 	PIA3, 
 	PIZZICATOPOLKA,
+	PLANETARIAN,
 	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
 	PRINCESSPRINCESS,
@@ -113,6 +120,7 @@ enum {
 	RYUUKOKU,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
+	SANGOKURENSEKI,
 	SCHOOLLOVE,
 	SCHOOLNI,
 	SENTIMENTALPRELUDE,
@@ -516,6 +524,54 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Sentimental Prelude'."
 		game_type_selector.select(SENTIMENTALPRELUDE)
 		game_type = SENTIMENTALPRELUDE
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == AIR:
+		game_type_sub_text.text = "Supports 'Air' (most images)."
+		game_type_selector.select(AIR)
+		game_type = AIR
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == ARABIANS:
+		game_type_sub_text.text = "Supports 'Arabians Lost: The Engagement on Desert' (most images)."
+		game_type_selector.select(ARABIANS)
+		game_type = ARABIANS
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene) 
+	elif index == LITTLEBUSTERS:
+		game_type_sub_text.text = "Supports 'Little Busters! Converted Edition' (most images)."
+		game_type_selector.select(LITTLEBUSTERS)
+		game_type = LITTLEBUSTERS
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene) 
+	elif index == CANVAS1:
+		game_type_sub_text.text = "Supports 'Canvas: Sepia-iro no Motif' (most images)."
+		game_type_selector.select(CANVAS1)
+		game_type = CANVAS1
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == PLANETARIAN:
+		game_type_sub_text.text = "Supports 'Planetarian: Chiisana Hoshi no Yume' (most images)."
+		game_type_selector.select(PLANETARIAN)
+		game_type = PLANETARIAN
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == SANGOKURENSEKI:
+		game_type_sub_text.text = "Supports 'Sangoku Rensenki: Otome no Heihou!' (most images)."
+		game_type_selector.select(SANGOKURENSEKI)
+		game_type = SANGOKURENSEKI
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == ELYSION:
+		game_type_sub_text.text = "Supports 'Elysion: Eien no Sanctuary' (most images)."
+		game_type_selector.select(ELYSION)
+		game_type = ELYSION
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == KANON:
+		game_type_sub_text.text = "Supports 'Kanon' (most images)."
+		game_type_selector.select(KANON)
+		game_type = KANON
 		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
 		sceneChanger(next_scene)
 	elif index == MOEKAN:
@@ -975,21 +1031,26 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 		
+		
 func sceneChanger(scene: PackedScene) -> void:
 	get_tree().change_scene_to_packed(scene)
 	return
+	
 	
 func initMenuItems() -> void:
 	# Menu items must be in alphabetical order based on their enum value.
 	
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
+	game_type_selector.add_item("Air", AIR)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
+	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
@@ -1004,6 +1065,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
+	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
@@ -1034,11 +1096,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
+	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
+	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
 	game_type_selector.add_item("Luxury & Beauty: Lucian Bee's - Evil Violet", LUXBEVIL)
@@ -1074,6 +1138,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
 	game_type_selector.add_item("Pizzicato Polka: Suisei Genya", PIZZICATOPOLKA)
+	game_type_selector.add_item("Planetarian: Chiisana Hoshi no Yume", PLANETARIAN)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
@@ -1087,6 +1152,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
+	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
