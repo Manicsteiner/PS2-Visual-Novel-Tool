@@ -2,6 +2,10 @@ extends Control
 
 @onready var interlude_load_pak = $InterludeLoadPAK
 @onready var interlude_load_folder = $InterludeLoadFOLDER
+@onready var remove_alpha_button: CheckBox = $VBoxContainer/removeAlphaButton
+@onready var output_combined: CheckBox = $VBoxContainer/outputCombined
+@onready var png_out_toggle: CheckBox = $VBoxContainer/pngOutToggle
+@onready var out_debug_button: CheckBox = $VBoxContainer/outDebugButton
 
 var chose_folder: bool = false
 var folder_path: String
@@ -10,17 +14,39 @@ var selected_files: PackedStringArray
 var out_png: bool = true
 var output_combined_image: bool = true
 var remove_alpha: bool = false
+var debug_out: bool = false
 
-#XOR keys for width and height of images
+# XOR keys for width and height of images in Interlude and Sentimental Prelude
 
 const width_key: int = 0x4355
 const height_key: int = 0x5441
 
+# Lookup table for other Cybelle compression format
+
+var lookup_table: PackedByteArray
+
+func _ready() -> void:
+	if Main.game_type != Main.INTERLUDE or Main.game_type != Main.SENTIMENTALPRELUDE:
+		make_lookup_tables()
+		remove_alpha_button.hide()
+		output_combined.hide()
+		png_out_toggle.hide()
+		out_debug_button.show()
+	else:
+		out_debug_button.hide()
+		
+
 func _process(_delta):
-	if selected_files and chose_folder:
-		interludeMakeFiles()
-		chose_folder = false
-		selected_files.clear()
+	if Main.game_type == Main.INTERLUDE or Main.game_type == Main.SENTIMENTALPRELUDE:
+		if selected_files and chose_folder:
+			interludeMakeFiles()
+			chose_folder = false
+			selected_files.clear()
+	else:
+		if selected_files and chose_folder:
+			cybellePakExtract()
+			chose_folder = false
+			selected_files.clear()
 	
 	
 func interludeMakeFiles() -> void:
@@ -246,7 +272,939 @@ func interludeMakeFiles() -> void:
 		file.close()
 		
 	print_rich("[color=green]Finished![/color]")
+	
+
+func cybellePakExtract() -> void:
+	var in_file: FileAccess
+	var out_file: FileAccess
+	var pak_name: String
+	var f_name: String
+	var buff: PackedByteArray
+	var pak_size: int
+	var f_offset: int
+	var f_size: int
+	var file_tbl: int
+	var num_files: int
+	var sector_align: bool = false
+	var width: int
+	var height: int
+	var decomp_type: int = 0
+	
+	if debug_out:
+		out_file = FileAccess.open(folder_path + "/!lookup.tbl", FileAccess.WRITE)
+		out_file.store_buffer(lookup_table)
+				
+	for usr_file in selected_files.size():
+		in_file = FileAccess.open(selected_files[usr_file], FileAccess.READ)
+		pak_name = selected_files[usr_file].get_file()
+		var pak_len: int = in_file.get_length()
 		
+		in_file.seek(0)
+		num_files = in_file.get_32()
+		pak_size = in_file.get_32()
+		if pak_size != pak_len:
+			file_tbl = 4
+		else:
+			file_tbl = 8
+		
+		# TODO: Check for names in some paks
+		if pak_name == "BGCG.PAK" or pak_name == "CHARCG.PAK" or pak_name == "EVENTCG.PAK" or pak_name == "OTHCG.PAK":
+			sector_align = true
+		
+		var pos: int = file_tbl
+		for file in num_files:
+			in_file.seek(pos)
+			f_offset = in_file.get_32()
+			
+			if pak_size != pak_len:
+				sector_align = false
+				pos = in_file.get_position()
+				f_size = in_file.get_32()
+				f_size -= f_offset
+			else:
+				f_size = in_file.get_32()
+				pos = in_file.get_position()
+			
+			if f_offset == 0:
+				print_rich("[color=yellow]Skipping %08d as offset is 0[/color]" % file)
+				continue
+				
+			in_file.seek(f_offset)
+			var bytes: int = in_file.get_32()
+			var bytes_2: int = in_file.get_32()
+			
+			in_file.seek(f_offset)
+			buff = in_file.get_buffer(f_size)
+			
+			# Check for ADPCM bytes
+			if bytes == 512:
+				f_name = pak_name + "_%04d" % file + ".ADPCM"
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				
+				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
+				continue
+				
+			if sector_align:
+				# Images are loaded into memory with sector padded bytes, rather than just base size. This is needed for decompression.
+				buff.resize(((f_size + 0x7FF) / 0x800 ) * 0x800)
+			
+			if debug_out:
+				f_name = pak_name + "_%04d" % file + ".COMP"
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				
+			f_name = pak_name + "_%04d" % file + ".BIN"
+			
+			if bytes_2 == 0:
+				if buff.decode_u8(9) == 1 and !debug_out:
+					push_error("File %s uses old compression format! Skipping." % f_name)
+					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				elif buff.decode_u8(9) == 2 and !debug_out:
+					push_error("TODO: File %s uses compression type = 02. Skipping." % f_name)
+					print_rich("[color=red]TODO: File %s compression type = 02. Skipping.[/color]" % f_name)
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				elif buff.decode_u8(9) != 3:
+					push_error("File %s has unknown compression type %02X!" % [f_name, buff.decode_u8(9)])
+					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, buff.decode_u8(9)])
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				width = buff.decode_u16(0)
+				height = buff.decode_u16(2)
+				decomp_type = buff.decode_u8(9)
+			else:
+				if buff.decode_u8(bytes_2 + 9) == 1 and !debug_out:
+					push_error("File %s uses old compression format! Skipping." % f_name)
+					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				elif buff.decode_u8(bytes_2 + 9) == 2 and !debug_out:
+					push_error("TODO: File %s uses compression type = 02. Skipping." % f_name)
+					print_rich("[color=red]TODO: File %s uses compression type = 02. Skipping.[/color]" % f_name)
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				elif buff.decode_u8(bytes_2 + 9) != 3:
+					push_error("File %s has unknown compression type %02X!" % [f_name, buff.decode_u8(9)])
+					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, buff.decode_u8(9)])
+					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+					continue
+				width = buff.decode_u16(bytes_2)
+				height = buff.decode_u16(bytes_2 + 2)
+				decomp_type = buff.decode_u8(bytes_2 + 9)
+				
+			# if flag at 0x1F in header, has a palette? Palette seems to be in the compressed section at 0x20
+			buff = cCbsd(buff)
+			if debug_out:
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				
+			var png: Image = ComFuncs.convert_rgb555_to_image(buff, width, height, true)
+			png.save_png(folder_path + "/%s" % f_name + ".PNG")
+			
+			print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+	
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func make_lookup_tables() -> void:
+	var table: PackedByteArray = PackedByteArray()
+	table.resize(1024)  # Allocate 1024 bytes for both tables (512 bytes each)
+
+	for i in range(512):  # Loop through 512 values
+		var a2: int = 0
+		var a3: int = 0
+
+		# Calculate a2 and a3 based on bitwise conditions
+		if (i & 1) == 0:  # Least significant bit is 0
+			a3 = 0x01
+			a2 = 0x00
+		elif (i & 2) == 0:  # Second least significant bit is 0
+			a3 = 0x03
+			a2 = ((i >> 2) & 0x01) + 0x01
+		elif (i & 4) == 0:  # Third least significant bit is 0
+			a3 = 0x05
+			a2 = ((i >> 3) & 0x03) + 0x03
+		elif (i & 8) == 0:  # Fourth least significant bit is 0
+			a3 = 0x07
+			a2 = ((i >> 4) & 0x07) + 0x07
+		else:  # Otherwise
+			a3 = 0x09
+			a2 = ((i >> 4) & 0x1F) + 0x0F
+
+		table[i + 512] = a3
+		table[i] = a2
+		
+	lookup_table = table
+	
+	var table_2: PackedByteArray = PackedByteArray()
+	table_2.resize(512)  # Allocate 512 bytes for the two tables combined
+
+	for i in range(256):  # Loop through 256 values
+		var v1: int = 0
+		var a2: int = 0
+		
+		# Logic to calculate v1 and a2
+		if (i & 1) == 0:  # Least significant bit is 0
+			v1 = 0x01
+			a2 = 0x01
+		elif (i & 2) == 0:  # Second least significant bit is 0
+			v1 = 0x02
+			a2 = 0x02
+		elif (i & 4) == 0:  # Third least significant bit is 0
+			v1 = 0x03
+			a2 = 0x03
+		elif (i & 8) == 0:  # Fourth least significant bit is 0
+			v1 = 0x04
+			a2 = 0x04
+		else:  # Otherwise
+			v1 = 0x00
+			a2 = 0x05
+
+		table_2[i + 256] = v1
+		table_2[i] = a2
+		
+	lookup_table.append_array(table_2)
+	
+	var table_3: PackedByteArray = PackedByteArray()
+	table_3.resize(0x4000)
+
+	var t6: int = 0x000F
+	var t5: int = 0x0010
+	var t4: int = 0x0020
+	var t3: int = 0x0040
+	var t2: int = 0x0080
+	var t1: int = 0x0100
+	var t0: int = 0x0200
+	var a3: int = 0x0400
+	var a2: int = 0x0800
+	var a1: int = 0x1000
+	
+	var v0: int = 0
+	var v1: int = 0  # Loop counter
+
+	while v1 < 0x2000:  # Loop through 8,192 entries
+		var value: int = 0
+
+		# Logic for assigning values based on v1
+		v0 = v1 & 0xF
+		v0 = v0 < 0xF
+		if v0 == 1:
+			value = t6
+		elif (v1 & 0x0010) == 0:
+			value = t5
+		elif (v1 & 0x0020) == 0:
+			value = t4
+		elif (v1 & 0x0040) == 0:
+			value = t3
+		elif (v1 & 0x0080) == 0:
+			value = t2
+		elif (v1 & 0x0100) == 0:
+			value = t1
+		elif (v1 & 0x0200) == 0:
+			value = t0
+		elif (v1 & 0x0400) == 0:
+			value = a3
+		elif (v1 & 0x0800) == 0:
+			value = a2
+		elif (v1 & 0x1000) == 0:
+			value = a1
+
+		# Write the value to the table as 2 bytes (short)
+		table_3.encode_u16(v1 * 2, value)
+
+		# Increment the counter
+		v1 += 1
+		
+	lookup_table.append_array(table_3)
+	return
+	
+	
+func cCbsd(input: PackedByteArray) -> PackedByteArray:
+	# This decompression function and related lookups is absurdly complex.
+	# Based on offsets from Sangoku Renseki.
+	# TODO: decomp_type 2 seem to cause problems
+	
+	var out: PackedByteArray
+	var temp_buff: PackedByteArray
+	#var fill_buff: PackedByteArray
+	var fill_size: int
+	var v0:int
+	var v1:int
+	var a0:int
+	var a1:int
+	var a2:int
+	var a3:int
+	var t0:int 
+	var t1:int
+	var t2:int
+	var t3:int
+	var t4:int
+	var t5:int
+	var t6:int
+	var t7:int
+	var t8:int
+	var t9: int
+	var s1: int
+	var s2: int
+	var width:int
+	var height:int
+	var start_off: int 
+	var out_size: int
+	var mem_01A922B0: int
+	var mem_01A922BC: int
+	var mem_01A922C4: int
+	var mem_01A922C8: int
+	var mem_01A922CC: int
+	var mem_01A922D0: int
+	var mem_01A92350: int
+	var mem_01A92354: int
+	var mem_01A92358: int
+	var mem_01A9235C: int
+	var has_palette: bool
+	
+	#if input.decode_u8(9) == 1:
+		#push_error("File uses old RLE format! Skipping")
+		#return PackedByteArray()
+	
+	if input.decode_u8(0x1F):
+		has_palette = true
+	else:
+		has_palette = false
+		
+	# Older header check (Canvas)
+	start_off = input.decode_u32(0x4)
+	if start_off != 0:
+		input = input.slice(start_off)
+	else:
+		start_off = 0x20
+		
+	# Determine start of bytes to decode
+	a1 = 0
+	a2 = 0
+	v1 = input.decode_u8(10)
+	if v1 == 0xA:
+		a1 = 0x200
+	elif v1 == 0xC:
+		a1 = 0x400
+	elif v1 == 0xD:
+		a1 = 0x40
+	elif v1 == 0xF:
+		v0 = input.decode_u16(0x1E)
+		a1 = v0 << 1
+		
+	a0 = input.decode_u32(0x10)
+	v1 = (a2 + a1) + start_off
+	start_off = v1 # New start off
+	a0 <<= 1
+	a0 = v1 + a0
+	
+	width = input.decode_u16(0)
+	height = input.decode_u16(2)
+	
+	fill_size = (width << 4) + 0x10
+	mem_01A922B0 = 0 # Part size when one pass finishes decompression?
+	mem_01A922BC = fill_size # ending of fill bytes
+	mem_01A922C4 = a0 # First section of bytes to decode
+	mem_01A922C8 = start_off
+	mem_01A922CC = input.decode_u8(0x1C)
+	mem_01A92350 = 0
+	mem_01A92354 = 0
+	mem_01A92358 = 0x00014C80 # Seems to be part size for decompression. 
+	mem_01A9235C = 0 # Header start address of input buffer
+	mem_01A922D0 = input.decode_u8(0x1D)
+	
+	a3 = 0
+	t0 = 0x1E
+	temp_buff.resize((t0 + 1) << 2)
+	while t0 != -1:
+		# These create wrap around bytes for seeking to memory addresses.
+		# These bytes later when read would normally wrap around the lowest 32 bits of a register value
+		v1 = mem_01A922C4
+		t0 -= 1
+		a2 = width
+		a1 = v1 + 1
+		a0 = input.decode_u8(v1)
+		mem_01A922C4 = a1
+		v1 += 2
+		a0 -= 8 & 0xFFFFFFFF
+		v0 = input.decode_u8(a1)
+		mem_01A922C4 = v1
+		v0 -= 8 & 0xFFFFFFFF
+		v0 = v0 * a2
+		v0 = (v0 + a0) & 0xFFFFFFFF
+		temp_buff.encode_s32(a3, v0)
+		a3 += 4
+		
+	# Combine fill bytes and out buffer into one. 
+	out_size = (width * height) * 2 # * 2 = 16 bit color components
+	out.resize(fill_size + out_size)
+	
+	v0 = (width << 3) + 8
+	#fill_buff.resize(v0)
+	t1 = mem_01A9235C
+	a1 = 0
+	if v0 < 0x7FFFFFFF:
+		s1 = 0 # Start address of out buffer where fill bytes start
+		while v0 != 0:
+			# Create fill buffer based on bytes at 0xC in the header of the image
+			v1 = a1 << 1
+			a1 += 1
+			a0 = input.decode_u16(t1 + 0xC)
+			v1 += s1
+			out.encode_s16(v1, a0)
+			v0 = (width << 3) + 8
+			v0 = a1 < v0
+			t1 = mem_01A9235C
+			
+	var final_size: int = fill_size + out_size
+	var goto: String = "init"
+	while true:
+		match goto:
+			"init":
+				# Simulates function re-entry
+				t2 = 0 # temp_buff start offset
+				v0 = mem_01A92358
+				a2 = mem_01A922BC # out buffer offset
+				t6 = final_size # Think this is correct
+				v0 <<= 1
+				v0 = a2 + v0
+				t9 = a2
+				v1 = v0 < t6
+				t7 = v0
+				if v1 == 0:
+					t7 = t6
+				t1 = mem_01A922C4
+				v0 = a2 < t7
+				a3 = mem_01A92354
+				t4 = mem_01A92350
+				# 00104010
+				t5 = mem_01A922C8
+				if v0 == 0:
+					goto = "00104670"
+				else:
+					t8 = mem_01A922D0
+					s1 = 0 # Points to start of lookup_table
+					s2 = 0x200 # Points to next 0x200 of lookup table
+					t3 = 0xFFFFFFFF
+					v1 = input.decode_u8(t1 + 1)
+					goto = "start"
+			"start":
+				v0 = input.decode_u8(t1)
+				v1 <<= 8
+				v0 = v0 | v1
+				v0 = v0 >> a3
+				v0 &= 0x1FF
+				v1 = v0 + s2
+				v0 += s1
+				a0 = lookup_table.decode_u8(v1)
+				t0 = lookup_table.decode_u8(v0)
+				a3 += a0
+				v0 = a3 >> 3
+				a3 &= 7
+				t1 += v0
+				a1 = input.decode_u8(t1 + 3)
+				v1 = input.decode_u8(t1 + 2)
+				a0 = input.decode_u8(t1 + 1)
+				a1 = (a1 << 24) & 0xFFFFFFFF
+				v0 = input.decode_u8(t1)
+				v1 = (v1 << 16) & 0xFFFFFFFF
+				a0 = (a0 << 8) & 0xFFFFFFFF
+				v1 = v1 | a0
+				v0 = v0 | a1
+				v0 = v0 | v1
+				v1 = v0 >> a3
+				if t0 != t8:
+					goto = "00104118"
+				else:
+					v0 = v1 & 1
+					if v0 != 0:
+						goto = "001040D8"
+						a0 = mem_01A922CC
+					else:
+						v0 = t4 << 1
+						t4 += 1
+						v0 = v0 + t5
+						a3 += 1
+						a0 = input.decode_u16(v0)
+						v1 = a3 >> 3
+						t1 = t1 + v1
+						a3 &= 7
+						out.encode_s16(a2, a0)
+						goto = "00104664"
+						a2 += 2
+			"001040D8":
+				v0 = 1
+				v1 >>= 1
+				v0 <<= a0
+				a0 = a3 + a0
+				v0 = (v0 - 1) & 0xFFFFFFFF
+				a3 = a0 + 1
+				v1 &= v0
+				a0 = a3 >> 3
+				v1 = (t4 - v1) & 0xFFFFFFFF
+				t1 = t1 + a0
+				v1 <<= 1
+				a3 &= 7
+				v1 += t5
+				goto = "0010420C"
+				v0 = input.decode_u16(v1 - 2)
+			"00104118":
+				v0 = v1 & 1
+				if v0 != 0:
+					v0 = v1 & 2
+					goto = "00104150"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					a3 += 1
+					v0 = v0 + t2
+					a0 = a3 >> 3
+					v1 = temp_buff.decode_u32(v0)
+					t1 = t1 + a0
+					a3 &= 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					v1 = (a2 + v1) & 0xFFFFFFFF
+					goto = "0010420C"
+					v0 = out.decode_u16(v1)
+			"00104150":
+				if v0 == 0:
+					v0 = v1 & 4
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					a3 += 2
+					v0 += t2
+					a0 = a3 >> 3
+					v1 = temp_buff.decode_u32(v0)
+					t1 += a0
+					a3 &= 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					goto = "001041FC"
+					v1 = (a2 + v1) & 0xFFFFFFFF
+				else:
+					# 00104180
+					v0 = v1 & 4
+					if v0 == 0:
+						v0 = v1 & 8
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						a3 += 3
+						v0 += t2
+						a0 = a3 >> 3
+						v1 = temp_buff.decode_u32(v0)
+						t1 += a0
+						a3 &= 7
+						v1 = (v1 << 1) & 0xFFFFFFFF
+						goto = "001041EC"
+						v1 = (a2 + v1) & 0xFFFFFFFF
+					else:
+						v0 = v1 & 8
+						# 001041B0
+						if v0 != 0:
+							v0 = v1 & 0x10
+							goto = "00104218"
+						else:
+							# v0 = v1 & 0x10
+							v0 = (t0 << 2) & 0xFFFFFFFF
+							a3 += 4
+							v0 = (v0 + t2) & 0xFFFFFFFF
+							a0 = a3 >> 3
+							v1 = temp_buff.decode_u32(v0)
+							t1 += a0
+							a3 &= 7
+							v1 = (v1 << 1) & 0xFFFFFFFF
+							v1 = (a2 + v1) & 0xFFFFFFFF
+							v0 = out.decode_u16(v1)
+							v1 += 2
+							out.encode_s16(a2, v0)
+							a2 += 2
+							# 001041EC
+							v0 = out.decode_u16(v1)
+							v1 += 2
+							out.encode_s16(a2, v0)
+							a2 += 2
+							# 001041FC
+							v0 = out.decode_u16(v1)
+							out.encode_s16(a2, v0)
+							a2 += 2
+							v0 = out.decode_u16(v1 + 2)
+							goto = "0010420C"
+			"001041EC":
+				v1 &= 0xFFFFFFFF
+				v0 = out.decode_u16(v1)
+				v1 += 2
+				out.encode_s16(a2, v0)
+				a2 += 2
+				# 001041FC
+				v0 = out.decode_u16(v1)
+				out.encode_s16(a2, v0)
+				a2 += 2
+				v0 = out.decode_u16(v1 + 2)
+				goto = "0010420C"
+			"001041FC":
+				v1 &= 0xFFFFFFFF
+				v0 = out.decode_u16(v1)
+				out.encode_s16(a2, v0)
+				a2 += 2
+				v0 = out.decode_u16(v1 + 2)
+				goto = "0010420C"
+			"0010420C":
+				out.encode_s16(a2, v0)
+				goto = "00104664"
+				a2 += 2
+			"00104218":
+				if v0 != 0:
+					v0 = v1 & 0x20
+					goto = "001042D0"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 5
+					v0 += t2
+					a1 = v1 & 3
+					a0 = temp_buff.decode_u32(v0)
+					a3 += 7
+					v1 = a3 >> 3
+					a3 &= 7
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					a1 = (a1 - 1) & 0xFFFFFFFF
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t1 += v1
+					v0 = out.decode_u16(a0)
+					a0 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(a0)
+					a0 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(a0)
+					a0 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(a0)
+					a0 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(a0)
+					a0 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					if a1 == t3:
+						goto = "00104664"
+					else:
+						v1 = 0xFFFFFFFF
+						while a1 != v1:
+							a0 &= 0xFFFFFFFF
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							a1 = (a1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"001042D0":
+				if v0 != 0:
+					v0 = v1 & 0x40
+					goto = "00104338"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 6
+					v0 += t2
+					a3 += 9
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 7
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 8
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							a0 &= 0xFFFFFFFF
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"00104338":
+				if v0 != 0:
+					v0 = v1 & 0x80
+					goto = "001043A0"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 7
+					v0 += t2
+					a3 += 0xB
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0xF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x10
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							a0 &= 0xFFFFFFFF
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"001043A0":
+				if v0 != 0:
+					v0 = v1 & 0x100
+					goto = "00104408"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 8
+					v0 += t2
+					a3 += 0xD
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x1F
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x20
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							a0 &= 0xFFFFFFFF
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"00104408":
+				if v0 != 0:
+					v0 = v1 & 0x200
+					goto = "00104470"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 9
+					v0 += t2
+					a3 += 0xF
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x3F
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x40
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							a0 &= 0xFFFFFFFF
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"00104470":
+				if v0 != 0:
+					v0 = v1 & 0x400
+					goto = "001044D8"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 10
+					v0 += t2
+					a3 += 0x11
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x7F
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x80
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"001044D8":
+				if v0 != 0:
+					v0 = v1 & 0x800
+					goto = "00104540"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 11
+					v0 += t2
+					a3 += 0x13
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0xFF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x100
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"00104540":
+				if v0 != 0:
+					v0 = v1 & 0x1000
+					goto = "001045A8"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 12
+					v0 += t2
+					a3 += 0x15
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x1FF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x200
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"001045A8":
+				if v0 != 0:
+					goto = "00104610"
+				else:
+					v0 = (t0 << 2) & 0xFFFFFFFF
+					v1 >>= 13
+					v0 += t2
+					a3 += 0x17
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x3FF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x400
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+			"00104610":
+				v1 >>= 14
+				v0 += t2
+				a3 += 0x19
+				a0 = temp_buff.decode_u32(v0)
+				v0 = a3 >> 3
+				v1 &= 0x7FF
+				t1 += v0
+				a0 = (a0 << 1) & 0xFFFFFFFF
+				v1 += 0x800
+				a0 = (a2 + a0) & 0xFFFFFFFF
+				a3 &= 7
+				if v1 == t3:
+					goto = "00104664"
+				else:
+					a1 = 0xFFFFFFFF
+					while a1 != v1:
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						v1 = (v1 - 1) & 0xFFFFFFFF
+						out.encode_s16(a2, v0)
+						a2 += 2
+					goto = "00104668"
+					v0 = a2 < t7
+			"00104664":
+				v0 = a2 < t7
+				if v0 != 0: # 00104668
+					goto = "start"
+					v1 = input.decode_u8(t1 + 1)
+				else:
+					goto = "00104670"
+			"00104668":
+				if v0 != 0:
+					goto = "start"
+					v1 = input.decode_u8(t1 + 1)
+				else:
+					goto = "00104670"
+			"00104670":
+				v1 = mem_01A922B0
+				v0 = (a2 - t9) & 0xFFFFFFFF
+				v0 >>= 1
+				a0 = a2 < t6
+				v1 += v0
+				mem_01A922C4 = t1
+				mem_01A92354 = a3
+				mem_01A92350 = t4
+				mem_01A922B0 = v1
+				mem_01A922BC = a2
+				if a0 == 0:
+					v0 = 0xFFFFFFFF
+					mem_01A922B0 = v0
+					v1 = t6 < a2
+					if v1 == 0:
+						goto = "001046B8"
+					else:
+						push_error("cCbsd::newEx() overrun!!!!!")
+						return out.slice(fill_size)
+				else:
+					goto = "001046B8"
+			"001046B8":
+					v0 = mem_01A922B0
+					if v0 == 0xFFFFFFFF:
+						return out.slice(fill_size)
+					else:
+						goto = "init"
+						
+	return out.slice(fill_size)
+	
+	
 func interludeDecodeImage(buffer:PackedByteArray, dimension_x:int, dimension_y:int, unk_bytes:int, off:int) -> PackedByteArray:
 	var out_buffer:PackedByteArray
 	var v0:int
@@ -447,3 +1405,7 @@ func _on_remove_alpha_button_toggled(_toggled_on: bool) -> void:
 
 func _on_output_combined_toggled(_toggled_on: bool) -> void:
 	output_combined_image = !output_combined_image
+
+
+func _on_out_debug_button_toggled(_toggled_on: bool) -> void:
+	debug_out = !debug_out
