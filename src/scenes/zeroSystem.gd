@@ -80,10 +80,10 @@ func extractBin() -> void:
 			if exe_path.get_file() == "SLPM_666.18": # Yumemishi
 				exe_start = 0xBB9E0
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
-			elif exe_path.get_file() == "SLPM_669.43": # Final Approach 2 - 1st Priority
+			elif exe_path.get_file() == "SLPM_669.42" or exe_path.get_file() == "SLPM_669.43": # Final Approach 2 - 1st Priority
 				exe_start = 0xBDCD8
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
-			elif exe_path.get_file() == "SLPM_656.07": # 3LDK - Shiawase ni Narouyo
+			elif exe_path.get_file() == "SLPM_656.07" or exe_path.get_file() == "SLPM_656.08": # 3LDK - Shiawase ni Narouyo
 				exe_start = 0x91200
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			elif exe_path.get_file() == "SLPM_656.71": # Double Wish
@@ -92,16 +92,16 @@ func extractBin() -> void:
 			elif  exe_path.get_file() == "SLPS_257.19": # Happiness! De-Lucks
 				exe_start = 0xF92B8
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
-			elif exe_path.get_file() == "SLPM_659.69": # Love Doll: Lovely Idol
+			elif exe_path.get_file() == "SLPM_659.68" or exe_path.get_file() == "SLPM_659.69": # Love Doll: Lovely Idol
 				exe_start = 0xB0D48
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			elif exe_path.get_file() == "SLPM_664.40": # Hokenshitsu he Youkoso
 				exe_start = 0xADC10
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
-			elif exe_path.get_file() == "SLPM_550.71": # Yumemi Hakusho: Second Dream
+			elif exe_path.get_file() == "SLPM_550.70" or exe_path.get_file() == "SLPM_550.71": # Yumemi Hakusho: Second Dream
 				exe_start = 0xBBA48
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
-			elif exe_path.get_file() == "SLPM_667.32": # Iinazuke
+			elif exe_path.get_file() == "SLPM_667.32" or exe_path.get_file() == "SLPM_667.33": # Iinazuke
 				exe_start = 0xC0418
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			elif exe_path.get_file() == "SLPM_659.65": # Magical Tale: Chiicha na Mahoutsukai
@@ -118,6 +118,9 @@ func extractBin() -> void:
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			elif exe_path.get_file() == "SLPM_665.08": # Otome no Jijou
 				exe_start = 0xBEC78
+				exe_file = FileAccess.open(exe_path, FileAccess.READ)
+			elif exe_path.get_file() == "SLPM_668.60": # Nettai Teikiatsu Shoujo
+				exe_start = 0xBB6C0
 				exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			else:
 				OS.alert("Unknown EXE found.")
