@@ -294,6 +294,8 @@ func cybellePakExtract() -> void:
 	# OTHCG.PAK_0176.BIN - OTHCG.PAK_0178.BIN huge multi image files
 	# Check for names in some paks
 	# RBB extraction (song loop info in exe)
+	# Compression type 2 (flag at 0x9 in the header of images). Function for it is at 0x001038f8 in Sangoku Renseki (cCbsd::idxEx())
+	# Compression type 1 at 0x001032f0 in Sangoku Renseki (cCbsd::fastEx())
 	
 	if debug_out:
 		out_file = FileAccess.open(folder_path + "/!lookup.tbl", FileAccess.WRITE)
@@ -326,6 +328,9 @@ func cybellePakExtract() -> void:
 				sector_align = true
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
+				
+			#if file != 2:
+				#continue
 				
 			in_file.seek(f_offset)
 			var bytes: int = in_file.get_32()
@@ -393,7 +398,7 @@ func cybellePakExtract() -> void:
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 					continue
 				
-			# if flag at 0x1F in header, has a palette?
+			# TODO: If flag at 0x1F in header, has a palette? If flag is 4, seems to have a compressed palette
 			if bytes_2 and buff.decode_u8(bytes_2 + 0x1F):
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
@@ -579,7 +584,7 @@ func make_lookup_tables() -> void:
 func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	# This decompression function and related lookups is absurdly complex.
 	# Based on offsets from Sangoku Renseki.
-	# TODO: decomp_type 2 seem to cause problems
+	# TODO: decomp_type 2 and 1
 	
 	var out: PackedByteArray
 	var temp_buff: PackedByteArray
@@ -617,16 +622,11 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	var mem_01A92354: int
 	var mem_01A92358: int
 	var mem_01A9235C: int
-	var has_palette: bool
+	var comp_type: int
 	
 	#if input.decode_u8(9) == 1:
 		#push_error("File uses old RLE format! Skipping")
 		#return PackedByteArray()
-	
-	if input.decode_u8(0x1F):
-		has_palette = true
-	else:
-		has_palette = false
 		
 	# Older header check (Canvas)
 	start_off = input.decode_u32(0x4)
@@ -635,6 +635,7 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	else:
 		start_off = 0x20
 		
+	comp_type = input.decode_u8(9)
 	# Determine start of bytes to decode
 	a1 = 0
 	a2 = 0
@@ -713,549 +714,1095 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 			v0 = a1 < v0
 			t1 = mem_01A9235C
 			
-	var final_size: int = fill_size + out_size
-	var goto: String = "init"
-	while true:
-		match goto:
-			"init":
-				# Simulates function re-entry
-				t2 = 0 # temp_buff start offset
-				v0 = mem_01A92358
-				a2 = mem_01A922BC # out buffer offset
-				t6 = final_size # Think this is correct
-				v0 <<= 1
-				v0 = a2 + v0
-				t9 = a2
-				v1 = v0 < t6
-				t7 = v0
-				if v1 == 0:
-					t7 = t6
-				t1 = mem_01A922C4
-				v0 = a2 < t7
-				a3 = mem_01A92354
-				t4 = mem_01A92350
-				# 00104010
-				t5 = mem_01A922C8
-				if v0 == 0:
-					goto = "00104670"
-				else:
-					t8 = mem_01A922D0
-					s1 = 0 # Points to start of lookup_table
-					s2 = 0x200 # Points to next 0x200 of lookup table
-					t3 = 0xFFFFFFFF
-					v1 = input.decode_u8(t1 + 1)
-					goto = "start"
-			"start":
-				v0 = input.decode_u8(t1)
-				v1 <<= 8
-				v0 = v0 | v1
-				v0 = v0 >> a3
-				v0 &= 0x1FF
-				v1 = v0 + s2
-				v0 += s1
-				a0 = lookup_table.decode_u8(v1)
-				t0 = lookup_table.decode_u8(v0)
-				a3 += a0
-				v0 = a3 >> 3
-				a3 &= 7
-				t1 += v0
-				a1 = input.decode_u8(t1 + 3)
-				v1 = input.decode_u8(t1 + 2)
-				a0 = input.decode_u8(t1 + 1)
-				a1 = (a1 << 24) & 0xFFFFFFFF
-				v0 = input.decode_u8(t1)
-				v1 = (v1 << 16) & 0xFFFFFFFF
-				a0 = (a0 << 8) & 0xFFFFFFFF
-				v1 = v1 | a0
-				v0 = v0 | a1
-				v0 = v0 | v1
-				v1 = v0 >> a3
-				if t0 != t8:
-					goto = "00104118"
-				else:
+	if comp_type == 3:
+		var final_size: int = fill_size + out_size
+		var goto: String = "init"
+		while true:
+			match goto:
+				"init":
+					# Simulates function re-entry
+					t2 = 0 # temp_buff start offset
+					v0 = mem_01A92358
+					a2 = mem_01A922BC # out buffer offset
+					t6 = final_size # Think this is correct
+					v0 <<= 1
+					v0 = a2 + v0
+					t9 = a2
+					v1 = v0 < t6
+					t7 = v0
+					if v1 == 0:
+						t7 = t6
+					t1 = mem_01A922C4
+					v0 = a2 < t7
+					a3 = mem_01A92354
+					t4 = mem_01A92350
+					# 00104010
+					t5 = mem_01A922C8
+					if v0 == 0:
+						goto = "00104670"
+					else:
+						t8 = mem_01A922D0
+						s1 = 0 # Points to start of lookup_table
+						s2 = 0x200 # Points to next 0x200 of lookup table
+						t3 = 0xFFFFFFFF
+						v1 = input.decode_u8(t1 + 1)
+						goto = "start"
+				"start":
+					v0 = input.decode_u8(t1)
+					v1 <<= 8
+					v0 = v0 | v1
+					v0 = v0 >> a3
+					v0 &= 0x1FF
+					v1 = v0 + s2
+					v0 += s1
+					a0 = lookup_table.decode_u8(v1)
+					t0 = lookup_table.decode_u8(v0)
+					a3 += a0
+					v0 = a3 >> 3
+					a3 &= 7
+					t1 += v0
+					a1 = input.decode_u8(t1 + 3)
+					v1 = input.decode_u8(t1 + 2)
+					a0 = input.decode_u8(t1 + 1)
+					a1 = (a1 << 24) & 0xFFFFFFFF
+					v0 = input.decode_u8(t1)
+					v1 = (v1 << 16) & 0xFFFFFFFF
+					a0 = (a0 << 8) & 0xFFFFFFFF
+					v1 = v1 | a0
+					v0 = v0 | a1
+					v0 = v0 | v1
+					v1 = v0 >> a3
+					if t0 != t8:
+						goto = "00104118"
+					else:
+						v0 = v1 & 1
+						if v0 != 0:
+							goto = "001040D8"
+							a0 = mem_01A922CC
+						else:
+							v0 = t4 << 1
+							t4 += 1
+							v0 = v0 + t5
+							a3 += 1
+							a0 = input.decode_u16(v0)
+							v1 = a3 >> 3
+							t1 = t1 + v1
+							a3 &= 7
+							out.encode_s16(a2, a0)
+							goto = "00104664"
+							a2 += 2
+				"001040D8":
+					v0 = 1
+					v1 >>= 1
+					v0 <<= a0
+					a0 = a3 + a0
+					v0 = (v0 - 1) & 0xFFFFFFFF
+					a3 = a0 + 1
+					v1 &= v0
+					a0 = a3 >> 3
+					v1 = (t4 - v1) & 0xFFFFFFFF
+					t1 = t1 + a0
+					v1 <<= 1
+					a3 &= 7
+					v1 += t5
+					goto = "0010420C"
+					v0 = input.decode_u16(v1 - 2)
+				"00104118":
 					v0 = v1 & 1
 					if v0 != 0:
-						goto = "001040D8"
-						a0 = mem_01A922CC
+						v0 = v1 & 2
+						goto = "00104150"
 					else:
-						v0 = t4 << 1
-						t4 += 1
-						v0 = v0 + t5
-						a3 += 1
-						a0 = input.decode_u16(v0)
-						v1 = a3 >> 3
-						t1 = t1 + v1
-						a3 &= 7
-						out.encode_s16(a2, a0)
-						goto = "00104664"
-						a2 += 2
-			"001040D8":
-				v0 = 1
-				v1 >>= 1
-				v0 <<= a0
-				a0 = a3 + a0
-				v0 = (v0 - 1) & 0xFFFFFFFF
-				a3 = a0 + 1
-				v1 &= v0
-				a0 = a3 >> 3
-				v1 = (t4 - v1) & 0xFFFFFFFF
-				t1 = t1 + a0
-				v1 <<= 1
-				a3 &= 7
-				v1 += t5
-				goto = "0010420C"
-				v0 = input.decode_u16(v1 - 2)
-			"00104118":
-				v0 = v1 & 1
-				if v0 != 0:
-					v0 = v1 & 2
-					goto = "00104150"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					a3 += 1
-					v0 = v0 + t2
-					a0 = a3 >> 3
-					v1 = temp_buff.decode_u32(v0)
-					t1 = t1 + a0
-					a3 &= 7
-					v1 = (v1 << 1) & 0xFFFFFFFF
-					v1 = (a2 + v1) & 0xFFFFFFFF
-					goto = "0010420C"
-					v0 = out.decode_u16(v1)
-			"00104150":
-				if v0 == 0:
-					v0 = v1 & 4
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					a3 += 2
-					v0 += t2
-					a0 = a3 >> 3
-					v1 = temp_buff.decode_u32(v0)
-					t1 += a0
-					a3 &= 7
-					v1 = (v1 << 1) & 0xFFFFFFFF
-					goto = "001041FC"
-					v1 = (a2 + v1) & 0xFFFFFFFF
-				else:
-					# 00104180
-					v0 = v1 & 4
-					if v0 == 0:
-						v0 = v1 & 8
 						v0 = (t0 << 2) & 0xFFFFFFFF
-						a3 += 3
+						a3 += 1
+						v0 = v0 + t2
+						a0 = a3 >> 3
+						v1 = temp_buff.decode_u32(v0)
+						t1 = t1 + a0
+						a3 &= 7
+						v1 = (v1 << 1) & 0xFFFFFFFF
+						v1 = (a2 + v1) & 0xFFFFFFFF
+						goto = "0010420C"
+						v0 = out.decode_u16(v1)
+				"00104150":
+					if v0 == 0:
+						v0 = v1 & 4
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						a3 += 2
 						v0 += t2
 						a0 = a3 >> 3
 						v1 = temp_buff.decode_u32(v0)
 						t1 += a0
 						a3 &= 7
 						v1 = (v1 << 1) & 0xFFFFFFFF
-						goto = "001041EC"
+						goto = "001041FC"
 						v1 = (a2 + v1) & 0xFFFFFFFF
 					else:
-						v0 = v1 & 8
-						# 001041B0
-						if v0 != 0:
-							v0 = v1 & 0x10
-							goto = "00104218"
-						else:
-							# v0 = v1 & 0x10
+						# 00104180
+						v0 = v1 & 4
+						if v0 == 0:
+							v0 = v1 & 8
 							v0 = (t0 << 2) & 0xFFFFFFFF
-							a3 += 4
-							v0 = (v0 + t2) & 0xFFFFFFFF
+							a3 += 3
+							v0 += t2
 							a0 = a3 >> 3
 							v1 = temp_buff.decode_u32(v0)
 							t1 += a0
 							a3 &= 7
 							v1 = (v1 << 1) & 0xFFFFFFFF
+							goto = "001041EC"
 							v1 = (a2 + v1) & 0xFFFFFFFF
-							v0 = out.decode_u16(v1)
-							v1 += 2
-							out.encode_s16(a2, v0)
-							a2 += 2
-							# 001041EC
-							v0 = out.decode_u16(v1)
-							v1 += 2
-							out.encode_s16(a2, v0)
-							a2 += 2
-							# 001041FC
-							v0 = out.decode_u16(v1)
-							out.encode_s16(a2, v0)
-							a2 += 2
-							v0 = out.decode_u16(v1 + 2)
-							goto = "0010420C"
-			"001041EC":
-				v1 &= 0xFFFFFFFF
-				v0 = out.decode_u16(v1)
-				v1 += 2
-				out.encode_s16(a2, v0)
-				a2 += 2
-				# 001041FC
-				v0 = out.decode_u16(v1)
-				out.encode_s16(a2, v0)
-				a2 += 2
-				v0 = out.decode_u16(v1 + 2)
-				goto = "0010420C"
-			"001041FC":
-				v1 &= 0xFFFFFFFF
-				v0 = out.decode_u16(v1)
-				out.encode_s16(a2, v0)
-				a2 += 2
-				v0 = out.decode_u16(v1 + 2)
-				goto = "0010420C"
-			"0010420C":
-				out.encode_s16(a2, v0)
-				goto = "00104664"
-				a2 += 2
-			"00104218":
-				if v0 != 0:
-					v0 = v1 & 0x20
-					goto = "001042D0"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 5
-					v0 += t2
-					a1 = v1 & 3
-					a0 = temp_buff.decode_u32(v0)
-					a3 += 7
-					v1 = a3 >> 3
-					a3 &= 7
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					a1 = (a1 - 1) & 0xFFFFFFFF
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					t1 += v1
-					v0 = out.decode_u16(a0)
-					a0 += 2
+						else:
+							v0 = v1 & 8
+							# 001041B0
+							if v0 != 0:
+								v0 = v1 & 0x10
+								goto = "00104218"
+							else:
+								# v0 = v1 & 0x10
+								v0 = (t0 << 2) & 0xFFFFFFFF
+								a3 += 4
+								v0 = (v0 + t2) & 0xFFFFFFFF
+								a0 = a3 >> 3
+								v1 = temp_buff.decode_u32(v0)
+								t1 += a0
+								a3 &= 7
+								v1 = (v1 << 1) & 0xFFFFFFFF
+								v1 = (a2 + v1) & 0xFFFFFFFF
+								v0 = out.decode_u16(v1)
+								v1 += 2
+								out.encode_s16(a2, v0)
+								a2 += 2
+								# 001041EC
+								v0 = out.decode_u16(v1)
+								v1 += 2
+								out.encode_s16(a2, v0)
+								a2 += 2
+								# 001041FC
+								v0 = out.decode_u16(v1)
+								out.encode_s16(a2, v0)
+								a2 += 2
+								v0 = out.decode_u16(v1 + 2)
+								goto = "0010420C"
+				"001041EC":
+					v1 &= 0xFFFFFFFF
+					v0 = out.decode_u16(v1)
+					v1 += 2
 					out.encode_s16(a2, v0)
 					a2 += 2
-					v0 = out.decode_u16(a0)
-					a0 += 2
+					# 001041FC
+					v0 = out.decode_u16(v1)
 					out.encode_s16(a2, v0)
 					a2 += 2
-					v0 = out.decode_u16(a0)
-					a0 += 2
+					v0 = out.decode_u16(v1 + 2)
+					goto = "0010420C"
+				"001041FC":
+					v1 &= 0xFFFFFFFF
+					v0 = out.decode_u16(v1)
 					out.encode_s16(a2, v0)
 					a2 += 2
-					v0 = out.decode_u16(a0)
-					a0 += 2
+					v0 = out.decode_u16(v1 + 2)
+					goto = "0010420C"
+				"0010420C":
 					out.encode_s16(a2, v0)
-					a2 += 2
-					v0 = out.decode_u16(a0)
-					a0 += 2
-					out.encode_s16(a2, v0)
-					a2 += 2
-					if a1 == t3:
-						goto = "00104664"
-					else:
-						v1 = 0xFFFFFFFF
-						while a1 != v1:
-							a0 &= 0xFFFFFFFF
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							a1 = (a1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"001042D0":
-				if v0 != 0:
-					v0 = v1 & 0x40
-					goto = "00104338"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 6
-					v0 += t2
-					a3 += 9
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 7
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 8
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							a0 &= 0xFFFFFFFF
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"00104338":
-				if v0 != 0:
-					v0 = v1 & 0x80
-					goto = "001043A0"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 7
-					v0 += t2
-					a3 += 0xB
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0xF
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x10
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							a0 &= 0xFFFFFFFF
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"001043A0":
-				if v0 != 0:
-					v0 = v1 & 0x100
-					goto = "00104408"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 8
-					v0 += t2
-					a3 += 0xD
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x1F
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x20
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							a0 &= 0xFFFFFFFF
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"00104408":
-				if v0 != 0:
-					v0 = v1 & 0x200
-					goto = "00104470"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 9
-					v0 += t2
-					a3 += 0xF
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x3F
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x40
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							a0 &= 0xFFFFFFFF
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"00104470":
-				if v0 != 0:
-					v0 = v1 & 0x400
-					goto = "001044D8"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 10
-					v0 += t2
-					a3 += 0x11
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x7F
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x80
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"001044D8":
-				if v0 != 0:
-					v0 = v1 & 0x800
-					goto = "00104540"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 11
-					v0 += t2
-					a3 += 0x13
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0xFF
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x100
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"00104540":
-				if v0 != 0:
-					v0 = v1 & 0x1000
-					goto = "001045A8"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 12
-					v0 += t2
-					a3 += 0x15
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x1FF
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x200
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"001045A8":
-				if v0 != 0:
-					goto = "00104610"
-				else:
-					v0 = (t0 << 2) & 0xFFFFFFFF
-					v1 >>= 13
-					v0 += t2
-					a3 += 0x17
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x3FF
-					t1 += v0
-					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x400
-					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-			"00104610":
-				v1 >>= 14
-				v0 += t2
-				a3 += 0x19
-				a0 = temp_buff.decode_u32(v0)
-				v0 = a3 >> 3
-				v1 &= 0x7FF
-				t1 += v0
-				a0 = (a0 << 1) & 0xFFFFFFFF
-				v1 += 0x800
-				a0 = (a2 + a0) & 0xFFFFFFFF
-				a3 &= 7
-				if v1 == t3:
 					goto = "00104664"
-				else:
-					a1 = 0xFFFFFFFF
-					while a1 != v1:
+					a2 += 2
+				"00104218":
+					if v0 != 0:
+						v0 = v1 & 0x20
+						goto = "001042D0"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 5
+						v0 += t2
+						a1 = v1 & 3
+						a0 = temp_buff.decode_u32(v0)
+						a3 += 7
+						v1 = a3 >> 3
+						a3 &= 7
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						a1 = (a1 - 1) & 0xFFFFFFFF
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						t1 += v1
 						v0 = out.decode_u16(a0)
 						a0 += 2
-						v1 = (v1 - 1) & 0xFFFFFFFF
 						out.encode_s16(a2, v0)
 						a2 += 2
-					goto = "00104668"
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						if a1 == t3:
+							goto = "00104664"
+						else:
+							v1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								a1 = (a1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001042D0":
+					if v0 != 0:
+						v0 = v1 & 0x40
+						goto = "00104338"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 6
+						v0 += t2
+						a3 += 9
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 7
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 8
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104338":
+					if v0 != 0:
+						v0 = v1 & 0x80
+						goto = "001043A0"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 7
+						v0 += t2
+						a3 += 0xB
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0xF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x10
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001043A0":
+					if v0 != 0:
+						v0 = v1 & 0x100
+						goto = "00104408"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 8
+						v0 += t2
+						a3 += 0xD
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x1F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x20
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104408":
+					if v0 != 0:
+						v0 = v1 & 0x200
+						goto = "00104470"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 9
+						v0 += t2
+						a3 += 0xF
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x3F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x40
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104470":
+					if v0 != 0:
+						v0 = v1 & 0x400
+						goto = "001044D8"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 10
+						v0 += t2
+						a3 += 0x11
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x7F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x80
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001044D8":
+					if v0 != 0:
+						v0 = v1 & 0x800
+						goto = "00104540"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 11
+						v0 += t2
+						a3 += 0x13
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0xFF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x100
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104540":
+					if v0 != 0:
+						v0 = v1 & 0x1000
+						goto = "001045A8"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 12
+						v0 += t2
+						a3 += 0x15
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x1FF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x200
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001045A8":
+					if v0 != 0:
+						goto = "00104610"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 13
+						v0 += t2
+						a3 += 0x17
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x3FF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x400
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104610":
+					v1 >>= 14
+					v0 += t2
+					a3 += 0x19
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x7FF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x800
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+				"00104664":
 					v0 = a2 < t7
-			"00104664":
-				v0 = a2 < t7
-				if v0 != 0: # 00104668
-					goto = "start"
-					v1 = input.decode_u8(t1 + 1)
-				else:
-					goto = "00104670"
-			"00104668":
-				if v0 != 0:
-					goto = "start"
-					v1 = input.decode_u8(t1 + 1)
-				else:
-					goto = "00104670"
-			"00104670":
-				v1 = mem_01A922B0
-				v0 = (a2 - t9) & 0xFFFFFFFF
-				v0 >>= 1
-				a0 = a2 < t6
-				v1 += v0
-				mem_01A922C4 = t1
-				mem_01A92354 = a3
-				mem_01A92350 = t4
-				mem_01A922B0 = v1
-				mem_01A922BC = a2
-				if a0 == 0:
-					v0 = 0xFFFFFFFF
-					mem_01A922B0 = v0
-					v1 = t6 < a2
-					if v1 == 0:
+					if v0 != 0: # 00104668
+						goto = "start"
+						v1 = input.decode_u8(t1 + 1)
+					else:
+						goto = "00104670"
+				"00104668":
+					if v0 != 0:
+						goto = "start"
+						v1 = input.decode_u8(t1 + 1)
+					else:
+						goto = "00104670"
+				"00104670":
+					v1 = mem_01A922B0
+					v0 = (a2 - t9) & 0xFFFFFFFF
+					v0 >>= 1
+					a0 = a2 < t6
+					v1 += v0
+					mem_01A922C4 = t1
+					mem_01A92354 = a3
+					mem_01A92350 = t4
+					mem_01A922B0 = v1
+					mem_01A922BC = a2
+					if a0 == 0:
+						v0 = 0xFFFFFFFF
+						mem_01A922B0 = v0
+						v1 = t6 < a2
+						if v1 == 0:
+							goto = "001046B8"
+						else:
+							push_error("cCbsd::newEx() overrun!!!!!")
+							return out.slice(fill_size)
+					else:
 						goto = "001046B8"
+				"001046B8":
+						v0 = mem_01A922B0
+						if v0 == 0xFFFFFFFF:
+							return out.slice(fill_size)
+						else:
+							goto = "init"
+	# TODO (haven't started)
+	elif comp_type == 2:
+		var final_size: int = fill_size + out_size
+		var goto: String = "init"
+		while true:
+			match goto:
+				"init":
+					# Simulates function re-entry
+					t2 = 0 # temp_buff start offset
+					v0 = mem_01A92358
+					a2 = mem_01A922BC # out buffer offset
+					t6 = final_size # Think this is correct
+					v0 <<= 1
+					v0 = a2 + v0
+					t9 = a2
+					v1 = v0 < t6
+					t7 = v0
+					if v1 == 0:
+						t7 = t6
+					t1 = mem_01A922C4
+					v0 = a2 < t7
+					a3 = mem_01A92354
+					t4 = mem_01A92350
+					# 00104010
+					t5 = mem_01A922C8
+					if v0 == 0:
+						goto = "00104670"
 					else:
-						push_error("cCbsd::newEx() overrun!!!!!")
-						return out.slice(fill_size)
-				else:
-					goto = "001046B8"
-			"001046B8":
-					v0 = mem_01A922B0
-					if v0 == 0xFFFFFFFF:
-						return out.slice(fill_size)
+						t8 = mem_01A922D0
+						s1 = 0 # Points to start of lookup_table
+						s2 = 0x200 # Points to next 0x200 of lookup table
+						t3 = 0xFFFFFFFF
+						v1 = input.decode_u8(t1 + 1)
+						goto = "start"
+				"start":
+					v0 = input.decode_u8(t1)
+					v1 <<= 8
+					v0 = v0 | v1
+					v0 = v0 >> a3
+					v0 &= 0x1FF
+					v1 = v0 + s2
+					v0 += s1
+					a0 = lookup_table.decode_u8(v1)
+					t0 = lookup_table.decode_u8(v0)
+					a3 += a0
+					v0 = a3 >> 3
+					a3 &= 7
+					t1 += v0
+					a1 = input.decode_u8(t1 + 3)
+					v1 = input.decode_u8(t1 + 2)
+					a0 = input.decode_u8(t1 + 1)
+					a1 = (a1 << 24) & 0xFFFFFFFF
+					v0 = input.decode_u8(t1)
+					v1 = (v1 << 16) & 0xFFFFFFFF
+					a0 = (a0 << 8) & 0xFFFFFFFF
+					v1 = v1 | a0
+					v0 = v0 | a1
+					v0 = v0 | v1
+					v1 = v0 >> a3
+					# 001039C4 diff
+					if t0 != t8:
+						goto = "00104118"
 					else:
-						goto = "init"
-						
+						v0 = v1 & 1
+						if v0 != 0:
+							goto = "001040D8"
+							a0 = mem_01A922CC
+						else:
+							v0 = t4 << 1
+							t4 += 1
+							v0 = v0 + t5
+							a3 += 1
+							a0 = input.decode_u16(v0)
+							v1 = a3 >> 3
+							t1 = t1 + v1
+							a3 &= 7
+							out.encode_s16(a2, a0)
+							goto = "00104664"
+							a2 += 2
+				"001040D8":
+					v0 = 1
+					v1 >>= 1
+					v0 <<= a0
+					a0 = a3 + a0
+					v0 = (v0 - 1) & 0xFFFFFFFF
+					a3 = a0 + 1
+					v1 &= v0
+					a0 = a3 >> 3
+					v1 = (t4 - v1) & 0xFFFFFFFF
+					t1 = t1 + a0
+					v1 <<= 1
+					a3 &= 7
+					v1 += t5
+					goto = "0010420C"
+					v0 = input.decode_u16(v1 - 2)
+				"00104118":
+					v0 = v1 & 1
+					if v0 != 0:
+						v0 = v1 & 2
+						goto = "00104150"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						a3 += 1
+						v0 = v0 + t2
+						a0 = a3 >> 3
+						v1 = temp_buff.decode_u32(v0)
+						t1 = t1 + a0
+						a3 &= 7
+						v1 = (v1 << 1) & 0xFFFFFFFF
+						v1 = (a2 + v1) & 0xFFFFFFFF
+						goto = "0010420C"
+						v0 = out.decode_u16(v1)
+				"00104150":
+					if v0 == 0:
+						v0 = v1 & 4
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						a3 += 2
+						v0 += t2
+						a0 = a3 >> 3
+						v1 = temp_buff.decode_u32(v0)
+						t1 += a0
+						a3 &= 7
+						v1 = (v1 << 1) & 0xFFFFFFFF
+						goto = "001041FC"
+						v1 = (a2 + v1) & 0xFFFFFFFF
+					else:
+						# 00104180
+						v0 = v1 & 4
+						if v0 == 0:
+							v0 = v1 & 8
+							v0 = (t0 << 2) & 0xFFFFFFFF
+							a3 += 3
+							v0 += t2
+							a0 = a3 >> 3
+							v1 = temp_buff.decode_u32(v0)
+							t1 += a0
+							a3 &= 7
+							v1 = (v1 << 1) & 0xFFFFFFFF
+							goto = "001041EC"
+							v1 = (a2 + v1) & 0xFFFFFFFF
+						else:
+							v0 = v1 & 8
+							# 001041B0
+							if v0 != 0:
+								v0 = v1 & 0x10
+								goto = "00104218"
+							else:
+								# v0 = v1 & 0x10
+								v0 = (t0 << 2) & 0xFFFFFFFF
+								a3 += 4
+								v0 = (v0 + t2) & 0xFFFFFFFF
+								a0 = a3 >> 3
+								v1 = temp_buff.decode_u32(v0)
+								t1 += a0
+								a3 &= 7
+								v1 = (v1 << 1) & 0xFFFFFFFF
+								v1 = (a2 + v1) & 0xFFFFFFFF
+								v0 = out.decode_u16(v1)
+								v1 += 2
+								out.encode_s16(a2, v0)
+								a2 += 2
+								# 001041EC
+								v0 = out.decode_u16(v1)
+								v1 += 2
+								out.encode_s16(a2, v0)
+								a2 += 2
+								# 001041FC
+								v0 = out.decode_u16(v1)
+								out.encode_s16(a2, v0)
+								a2 += 2
+								v0 = out.decode_u16(v1 + 2)
+								goto = "0010420C"
+				"001041EC":
+					v1 &= 0xFFFFFFFF
+					v0 = out.decode_u16(v1)
+					v1 += 2
+					out.encode_s16(a2, v0)
+					a2 += 2
+					# 001041FC
+					v0 = out.decode_u16(v1)
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(v1 + 2)
+					goto = "0010420C"
+				"001041FC":
+					v1 &= 0xFFFFFFFF
+					v0 = out.decode_u16(v1)
+					out.encode_s16(a2, v0)
+					a2 += 2
+					v0 = out.decode_u16(v1 + 2)
+					goto = "0010420C"
+				"0010420C":
+					out.encode_s16(a2, v0)
+					goto = "00104664"
+					a2 += 2
+				"00104218":
+					if v0 != 0:
+						v0 = v1 & 0x20
+						goto = "001042D0"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 5
+						v0 += t2
+						a1 = v1 & 3
+						a0 = temp_buff.decode_u32(v0)
+						a3 += 7
+						v1 = a3 >> 3
+						a3 &= 7
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						a1 = (a1 - 1) & 0xFFFFFFFF
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						t1 += v1
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						v0 = out.decode_u16(a0)
+						a0 += 2
+						out.encode_s16(a2, v0)
+						a2 += 2
+						if a1 == t3:
+							goto = "00104664"
+						else:
+							v1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								a1 = (a1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001042D0":
+					if v0 != 0:
+						v0 = v1 & 0x40
+						goto = "00104338"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 6
+						v0 += t2
+						a3 += 9
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 7
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 8
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104338":
+					if v0 != 0:
+						v0 = v1 & 0x80
+						goto = "001043A0"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 7
+						v0 += t2
+						a3 += 0xB
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0xF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x10
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001043A0":
+					if v0 != 0:
+						v0 = v1 & 0x100
+						goto = "00104408"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 8
+						v0 += t2
+						a3 += 0xD
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x1F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x20
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104408":
+					if v0 != 0:
+						v0 = v1 & 0x200
+						goto = "00104470"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 9
+						v0 += t2
+						a3 += 0xF
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x3F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x40
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								a0 &= 0xFFFFFFFF
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104470":
+					if v0 != 0:
+						v0 = v1 & 0x400
+						goto = "001044D8"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 10
+						v0 += t2
+						a3 += 0x11
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x7F
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x80
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001044D8":
+					if v0 != 0:
+						v0 = v1 & 0x800
+						goto = "00104540"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 11
+						v0 += t2
+						a3 += 0x13
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0xFF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x100
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104540":
+					if v0 != 0:
+						v0 = v1 & 0x1000
+						goto = "001045A8"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 12
+						v0 += t2
+						a3 += 0x15
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x1FF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x200
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"001045A8":
+					if v0 != 0:
+						goto = "00104610"
+					else:
+						v0 = (t0 << 2) & 0xFFFFFFFF
+						v1 >>= 13
+						v0 += t2
+						a3 += 0x17
+						a0 = temp_buff.decode_u32(v0)
+						v0 = a3 >> 3
+						v1 &= 0x3FF
+						t1 += v0
+						a0 = (a0 << 1) & 0xFFFFFFFF
+						v1 += 0x400
+						a0 = (a2 + a0) & 0xFFFFFFFF
+						a3 &= 7
+						if v1 == t3:
+							goto = "00104664"
+						else:
+							a1 = 0xFFFFFFFF
+							while a1 != v1:
+								v0 = out.decode_u16(a0)
+								a0 += 2
+								v1 = (v1 - 1) & 0xFFFFFFFF
+								out.encode_s16(a2, v0)
+								a2 += 2
+							goto = "00104668"
+							v0 = a2 < t7
+				"00104610":
+					v1 >>= 14
+					v0 += t2
+					a3 += 0x19
+					a0 = temp_buff.decode_u32(v0)
+					v0 = a3 >> 3
+					v1 &= 0x7FF
+					t1 += v0
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 += 0x800
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					a3 &= 7
+					if v1 == t3:
+						goto = "00104664"
+					else:
+						a1 = 0xFFFFFFFF
+						while a1 != v1:
+							v0 = out.decode_u16(a0)
+							a0 += 2
+							v1 = (v1 - 1) & 0xFFFFFFFF
+							out.encode_s16(a2, v0)
+							a2 += 2
+						goto = "00104668"
+						v0 = a2 < t7
+				"00104664":
+					v0 = a2 < t7
+					if v0 != 0: # 00104668
+						goto = "start"
+						v1 = input.decode_u8(t1 + 1)
+					else:
+						goto = "00104670"
+				"00104668":
+					if v0 != 0:
+						goto = "start"
+						v1 = input.decode_u8(t1 + 1)
+					else:
+						goto = "00104670"
+				"00104670":
+					v1 = mem_01A922B0
+					v0 = (a2 - t9) & 0xFFFFFFFF
+					v0 >>= 1
+					a0 = a2 < t6
+					v1 += v0
+					mem_01A922C4 = t1
+					mem_01A92354 = a3
+					mem_01A92350 = t4
+					mem_01A922B0 = v1
+					mem_01A922BC = a2
+					if a0 == 0:
+						v0 = 0xFFFFFFFF
+						mem_01A922B0 = v0
+						v1 = t6 < a2
+						if v1 == 0:
+							goto = "001046B8"
+						else:
+							push_error("cCbsd::newEx() overrun!!!!!")
+							return out.slice(fill_size)
+					else:
+						goto = "001046B8"
+				"001046B8":
+						v0 = mem_01A922B0
+						if v0 == 0xFFFFFFFF:
+							return out.slice(fill_size)
+						else:
+							goto = "init"
+							
 	return out.slice(fill_size)
 	
 	
