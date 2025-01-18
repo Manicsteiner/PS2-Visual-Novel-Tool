@@ -47,22 +47,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray(
-"SLPM_666.18,
-SLPM_669.42, SLPM_669.43,
-SLPM_656.07, SLPM_656.08,
-SLPM_656.71,
-SLPS_257.19,
-SLPM_659.68, SLPM_659.69,
-SLPM_664.40,
-SLPM_550.70, SLPM_550.71,
-SLPM_667.32, SLPM_667.33,
-SLPM_659.65,
-SLPS_256.70,
-SLPM_666.25,
-SLPM_663.76,
-SLPM_665.08,
-SLPM_668.60")
+filters = PackedStringArray("SLPM_666.18,\nSLPM_669.42, SLPM_669.43,\nSLPM_656.07, SLPM_656.08,\nSLPM_656.71,\nSLPS_257.19,\nSLPM_659.68, SLPM_659.69,\nSLPM_664.40,\nSLPM_550.70, SLPM_550.71,\nSLPM_667.32, SLPM_667.33,\nSLPM_659.65,\nSLPS_256.70,\nSLPM_666.25,\nSLPM_663.76,\nSLPM_665.08,\nSLPM_668.60")
 use_native_dialog = true
 
 [node name="ZEROLoadPAC" type="FileDialog" parent="."]

@@ -20,6 +20,7 @@ enum {
 	CAMBRIAN,
 	CANVAS1,
 	CASTLEFANTASIA,
+	CLOVERNOKUNI,
 	COLORFULAQUA,
 	DABLACK,
 	DAWHITE,
@@ -38,6 +39,7 @@ enum {
 	FINALA,
 	FINALA2,
 	FINALIST,
+	FRIENDS,
 	FUKAKUTEI,
 	FUTAKOI,
 	FUTAKOIJIMA,
@@ -54,6 +56,7 @@ enum {
 	HAPPYBREED,
 	HAPPYDELUCKS,
 	HARUKAZEPS,
+	HEARTNOKUNI,
 	HOOLIGAN, 
 	HOKENSHITSU,
 	HURRAH,
@@ -563,6 +566,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SANGOKURENSEKI
 		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
 		sceneChanger(next_scene)
+	elif index == FRIENDS:
+		game_type_sub_text.text = "Supports 'Friends: Seishun no Kagayaki' (most images)."
+		game_type_selector.select(FRIENDS)
+		game_type = FRIENDS
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == CLOVERNOKUNI:
+		game_type_sub_text.text = "Supports 'Clover no Kuni no Alice: Wonderful Wonder World' (most images)."
+		game_type_selector.select(CLOVERNOKUNI)
+		game_type = CLOVERNOKUNI
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == HEARTNOKUNI:
+		game_type_sub_text.text = "Supports 'Heart no Kuni no Alice: Wonderful Wonder World' (most images)."
+		game_type_selector.select(HEARTNOKUNI)
+		game_type = HEARTNOKUNI
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
 	elif index == ELYSION:
 		game_type_sub_text.text = "Supports 'Elysion: Eien no Sanctuary' (most images)."
 		game_type_selector.select(ELYSION)
@@ -1059,6 +1080,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
+	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
 	game_type_selector.add_item("D-A:  White", DAWHITE)
@@ -1077,6 +1099,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
+	game_type_selector.add_item("Friends: Seishun no Kagayaki", FRIENDS)
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
@@ -1093,6 +1116,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
+	game_type_selector.add_item("Heart no Kuni no Alice: Wonderful Wonder World", HEARTNOKUNI)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)

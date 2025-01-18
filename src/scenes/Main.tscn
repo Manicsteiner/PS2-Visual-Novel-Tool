@@ -37,10 +37,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = 192.0
-offset_right = 45.0
-offset_bottom = 223.0
+offset_left = -64.0
+offset_top = 187.0
+offset_right = 61.0
+offset_bottom = 218.0
 grow_horizontal = 2
 grow_vertical = 2
 fit_to_longest_item = false
@@ -48,18 +48,19 @@ allow_reselect = true
 
 [node name="GameTypeText" type="Label" parent="."]
 layout_mode = 0
-offset_left = 520.0
-offset_top = 520.0
-offset_right = 724.0
-offset_bottom = 543.0
+offset_left = 544.0
+offset_top = 512.0
+offset_right = 748.0
+offset_bottom = 535.0
 
 [node name="GameTypeSubText" type="Label" parent="."]
 layout_mode = 0
-offset_left = 456.0
-offset_top = 592.0
-offset_right = 792.0
-offset_bottom = 615.0
+offset_left = 480.0
+offset_top = 584.0
+offset_right = 816.0
+offset_bottom = 607.0
 horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 2
 
 [connection signal="item_selected" from="GameTypeSelector" to="." method="_on_game_type_selector_item_selected"]
