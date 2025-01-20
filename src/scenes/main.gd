@@ -72,6 +72,7 @@ enum {
 	KIMISUTA,
 	KIRAKIRA, 
 	KOKORONOTOBIRA, 
+	KONOAOZORA,
 	LITTLEBUSTERS,
 	LNOKISETSU,
 	LOSTPASSAGE,
@@ -998,6 +999,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PRINCESSHOLIDAY
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == KONOAOZORA:
+		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_selector.select(KONOAOZORA)
+		game_type = KONOAOZORA
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -1132,6 +1139,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
