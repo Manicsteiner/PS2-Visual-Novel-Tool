@@ -3,6 +3,14 @@ extends Control
 @onready var file_load_iso: FileDialog = $FILELoadISO
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
 
+enum enc_type {
+	NONE,
+	KONNYAKU,
+	PURECURE
+}
+
+var encryption_selected: int = enc_type.KONNYAKU
+
 var folder_path: String
 var selected_file: String = ""
 var chose_file: bool = false
@@ -32,14 +40,14 @@ func extractIso() -> void:
 	var out_file: FileAccess
 	var xor_file: FileAccess
 	var fail: bool = false
-	var expected_str: String
-	var hdr_string: String
+	var dvd_str: String
 	var rom_off: int
 	var rom_size: int
 	var buff: PackedByteArray
 	var xor_tbl: PackedByteArray
+	var hdr_bytes: PackedByteArray
 	var num_files: int
-	var f_name: String = "dummy"
+	var f_name: String
 	var f_name_off: int
 	var last_name_pos: int
 	var last_tbl_pos: int
@@ -48,27 +56,45 @@ func extractIso() -> void:
 	var file_tbl: int
 	var pos: int
 	
+	# Just in case some offsets are different
+	var rom_offsets: Dictionary = {
+	"KONNYAKU": 0x445C0, # Kono Aozora Ni
+	"HIGURASI": 0x445C0, # Higurashi no Naku Koro ni Matsuri
+	"PURECURE": 0x445C0, # Pure x Cure Recovery - TODO: uses different decryption
+	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
+	"PIAGO": 0x445C0 # Pia Carrot he Youkoso!! G.O. Summer Fair - TODO: uses different decryption
+	}
+	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
 	# Some small images don't output correctly. Appears to be a process_pic2ps2_image problem.
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
+	# Handle .txa decompression
+	# Handle .wip decompression
+	# Handle .bup decompression
+	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue as bup files get overridden
 	# Need a Shift-JIS decoder to UTF-8 for file names
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
+	
 	# Check if DVD name matches
-	if Main.game_type == Main.KONOAOZORA:
-		in_file.seek(0x83071)
-		var hdr_bytes: PackedByteArray = in_file.get_buffer(8)
-		hdr_string = hdr_bytes.get_string_from_ascii()
-		expected_str = "KONNYAKU"
-		if hdr_string == expected_str:
-			rom_off = 0x445C0 # At 0x00135684 in memory inside a function
-		else:
-			fail = true
-			
-	if fail:
-		OS.alert("%s doesn't match known offset! Expected %s but got %s." % [selected_file, expected_str, hdr_string])
+	in_file.seek(0x83071)
+	hdr_bytes = in_file.get_buffer(8)
+	dvd_str = hdr_bytes.get_string_from_ascii()
+	if dvd_str in rom_offsets:
+		rom_off = rom_offsets[dvd_str]
+	else:
+		var expected_str: String = ", ".join(rom_offsets.keys())
+		OS.alert("%s doesn't match known offset! Expected one of: %s, but got: %s." % [selected_file, expected_str, dvd_str])
 		return
 			
+	# Set decryption type
+	if dvd_str == "KEYORINA":
+		encryption_selected = enc_type.NONE
+	elif dvd_str == "HIGURASI":
+		encryption_selected = enc_type.KONNYAKU
+	elif dvd_str == "KONNYAKU":
+		encryption_selected = enc_type.KONNYAKU
+		
 	rom_off *= 0x800
 	
 	in_file.seek(rom_off + 8)
@@ -121,28 +147,31 @@ func extractIso() -> void:
 			f_name = xor_file.get_line()
 			last_name_pos = xor_file.get_position()
 					
-			# Skip music names for now as they have Shift-JIS names which cause Godot to die.
-			if f_name.get_extension() == "ads":
+			# Skip music names for Kono Aozora for now as they have Shift-JIS names which cause Godot to die.
+			if f_name.get_extension() == "ads" and dvd_str == "KONNYAKU":
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 				continue
-			# Use for debugging a certain file
-			#if f_name.get_extension() != "pic":
+				
+			# Use for debugging certain file(s)
+			#if f_name.get_extension() != "bup":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
 			
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
+			
 			# Decrypt bytes in sectors
-			var dec_pos: int = 0
-			while dec_pos < f_size:
-				for i in range(0, 0x10):
-					if dec_pos + i >= f_size:
-						break
-					var bytes: int = buff.decode_u8(dec_pos + i)
-					buff.encode_u8(dec_pos + i, bytes ^ 0xFF)
-				dec_pos += 0x800
+			if encryption_selected == enc_type.KONNYAKU:
+				var dec_pos: int = 0
+				while dec_pos < f_size:
+					for i in range(0, 0x10):
+						if dec_pos + i >= f_size:
+							break
+						var bytes: int = buff.decode_u8(dec_pos + i)
+						buff.encode_u8(dec_pos + i, bytes ^ 0xFF)
+					dec_pos += 0x800
 				
 			if !last_name_pos % 16 == 0: # Align to 0x10 boundary for next table start when i reaches num_files
 				last_name_pos = (last_name_pos + 15) & ~15
@@ -152,11 +181,11 @@ func extractIso() -> void:
 				out_file.store_buffer(buff)
 				out_file.close()
 			
-			# Decompression ONLY for lzr files and .pic?
-			if f_name.get_extension() == "pic" or f_name.get_extension() == "lzs":
-				buff = decompress(buff)
+			# Decompression ONLY for these files (other file types need checking)
+			if f_name.get_extension() == "pic" or f_name.get_extension() == "lzs" or f_name.get_extension() == "bup":
+				buff = decompress_sneo(buff)
 				
-			var hdr_bytes: PackedByteArray = buff.slice(0, 4)
+			hdr_bytes = buff.slice(0, 4)
 			var hdr_str: String = hdr_bytes.get_string_from_ascii()
 			if hdr_str == "PIC2":
 				if debug_raw_out:
@@ -164,7 +193,24 @@ func extractIso() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 				
+				# For dummy images in Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
+				if buff.size() == 0:
+					print_rich("[color=yellow]Skipping %s as num images is 0[/color]" % f_name)
+					print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+					continue
+					
 				var png: Image = process_pic2ps2_image(buff)
+				png.save_png(folder_path + "/%s" % f_name + ".PNG")
+				
+				print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				continue
+			elif hdr_str == "BUP2":
+				if debug_raw_out:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+				
+				var png: Image = process_bup2ps2_image(buff)
 				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
 				print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
@@ -265,6 +311,47 @@ func process_pic2ps2_image(data: PackedByteArray) -> Image:
 	return final_image
 	
 	
+func process_bup2ps2_image(data: PackedByteArray) -> Image:
+	# May need to be updated in the future.
+	
+	# Extract image dimensions
+	var image_width: int = data.decode_u16(0x14)
+	var image_height: int = data.decode_u16(0x16)
+
+	# Extract palette data (1024 colors, 0x400 bytes)
+	var palette_offset: int = data.decode_u32(0x18)
+	var palette: PackedByteArray = PackedByteArray()
+	for i in range(0, 0x400):
+		palette.append(data.decode_u8(palette_offset + i))
+
+	# Unswizzle the palette
+	palette = ComFuncs.unswizzle_palette(palette, 32)
+
+	# If alpha needs to be removed, set it to 255
+	if remove_alpha:
+		for i in range(0, 0x400, 4):
+			palette.encode_u8(i + 3, 255)
+
+	# Extract raw pixel data
+	var image_data_offset: int = palette_offset + 0x400
+	var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
+
+	# Create the image object
+	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+
+	# Process the pixel data and apply the palette
+	for y in range(image_height):
+		for x in range(image_width):
+			var pixel_index: int = pixel_data[x + y * image_width]
+			var r: int = palette[pixel_index * 4 + 0]
+			var g: int = palette[pixel_index * 4 + 1]
+			var b: int = palette[pixel_index * 4 + 2]
+			var a: int = palette[pixel_index * 4 + 3]
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+
+	return image
+	
+	
 func decryptRomHeader(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedByteArray:
 	var word_1: int
 	var word_2: int
@@ -279,27 +366,24 @@ func decryptRomHeader(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedB
 	return rom
 	
 	
-func decompress(input: PackedByteArray) -> PackedByteArray:
+func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 	var out: PackedByteArray
-	var v0:int
-	var v1:int
-	var a0:int
-	var a1:int
-	var a2:int # section start
-	var a3:int
-	var t0:int 
-	var t1:int
-	var t2:int
-	var t3:int
-	var t4:int
-	var t5:int
-	var t6:int
-	var t7:int # out off
-	var t8:int
-	var t9: int
-	var s1: int
-	var s2: int
-	var is_image: bool = false
+	var v0: int
+	var v1: int
+	var a0: int
+	var a1: int
+	var a2: int # section start
+	var a3: int
+	var t0: int 
+	var t1: int
+	var t2: int
+	var t3: int
+	var t4: int
+	var t5: int
+	var t6: int
+	var t7: int # out off
+	var is_pic2: bool = false
+	var is_bup2: bool = false
 	var section_start: int
 	var section_end: int
 	var num_img_parts: int
@@ -311,16 +395,26 @@ func decompress(input: PackedByteArray) -> PackedByteArray:
 	var hdr_bytes: PackedByteArray = input.slice(0, 4)
 	var hdr_str: String = hdr_bytes.get_string_from_ascii()
 	if hdr_str == "LZS2":
-		is_image = false
 		section_start = 0x10
 		section_end = input.decode_u32(0x8)
 		out.resize(section_end)
 		a2 = section_start
 		a3 = section_end
+	elif hdr_str == "BUP2":
+		# There's a bunch of data in the headers still, this only semi works.
+		is_bup2 = true
+		section_start = input.decode_u32(0x1C)
+		section_end = input.decode_u32(0x8)
+		out.resize(input.decode_u16(0x14) * input.decode_u16(0x16))
+		a2 = section_start
+		a3 = section_end
 	elif hdr_str == "PIC2":
-		is_image = true
+		is_pic2 = true
 		img_part = 0
 		num_img_parts = input.decode_u32(0x1C)
+		# Dummy images in Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
+		if num_img_parts == 0:
+			return PackedByteArray()
 		section_start = input.decode_u32(0x28)
 		section_end = input.decode_u32(0x2C)
 		part_width = input.decode_u16(0x24)
@@ -437,7 +531,7 @@ func decompress(input: PackedByteArray) -> PackedByteArray:
 						v0 = t1
 						goto = "img_chk"
 			"img_chk":
-				if is_image:
+				if is_pic2:
 					img_part += 1
 					imgs.append(PackedByteArray(out))
 					out.clear()
@@ -460,6 +554,14 @@ func decompress(input: PackedByteArray) -> PackedByteArray:
 						for img in range(0, imgs.size()):
 							out.append_array(imgs[img])
 						break
+				elif is_bup2:
+					imgs.append(PackedByteArray(out))
+					out.clear()
+					
+					section_end = input.decode_u32(0x1C)
+					out.append_array(input.slice(0, section_end))
+					out.append_array(imgs[0])
+					break
 				else:
 					break
 		
@@ -519,7 +621,7 @@ func _on_output_debug_toggled(_toggled_on: bool) -> void:
 
 
 func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
-	remove_alpha != remove_alpha
+	remove_alpha = !remove_alpha
 
 
 func _on_output_decrypted_toggled(_toggled_on: bool) -> void:

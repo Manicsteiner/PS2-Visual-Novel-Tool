@@ -57,6 +57,7 @@ enum {
 	HAPPYDELUCKS,
 	HARUKAZEPS,
 	HEARTNOKUNI,
+	HIGURASHI,
 	HOOLIGAN, 
 	HOKENSHITSU,
 	HURRAH,
@@ -151,6 +152,7 @@ enum {
 	WHITEBREATH,
 	YATOHIME,
 	YOJINBO,
+	YOAKE,
 	YRMEMORIES,
 	YUMEMI,
 	YUMEMISHI,
@@ -1005,6 +1007,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = KONOAOZORA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == YOAKE:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(YOAKE)
+		game_type = YOAKE
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
+	elif index == HIGURASHI:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(HIGURASHI)
+		game_type = HIGURASHI
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -1124,6 +1138,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Heart no Kuni no Alice: Wonderful Wonder World", HEARTNOKUNI)
+	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri", HIGURASHI)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
@@ -1218,6 +1233,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
+	game_type_selector.add_item("Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue", YOAKE)
 	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
