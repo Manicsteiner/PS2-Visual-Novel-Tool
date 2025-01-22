@@ -422,7 +422,7 @@ func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
 	
 func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, sector_start: int) -> PackedByteArray:
 	# Used by PIAGO encryption
-	
+
 	# Constants
 	var t2: int = 0x000343FD  # Multiplier constant
 	var t7: int = 0x00269EC3  # Addition constant
@@ -431,7 +431,7 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 
 	# Create a copy of the input buffer to modify
 	var result: PackedByteArray = input_buffer.duplicate()
-	var total_blocks: int = result.size() / sector_size  # Total blocks to process
+	var total_blocks: int = result.size()  # Total blocks to process
 
 	# Decryption variables
 	var a2: int = 0  # Block index
@@ -440,33 +440,38 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 
 	# Process each block
 	while a2 < total_blocks:
-		var block_start: int = a2 * sector_size
+		var block_start: int = a2
 		var block_end: int = block_start + block_size
-
-		var v0: int = t5 + a2  # Add sector start and block index
-		var a1: int = v0 + t4  # Add decryption key
+		var sector: int = a2 / 0x800
 		
+		var v0: int = t5 + sector # Add sector start and block index
+		var a1: int = v0 + t4  # Add decryption key
+
 		# First multiplication and addition
 		v0 = a1 * t2  # Multiply by t2
 		a1 = (v0 + t7) & 0xFFFFFFFF  # Add t7 and ensure 32-bit
 
 		# Iterate over the first 0x10 bytes of the sector
 		for a0 in range(block_start, block_end):
+			if a0 >= total_blocks:
+				return result
 			# Second multiplication and addition
 			v0 = a1 * t2  # Multiply by t2 again
 			a1 = (v0 + t7) & 0xFFFFFFFF  # Add t7 and ensure 32-bit
-			
+
 			# Derive XOR value
 			var v1: int = a1 ^ (a1 >> 16) # XOR derived from a1
-			
+
 			# Decrypt the current byte
 			var current_byte: int = result[a0]
 			result[a0] = (current_byte ^ v1) & 0xFF  # XOR with calculated value
 
 		# Move to the next sector
-		a2 += 1
+		a2 += 0x800
 
 	return result
+
+
 	
 	
 func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
