@@ -167,10 +167,10 @@ func extractIso() -> void:
 				continue
 				
 			# Use for debugging certain file(s)
-			if f_name.get_extension() != "pic":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
+			#if f_name.get_extension() != "pic":
+				#if !last_name_pos % 16 == 0:
+					#last_name_pos = (last_name_pos + 15) & ~15
+				#continue
 			
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
