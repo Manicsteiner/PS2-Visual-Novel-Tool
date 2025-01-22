@@ -71,7 +71,7 @@ func extractIso() -> void:
 	}
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
-	# Some small images don't output correctly. Appears to be a process_pic2ps2_image problem?
+	# Check BUPs for any weird missing / distorted image parts, as the method for PIC2s may need to be applied here.
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
 	# Handle .txa decompression
 	# Handle .wip decompression
@@ -167,10 +167,10 @@ func extractIso() -> void:
 				continue
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "bup":
-				#if !last_name_pos % 16 == 0:
-					#last_name_pos = (last_name_pos + 15) & ~15
-				#continue
+			if f_name.get_extension() != "pic":
+				if !last_name_pos % 16 == 0:
+					last_name_pos = (last_name_pos + 15) & ~15
+				continue
 			
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
@@ -211,13 +211,13 @@ func extractIso() -> void:
 				# For dummy images in Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
 				if buff.size() == 0:
 					print_rich("[color=yellow]Skipping %s as num images is 0[/color]" % f_name)
-					print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+					print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 					continue
 					
 				var png: Image = process_pic2ps2_image(buff)
 				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
-				print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
 			elif hdr_str == "BUP2":
 				if debug_raw_out:
@@ -228,14 +228,14 @@ func extractIso() -> void:
 				var png: Image = process_bup2ps2_image(buff)
 				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
-				print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
 				
 			out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			out_file.close()
 			
-			print("0x%08X " % f_offset, "0x%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+			print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 		
 		pos = last_name_pos
 			
@@ -313,7 +313,9 @@ func process_pic2ps2_image(data: PackedByteArray) -> Image:
 						tile_image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 				
 				# Test tile
-				# tile_image.save_png(folder_path + "/%02d" % i + ".PNG")
+				#tile_image.save_png(folder_path + "/%02d" % i + ".PNG")
+				#var tile: FileAccess = FileAccess.open(folder_path + "/%02d" % i + ".PART", FileAccess.WRITE)
+				#tile.store_buffer(part_data)
 				# Place the tile into the final image at the correct position
 				for y in range(tile_height):
 					for x in range(tile_width):
@@ -519,6 +521,7 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 	elif hdr_str == "PIC2":
 		is_pic2 = true
 		img_part = 0
+		var section: int = (img_part * 0x10) + 0x20
 		num_img_parts = input.decode_u32(0x1C)
 		# Dummy images in Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
 		if num_img_parts == 0:
@@ -527,6 +530,26 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 		section_end = input.decode_u32(0x2C)
 		part_width = input.decode_u16(0x24)
 		part_height = input.decode_u16(0x26)
+		# Append image parts from input if image part size is 0.
+		if section_end == 0:
+			while section_end == 0:
+				section_end = (part_width * part_height) + section_start
+				out = input.slice(section_start, section_end)
+				imgs.append(PackedByteArray(out))
+				out.clear()
+				img_part += 1
+				if img_part == num_img_parts:
+					section_start = input.decode_u32(0x18)
+					section_end = input.decode_u32(0x28)
+					out.append_array(input.slice(0, section_end))
+					for img in range(0, imgs.size()):
+						out.append_array(imgs[img])
+					return out
+				section = (img_part * 0x10) + 0x20
+				section_start = input.decode_u32(section + 0x08)
+				section_end = input.decode_u32(section + 0x0C)
+				part_width = input.decode_u16(section + 0x04)
+				part_height = input.decode_u16(section + 0x06)
 		out.resize(part_width * part_height)
 		a2 = section_start
 		a3 = section_end
@@ -650,9 +673,29 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 						part_height = input.decode_u16(section + 0x06)
 						section_start = input.decode_u32(section + 0x08)
 						section_end = input.decode_u32(section + 0x0C)
+						if section_end == 0:
+							while section_end == 0:
+								section_end = (part_width * part_height) + section_start
+								out = input.slice(section_start, section_end)
+								imgs.append(PackedByteArray(out))
+								out.clear()
+								img_part += 1
+								if img_part == num_img_parts:
+									section_start = input.decode_u32(0x18)
+									section_end = input.decode_u32(0x28)
+									out.append_array(input.slice(0, section_end))
+									for img in range(0, imgs.size()):
+										out.append_array(imgs[img])
+									return out
+								section = (img_part * 0x10) + 0x20
+								section_start = input.decode_u32(section + 0x08)
+								section_end = input.decode_u32(section + 0x0C)
+								part_width = input.decode_u16(section + 0x04)
+								part_height = input.decode_u16(section + 0x06)
+							
+						out.resize(part_width * part_height)
 						a2 = section_start
 						a3 = section_end
-						out.resize(part_width * part_height)
 						goto = "init"
 					else:
 						# Append palette then image parts
