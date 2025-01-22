@@ -111,6 +111,7 @@ enum {
 	PATISSERIE,
 	PHANTOMINFERNO, 
 	PIA3, 
+	PIAGO,
 	PIZZICATOPOLKA,
 	PLANETARIAN,
 	PRINCESSHOLIDAY,
@@ -1019,6 +1020,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HIGURASHI
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == PIAGO:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(PIAGO)
+		game_type = PIAGO
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -1192,6 +1199,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)
+	game_type_selector.add_item("Pia Carrot he Youkoso!! G.O. Summer Fair", PIAGO)
 	game_type_selector.add_item("Pizzicato Polka: Suisei Genya", PIZZICATOPOLKA)
 	game_type_selector.add_item("Planetarian: Chiisana Hoshi no Yume", PLANETARIAN)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)

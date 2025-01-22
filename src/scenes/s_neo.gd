@@ -6,10 +6,14 @@ extends Control
 enum enc_type {
 	NONE,
 	KONNYAKU,
-	PURECURE
+	PURECURE,
+	PIAGO
 }
 
 var encryption_selected: int = enc_type.KONNYAKU
+
+# Used in PUREPURE encryption types. Based on encrypted u32 int at 0xC in ROM.BIN
+var global_key: int = 0
 
 var folder_path: String
 var selected_file: String = ""
@@ -52,6 +56,7 @@ func extractIso() -> void:
 	var last_name_pos: int
 	var last_tbl_pos: int
 	var f_offset: int
+	var f_key: int
 	var f_size: int
 	var file_tbl: int
 	var pos: int
@@ -60,17 +65,16 @@ func extractIso() -> void:
 	var rom_offsets: Dictionary = {
 	"KONNYAKU": 0x445C0, # Kono Aozora Ni
 	"HIGURASI": 0x445C0, # Higurashi no Naku Koro ni Matsuri
-	"PURECURE": 0x445C0, # Pure x Cure Recovery - TODO: uses different decryption
+	"PURECURE": 0x445C0, # Pure x Cure Recovery  (Angle Maneuver engine)- TODO: uses different decryption
 	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
-	"PIAGO": 0x445C0 # Pia Carrot he Youkoso!! G.O. Summer Fair - TODO: uses different decryption
+	"PIAGO": 0x445C0 # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
 	}
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
-	# Some small images don't output correctly. Appears to be a process_pic2ps2_image problem.
+	# Some small images don't output correctly. Appears to be a process_pic2ps2_image problem?
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
 	# Handle .txa decompression
 	# Handle .wip decompression
-	# Handle .bup decompression
 	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue as bup files get overridden
 	# Need a Shift-JIS decoder to UTF-8 for file names
 	
@@ -94,6 +98,10 @@ func extractIso() -> void:
 		encryption_selected = enc_type.KONNYAKU
 	elif dvd_str == "KONNYAKU":
 		encryption_selected = enc_type.KONNYAKU
+	elif dvd_str == "PIAGO":
+		encryption_selected = enc_type.PIAGO
+	elif dvd_str == "PURECURE":
+		encryption_selected = enc_type.PURECURE
 		
 	rom_off *= 0x800
 	
@@ -103,10 +111,14 @@ func extractIso() -> void:
 	
 	in_file.seek(rom_off)
 	buff = in_file.get_buffer(rom_size)
-	# Xor table is after ROM offset with the same size
-	xor_tbl = in_file.get_buffer(rom_size)
-	
-	buff = decryptRomHeader(buff, xor_tbl)
+	if encryption_selected == enc_type.KONNYAKU or encryption_selected == enc_type.NONE:
+		# Xor table is after ROM offset with the same size
+		xor_tbl = in_file.get_buffer(rom_size)
+		
+		buff = decrypt_rom_header(buff, xor_tbl)
+	elif encryption_selected == enc_type.PIAGO:
+		global_key = buff.decode_u32(0xC) # Retrieve global key from header of ROM.BIN
+		buff = decrypt_rom_header_PIAGO(buff)
 	
 	out_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.WRITE)
 	out_file.store_buffer(buff)
@@ -130,6 +142,7 @@ func extractIso() -> void:
 			xor_file.seek(last_tbl_pos)
 			f_name_off = xor_file.get_32() # if highest 32 bit is 0x80, appears to be a folder or sometimes nothing (0x2E)
 			f_offset = xor_file.get_32()
+			f_key = f_offset # Used as a key in PUREPURE encryption
 			f_offset = (f_offset * 0x800) + rom_off
 			f_size = xor_file.get_32()
 			last_tbl_pos = xor_file.get_position()
@@ -172,6 +185,8 @@ func extractIso() -> void:
 						var bytes: int = buff.decode_u8(dec_pos + i)
 						buff.encode_u8(dec_pos + i, bytes ^ 0xFF)
 					dec_pos += 0x800
+			elif encryption_selected == enc_type.PIAGO:
+				buff = decrypt_mem_file_PIAGO(buff, global_key, f_key)
 				
 			if !last_name_pos % 16 == 0: # Align to 0x10 boundary for next table start when i reaches num_files
 				last_name_pos = (last_name_pos + 15) & ~15
@@ -352,7 +367,7 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 	return image
 	
 	
-func decryptRomHeader(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedByteArray:
+func decrypt_rom_header(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedByteArray:
 	var word_1: int
 	var word_2: int
 	var off: int = 0x10
@@ -364,6 +379,94 @@ func decryptRomHeader(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedB
 		off += 0x4
 		
 	return rom
+	
+	
+func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
+	 # Initialize constants
+	var s2_offset_8: int = 0x0008
+	var s2_offset_12: int = 0x000c
+	var a2: int = 0x000343FD
+	var t0: int = 0x00269EC3
+	var result: PackedByteArray = rom.duplicate() # Create a copy to modify
+
+	# Extract the number of iterations and starting values
+	var total_iterations: int = (rom.decode_u32(s2_offset_8) << 11)
+	var a1: int = rom.decode_u32(s2_offset_12)
+	var a3: int = 0x0010  # Initial rom offset
+	var s0: int = 0x0010  # Initial offset for data processing
+
+	# Processing loop
+	while a3 < total_iterations:
+		# Multiply a1 by a2
+		var mult_result: int = a1 * a2
+
+		# Add t0 to the result
+		a1 = (mult_result + t0) & 0xFFFFFFFF  # Keep within 32-bit range
+
+		# Read a byte from the current position in the buffer
+		var v0: int = result[s0]
+
+		# Process XOR operations
+		var v1: int = (a1 >> 16) ^ a1
+		v0 = v0 ^ (v1 & 0xFF)
+
+		# Write the modified byte back to the buffer
+		result[s0] = v0
+
+		# Increment pointers and counter
+		s0 += 1
+		a3 += 1
+
+	return result
+	
+	
+func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, sector_start: int) -> PackedByteArray:
+	# Used by PIAGO encryption
+	
+	# Constants
+	var t2: int = 0x000343FD  # Multiplier constant
+	var t7: int = 0x00269EC3  # Addition constant
+	var sector_size: int = 0x800  # Size of each sector
+	var block_size: int = 0x10  # Block size to decrypt
+
+	# Create a copy of the input buffer to modify
+	var result: PackedByteArray = input_buffer.duplicate()
+	var total_blocks: int = result.size() / sector_size  # Total blocks to process
+
+	# Decryption variables
+	var a2: int = 0  # Block index
+	var t4: int = decryption_key  # Global decryption key
+	var t5: int = sector_start  # Sector start used as part of the key
+
+	# Process each block
+	while a2 < total_blocks:
+		var block_start: int = a2 * sector_size
+		var block_end: int = block_start + block_size
+
+		var v0: int = t5 + a2  # Add sector start and block index
+		var a1: int = v0 + t4  # Add decryption key
+		
+		# First multiplication and addition
+		v0 = a1 * t2  # Multiply by t2
+		a1 = (v0 + t7) & 0xFFFFFFFF  # Add t7 and ensure 32-bit
+
+		# Iterate over the first 0x10 bytes of the sector
+		for a0 in range(block_start, block_end):
+			# Second multiplication and addition
+			v0 = a1 * t2  # Multiply by t2 again
+			a1 = (v0 + t7) & 0xFFFFFFFF  # Add t7 and ensure 32-bit
+			
+			# Derive XOR value
+			var v1: int = a1 ^ (a1 >> 16) # XOR derived from a1
+			
+			# Decrypt the current byte
+			var current_byte: int = result[a0]
+			result[a0] = (current_byte ^ v1) & 0xFF  # XOR with calculated value
+
+		# Move to the next sector
+		a2 += 1
+
+	return result
 	
 	
 func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
