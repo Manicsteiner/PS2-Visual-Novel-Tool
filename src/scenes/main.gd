@@ -121,6 +121,7 @@ enum {
 	PRISMARK,
 	PRIVATENURSE,
 	PUREPURE,
+	PUREXCURE,
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
@@ -1026,6 +1027,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PIAGO
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == PUREXCURE:
+		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_selector.select(PUREXCURE)
+		game_type = PUREXCURE
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -1209,6 +1216,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
 	game_type_selector.add_item("Private Nurse: Maria", PRIVATENURSE)
 	game_type_selector.add_item("Pure Pure: Mimi to Shippo no Monogatari", PUREPURE)
+	game_type_selector.add_item("Pure x Cure Recovery", PUREXCURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)

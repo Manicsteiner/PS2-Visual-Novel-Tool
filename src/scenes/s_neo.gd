@@ -12,8 +12,10 @@ enum enc_type {
 
 var encryption_selected: int = enc_type.KONNYAKU
 
-# Used in PUREPURE encryption types. Based on encrypted u32 int at 0xC in ROM.BIN
+# Used in PIAGO encryption. Based on encrypted u32 int at 0xC in ROM.BIN
 var global_key: int = 0
+# Used by PURECURE encryption.
+var lookup_tbl: PackedByteArray
 
 var folder_path: String
 var selected_file: String = ""
@@ -42,7 +44,7 @@ func _process(_delta: float) -> void:
 func extractIso() -> void:
 	var in_file: FileAccess
 	var out_file: FileAccess
-	var xor_file: FileAccess
+	var rom_file: FileAccess
 	var fail: bool = false
 	var dvd_str: String
 	var rom_off: int
@@ -65,7 +67,7 @@ func extractIso() -> void:
 	var rom_offsets: Dictionary = {
 	"KONNYAKU": 0x445C0, # Kono Aozora Ni
 	"HIGURASI": 0x445C0, # Higurashi no Naku Koro ni Matsuri
-	"PURECURE": 0x445C0, # Pure x Cure Recovery  (Angle Maneuver engine)- TODO: uses different decryption
+	"PURECURE": 0x445C0, # Pure x Cure Recovery  (Angle Maneuver engine)
 	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
 	"PIAGO": 0x445C0 # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
 	}
@@ -76,7 +78,7 @@ func extractIso() -> void:
 	# Handle .txa decompression
 	# Handle .wip decompression
 	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue as bup files get overridden
-	# Need a Shift-JIS decoder to UTF-8 for file names
+	# Need a Shift-JIS decoder to UTF-8 for .ads file names in Kono Aozora and Pure x Cure
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
 	
@@ -111,63 +113,92 @@ func extractIso() -> void:
 	
 	in_file.seek(rom_off)
 	buff = in_file.get_buffer(rom_size)
+	
 	if encryption_selected == enc_type.KONNYAKU or encryption_selected == enc_type.NONE:
 		# Xor table is after ROM offset with the same size
 		xor_tbl = in_file.get_buffer(rom_size)
-		
 		buff = decrypt_rom_header(buff, xor_tbl)
 	elif encryption_selected == enc_type.PIAGO:
 		global_key = buff.decode_u32(0xC) # Retrieve global key from header of ROM.BIN
 		buff = decrypt_rom_header_PIAGO(buff)
+	elif encryption_selected == enc_type.PURECURE:
+		var key: int = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
+		# Make lookup table for file decryption
+		var keys: PackedInt64Array = decrypt_int_PURECURE(key)
+		var off: int = 0
+		while off < 0x100F:
+			lookup_tbl.append(keys[1] & 0xFF)
+			keys = decrypt_int_PURECURE(keys[0])
+			off += 1
+			
+		lookup_tbl.append(0) # Last byte is zero in game's memory.
+		
+		out_file = FileAccess.open(folder_path + "/!LOOKUP.TBL", FileAccess.WRITE)
+		out_file.store_buffer(lookup_tbl)
+		out_file.close()
+		
+		key = buff.decode_u32(0xC) # Initial key is at 0xC in ROM.BIN
+		keys = decrypt_int_PURECURE(key) # Actually loads 2 u32s but Godot wraps around if loaded as a 32 array (treats as signed).
+		off = 0x10
+		while off < rom_size:
+			var byte: int = buff.decode_u8(off) ^ keys[1]
+			buff.encode_s8(off, byte)
+			keys = decrypt_int_PURECURE(keys[0])
+			off += 1
+			
 	
 	out_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.WRITE)
 	out_file.store_buffer(buff)
 	out_file.close()
 	buff.clear()
 	
-	xor_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.READ)
+	rom_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.READ)
 	
 	pos = 0x10
 	while pos < rom_size:
-		xor_file.seek(pos)
-		if xor_file.eof_reached():
+		rom_file.seek(pos)
+		if rom_file.eof_reached():
 			break
 			
 		file_tbl = pos
-		num_files = xor_file.get_32()
+		num_files = rom_file.get_32()
 		if num_files == 0:
 			break
-		last_tbl_pos = xor_file.get_position()
+		last_tbl_pos = rom_file.get_position()
 		for file in num_files:
-			xor_file.seek(last_tbl_pos)
-			f_name_off = xor_file.get_32() # if highest 32 bit is 0x80, appears to be a folder or sometimes nothing (0x2E)
-			f_offset = xor_file.get_32()
-			f_key = f_offset # Used as a key in PUREPURE encryption
+			rom_file.seek(last_tbl_pos)
+			f_name_off = rom_file.get_32() # if highest 32 bit is 0x80, appears to be a folder or sometimes nothing (0x2E)
+			f_offset = rom_file.get_32()
+			f_key = f_offset # Used as a key in PUREPURE/PIAGO encryption
 			f_offset = (f_offset * 0x800) + rom_off
-			f_size = xor_file.get_32()
-			last_tbl_pos = xor_file.get_position()
+			f_size = rom_file.get_32()
+			last_tbl_pos = rom_file.get_position()
 			if f_name_off > 0x7FFFFFFF:
 				# Skip folders as I am unsure how they are sorted
-				xor_file.seek(file_tbl + f_name_off & 0x7FFFFFFF)
-				f_name = xor_file.get_line()
-				last_name_pos = xor_file.get_position()
+				rom_file.seek(file_tbl + f_name_off & 0x7FFFFFFF)
+				f_name = rom_file.get_line()
+				last_name_pos = rom_file.get_position()
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 				continue
 			
 			
-			xor_file.seek(file_tbl + f_name_off)
-			f_name = xor_file.get_line()
-			last_name_pos = xor_file.get_position()
+			rom_file.seek(file_tbl + f_name_off)
+			f_name = rom_file.get_line()
+			last_name_pos = rom_file.get_position()
 					
 			# Skip music names for Kono Aozora for now as they have Shift-JIS names which cause Godot to die.
 			if f_name.get_extension() == "ads" and dvd_str == "KONNYAKU":
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 				continue
+			elif f_name.get_extension() == "ads" and dvd_str == "PURECURE":
+				if !last_name_pos % 16 == 0:
+					last_name_pos = (last_name_pos + 15) & ~15
+				continue
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "pic":
+			#if f_name.get_extension() != "bup":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -187,6 +218,8 @@ func extractIso() -> void:
 					dec_pos += 0x800
 			elif encryption_selected == enc_type.PIAGO:
 				buff = decrypt_mem_file_PIAGO(buff, global_key, f_key)
+			elif encryption_selected == enc_type.PURECURE:
+				buff = decrypt_mem_file_PURECURE(buff, f_key)
 				
 			if !last_name_pos % 16 == 0: # Align to 0x10 boundary for next table start when i reaches num_files
 				last_name_pos = (last_name_pos + 15) & ~15
@@ -240,6 +273,7 @@ func extractIso() -> void:
 		pos = last_name_pos
 			
 	print_rich("[color=green]Finished![/color]")
+	lookup_tbl.clear()
 	
 	
 func process_pic2ps2_image(data: PackedByteArray) -> Image:
@@ -422,6 +456,50 @@ func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
 	return result
 	
 	
+func decrypt_int_PURECURE(key: int) -> PackedInt64Array:
+	var v1: int = 0x000343FD  # Multiplier constant
+	var v0: int = 0x00269EC3  # Addition constant
+	var keys: PackedInt64Array # New keys to return.
+	# keys[0] should be returned to this function for loops
+	# keys[1] is xor'd by the input byte from a buffer needing decryption.
+	
+	var n_key_1: int = ((key * v1) + v0) & 0xFFFFFFFF
+	var n_key_2: int = (n_key_1 >> 10) & 0xFFFF
+	keys.append(n_key_1)
+	keys.append(n_key_2)
+	return keys
+	
+	
+func decrypt_mem_file_PURECURE(input_buffer: PackedByteArray, sector_start: int) -> PackedByteArray:
+	var sector_size: int = 0x800  # Size of each sector
+	var block_size: int = 0x10  # Block size to decrypt
+	var block_idx: int = 0 # Block index
+	var total_blocks: int = input_buffer.size() # Total blocks to process
+	var lookup_tbl_off: int = 0 # Table lookup offset
+	
+	while block_idx < total_blocks:
+		var block_start: int = block_idx
+		var block_end: int = block_start + block_size
+		var sector: int = block_idx / sector_size
+		
+		var v1: int = sector_start + sector # Add sector start and current sector
+		var keys: PackedInt64Array = decrypt_int_PURECURE(v1) # Current sector aligned to 0x800 becomes key
+		lookup_tbl_off = keys[1] & 0x0FFF
+		var lookup_idx: int = 0 # Resets every 0x10 bytes
+		for a2 in range(block_start, block_end):
+			if a2 >= total_blocks:
+				return input_buffer
+			lookup_tbl_off += lookup_idx
+			var v0: int = input_buffer.decode_u8(a2)
+			var a0: int = lookup_tbl.decode_u8(lookup_tbl_off)
+			input_buffer.encode_s8(a2, (v0 ^ a0) & 0xFF)
+			lookup_tbl_off += 1
+			
+		block_idx += sector_size
+	
+	
+	return input_buffer
+	
 func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, sector_start: int) -> PackedByteArray:
 	# Used by PIAGO encryption
 
@@ -444,7 +522,7 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 	while a2 < total_blocks:
 		var block_start: int = a2
 		var block_end: int = block_start + block_size
-		var sector: int = a2 / 0x800
+		var sector: int = a2 / sector_size
 		
 		var v0: int = t5 + sector # Add sector start and block index
 		var a1: int = v0 + t4  # Add decryption key
@@ -469,7 +547,7 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 			result[a0] = (current_byte ^ v1) & 0xFF  # XOR with calculated value
 
 		# Move to the next sector
-		a2 += 0x800
+		a2 += sector_size
 
 	return result
 
