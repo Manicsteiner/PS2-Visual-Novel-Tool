@@ -5,6 +5,7 @@ extends Control
 
 enum enc_type {
 	NONE,
+	KEYORINA,
 	KONNYAKU,
 	PURECURE,
 	PIAGO
@@ -62,6 +63,9 @@ func extractIso() -> void:
 	var f_size: int
 	var file_tbl: int
 	var pos: int
+	var made_folders: bool = false
+	var folders: Dictionary = {}
+	var current_folder: String
 	
 	# Just in case some offsets are different
 	var rom_offsets: Dictionary = {
@@ -81,21 +85,31 @@ func extractIso() -> void:
 	# Need a Shift-JIS decoder to UTF-8 for .ads file names in Kono Aozora and Pure x Cure
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
-	
-	# Check if DVD name matches
-	in_file.seek(0x83071)
-	hdr_bytes = in_file.get_buffer(8)
-	dvd_str = hdr_bytes.get_string_from_ascii()
-	if dvd_str in rom_offsets:
-		rom_off = rom_offsets[dvd_str]
-	else:
-		var expected_str: String = ", ".join(rom_offsets.keys())
-		OS.alert("%s doesn't match known offset! Expected one of: %s, but got: %s." % [selected_file, expected_str, dvd_str])
-		return
+	# All other games besides Katakamuna have a dvd name.
+	if Main.game_type != Main.KATAKAMUNA:
+		# Check if DVD name matches
+		in_file.seek(0x83071)
+		hdr_bytes = in_file.get_buffer(8)
+		dvd_str = hdr_bytes.get_string_from_ascii()
+		if dvd_str in rom_offsets:
+			rom_off = rom_offsets[dvd_str]
+		else:
+			var expected_str: String = ", ".join(rom_offsets.keys())
+			OS.alert("%s doesn't match known offset! Expected one of: %s, but got: %s." % [selected_file, expected_str, dvd_str])
+			return
+	elif Main.game_type == Main.KATAKAMUNA:
+		in_file.seek(0xC3500000)
+		hdr_bytes = in_file.get_buffer(3)
+		dvd_str = hdr_bytes.get_string_from_ascii()
+		if dvd_str == "ROM":
+			rom_off = 0x186A00
+		else:
+			OS.alert("ISO doesn't appear to be Katakamuna.")
+			return
 			
 	# Set decryption type
 	if dvd_str == "KEYORINA":
-		encryption_selected = enc_type.NONE
+		encryption_selected = enc_type.KEYORINA
 	elif dvd_str == "HIGURASI":
 		encryption_selected = enc_type.KONNYAKU
 	elif dvd_str == "KONNYAKU":
@@ -104,6 +118,8 @@ func extractIso() -> void:
 		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "PURECURE":
 		encryption_selected = enc_type.PURECURE
+	elif dvd_str == "ROM":
+		encryption_selected = enc_type.NONE
 		
 	rom_off *= 0x800
 	
@@ -114,7 +130,7 @@ func extractIso() -> void:
 	in_file.seek(rom_off)
 	buff = in_file.get_buffer(rom_size)
 	
-	if encryption_selected == enc_type.KONNYAKU or encryption_selected == enc_type.NONE:
+	if encryption_selected == enc_type.KONNYAKU or encryption_selected == enc_type.KEYORINA:
 		# Xor table is after ROM offset with the same size
 		xor_tbl = in_file.get_buffer(rom_size)
 		buff = decrypt_rom_header(buff, xor_tbl)
@@ -155,6 +171,9 @@ func extractIso() -> void:
 	rom_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.READ)
 	
 	pos = 0x10
+	if encryption_selected == enc_type.NONE: # Katakamuna aligns to 0x80 for tables
+		pos = (pos + 0x7F) & ~0x7F
+		
 	while pos < rom_size:
 		rom_file.seek(pos)
 		if rom_file.eof_reached():
@@ -167,19 +186,27 @@ func extractIso() -> void:
 		last_tbl_pos = rom_file.get_position()
 		for file in num_files:
 			rom_file.seek(last_tbl_pos)
-			f_name_off = rom_file.get_32() # if highest 32 bit is 0x80, appears to be a folder or sometimes nothing (0x2E)
+			f_name_off = rom_file.get_32() # if highest 32 bit is 0x80 is a folder or sometimes nothing (0x2E)
 			f_offset = rom_file.get_32()
 			f_key = f_offset # Used as a key in PUREPURE/PIAGO encryption
-			f_offset = (f_offset * 0x800) + rom_off
 			f_size = rom_file.get_32()
 			last_tbl_pos = rom_file.get_position()
 			if f_name_off > 0x7FFFFFFF:
-				# Skip folders as I am unsure how they are sorted
 				rom_file.seek(file_tbl + f_name_off & 0x7FFFFFFF)
-				f_name = rom_file.get_line()
+				var temp_folder: String = rom_file.get_line().lstrip(".")
 				last_name_pos = rom_file.get_position()
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
+					
+				if !made_folders and !temp_folder == "":
+					if temp_folder not in folders:
+						folders[temp_folder] = {}
+					folders[temp_folder]["ids"] = [[f_offset, f_size]]
+				elif made_folders:
+					for key in folders.keys():
+						if [f_offset, f_size] in folders[key].get("ids", []):
+							current_folder = key
+							break
 				continue
 			
 			
@@ -203,6 +230,7 @@ func extractIso() -> void:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
 			
+			f_offset = (f_offset * 0x800) + rom_off
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
 			
@@ -225,6 +253,10 @@ func extractIso() -> void:
 				last_name_pos = (last_name_pos + 15) & ~15
 				
 			if debug_out:
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
 				out_file = FileAccess.open(folder_path + "/%s" % f_name + ".ORG", FileAccess.WRITE)
 				out_file.store_buffer(buff)
 				out_file.close()
@@ -236,6 +268,11 @@ func extractIso() -> void:
 			hdr_bytes = buff.slice(0, 4)
 			var hdr_str: String = hdr_bytes.get_string_from_ascii()
 			if hdr_str == "PIC2":
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
+					
 				if debug_raw_out:
 					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
 					out_file.store_buffer(buff)
@@ -252,7 +289,14 @@ func extractIso() -> void:
 				
 				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
+			if hdr_str == "PIC ":
+				pass
 			elif hdr_str == "BUP2":
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
+						
 				if debug_raw_out:
 					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
 					out_file.store_buffer(buff)
@@ -264,13 +308,20 @@ func extractIso() -> void:
 				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
 				
+			if made_folders and current_folder:
+				f_name = current_folder + "/" + f_name
+				var dir: DirAccess = DirAccess.open(folder_path)
+				dir.make_dir_recursive(folder_path + "/" + current_folder)
 			out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			out_file.close()
 			
 			print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 		
+		made_folders = true
 		pos = last_name_pos
+		if encryption_selected == enc_type.NONE:
+			pos = (pos + 0x7F) & ~0x7F
 			
 	print_rich("[color=green]Finished![/color]")
 	lookup_tbl.clear()
@@ -500,6 +551,7 @@ func decrypt_mem_file_PURECURE(input_buffer: PackedByteArray, sector_start: int)
 	
 	return input_buffer
 	
+	
 func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, sector_start: int) -> PackedByteArray:
 	# Used by PIAGO encryption
 
@@ -550,8 +602,6 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 		a2 += sector_size
 
 	return result
-
-
 	
 	
 func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
@@ -570,7 +620,9 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 	var t5: int
 	var t6: int
 	var t7: int # out off
+	var is_pic: bool = false # For Katakamuna
 	var is_pic2: bool = false
+	var is_bup: bool = false # For Katakamuna
 	var is_bup2: bool = false
 	var section_start: int
 	var section_end: int
@@ -631,6 +683,13 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 		out.resize(part_width * part_height)
 		a2 = section_start
 		a3 = section_end
+	elif "PIC ":
+		is_pic = true
+		section_start = input.decode_u32(0x20)
+		section_end = input.decode_u32(input.size() - 0x20)
+		part_width = input.decode_u16(0x04)
+		part_height = input.decode_u16(0x06)
+		out.resize(part_width * part_height)
 	
 	var goto: String = "init" # 001352C0 based on Kono Aozora Ni
 	while true:
@@ -790,6 +849,16 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 					section_end = input.decode_u32(0x1C)
 					out.append_array(input.slice(0, section_end))
 					out.append_array(imgs[0])
+					break
+				elif is_pic:
+					imgs.append(PackedByteArray(out))
+					out.clear()
+					# Append palette then image parts
+					section_start = input.decode_u32(0xC)
+					section_end = input.decode_u32(0x10)
+					out.append_array(input.slice(0, section_end))
+					for img in range(0, imgs.size()):
+						out.append_array(imgs[img])
 					break
 				else:
 					break
