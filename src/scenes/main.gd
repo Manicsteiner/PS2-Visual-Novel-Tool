@@ -58,6 +58,7 @@ enum {
 	HARUKAZEPS,
 	HEARTNOKUNI,
 	HIGURASHI,
+	HIGURASHIKAKERA,
 	HOOLIGAN, 
 	HOKENSHITSU,
 	HURRAH,
@@ -109,6 +110,7 @@ enum {
 	ORANGEPOCKET,
 	OTOMENOJIJOU,
 	OUKA,
+	PARFAIT,
 	PATISSERIE,
 	PHANTOMINFERNO, 
 	PIA3, 
@@ -1022,6 +1024,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HIGURASHI
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == HIGURASHIKAKERA:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(HIGURASHIKAKERA)
+		game_type = HIGURASHIKAKERA
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == PIAGO:
 		game_type_sub_text.text = "Supports most images."
 		game_type_selector.select(PIAGO)
@@ -1035,9 +1043,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == KATAKAMUNA:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports extraction only."
 		game_type_selector.select(KATAKAMUNA)
 		game_type = KATAKAMUNA
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
+	elif index == PARFAIT:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(PARFAIT)
+		game_type = PARFAIT
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1160,6 +1174,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
 	game_type_selector.add_item("Heart no Kuni no Alice: Wonderful Wonder World", HEARTNOKUNI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri", HIGURASHI)
+	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri: Kakera Asobi", HIGURASHIKAKERA)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
@@ -1211,6 +1226,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
 	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
+	game_type_selector.add_item("Parfait: Chocolat Second Style", PARFAIT)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
 	game_type_selector.add_item("Phantom: Phantom of Inferno", PHANTOMINFERNO)
 	game_type_selector.add_item("Pia Carrot he Youkoso!! 3: Round Summer", PIA3)

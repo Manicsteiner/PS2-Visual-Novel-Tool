@@ -8,7 +8,8 @@ enum enc_type {
 	KEYORINA,
 	KONNYAKU,
 	PURECURE,
-	PIAGO
+	PIAGO,
+	PARFAIT
 }
 
 var encryption_selected: int = enc_type.KONNYAKU
@@ -66,14 +67,14 @@ func extractIso() -> void:
 	var made_folders: bool = false
 	var folders: Dictionary = {}
 	var current_folder: String
-	
-	# Just in case some offsets are different
 	var rom_offsets: Dictionary = {
 	"KONNYAKU": 0x445C0, # Kono Aozora Ni
 	"HIGURASI": 0x445C0, # Higurashi no Naku Koro ni Matsuri
+	"HGRSMTRR": 0x445C0, # Higurashi no Naku Koro ni - Matsuri - Kakera Asobi 
 	"PURECURE": 0x445C0, # Pure x Cure Recovery  (Angle Maneuver engine)
 	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
-	"PIAGO": 0x445C0 # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
+	"PIAGO": 0x445C0, # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
+	"PARFAIT": 0x124F80 # Parfait - Chocolat Second Style
 	}
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
@@ -84,6 +85,7 @@ func extractIso() -> void:
 	# Handle .txa decompression
 	# Handle .wip decompression
 	# Need a Shift-JIS decoder to UTF-8 for .ads file names in Kono Aozora and Pure x Cure
+	# Parfait is regular LZSS
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
 	# All other games besides Katakamuna have a dvd name.
@@ -113,10 +115,14 @@ func extractIso() -> void:
 		encryption_selected = enc_type.KEYORINA
 	elif dvd_str == "HIGURASI":
 		encryption_selected = enc_type.KONNYAKU
+	elif dvd_str == "HGRSMTRR":
+		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "KONNYAKU":
 		encryption_selected = enc_type.KONNYAKU
 	elif dvd_str == "PIAGO":
 		encryption_selected = enc_type.PIAGO
+	elif dvd_str == "PARFAIT":
+		encryption_selected = enc_type.PARFAIT
 	elif dvd_str == "PURECURE":
 		encryption_selected = enc_type.PURECURE
 	elif dvd_str == "ROM":
@@ -138,6 +144,8 @@ func extractIso() -> void:
 	elif encryption_selected == enc_type.PIAGO:
 		global_key = buff.decode_u32(0xC) # Retrieve global key from header of ROM.BIN
 		buff = decrypt_rom_header_PIAGO(buff)
+	elif encryption_selected == enc_type.PARFAIT:
+		buff = decrypt_rom_header_PARFAIT(buff)
 	elif encryption_selected == enc_type.PURECURE:
 		var key: int = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
 		# Make lookup table for file decryption
@@ -172,7 +180,7 @@ func extractIso() -> void:
 	rom_file = FileAccess.open(folder_path + "/!ROM.BIN", FileAccess.READ)
 	
 	pos = 0x10
-	if encryption_selected == enc_type.NONE: # Katakamuna aligns to 0x80 for tables
+	if encryption_selected == enc_type.NONE or encryption_selected == enc_type.PARFAIT: # Katakamuna/PARFAIT aligns to 0x80 for tables
 		pos = (pos + 0x7F) & ~0x7F
 		
 	while pos < rom_size:
@@ -227,7 +235,7 @@ func extractIso() -> void:
 				continue
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "pic":
+			#if f_name.get_extension() != "lzs":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -283,7 +291,26 @@ func extractIso() -> void:
 					continue
 				# ***
 				buff = decompress_sneo(buff)
+			if f_name.get_extension() == "img" and current_folder != "bustup":
+				# For Parfait. No BUP support yet.
+				# arr_dat[0] is the full decompressed buffer, [1] is the png image.
+				var arr_dat: Array = process_img(buff)
+				buff = arr_dat[0]
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
+					
+				if debug_raw_out:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+				var png: Image = arr_dat[1]
+				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
+				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				continue
 				
 			hdr_bytes = buff.slice(0, 4)
 			var hdr_str: String = hdr_bytes.get_string_from_ascii()
@@ -343,7 +370,7 @@ func extractIso() -> void:
 		
 		made_folders = true
 		pos = last_name_pos
-		if encryption_selected == enc_type.NONE:
+		if encryption_selected == enc_type.NONE or encryption_selected == enc_type.PARFAIT:
 			pos = (pos + 0x7F) & ~0x7F
 			
 	print_rich("[color=green]Finished![/color]")
@@ -476,6 +503,57 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 
 	return image
 	
+
+func process_img(data: PackedByteArray) -> Array:
+	# Used by Parfait. Doesn't support BUPs yet, as there's multiple data in them.
+	var hdr_bytes: PackedByteArray = data.slice(0, 4)
+	var hdr_str = hdr_bytes.get_string_from_ascii()
+	if hdr_str != "IMG ":
+		push_error("Not a valid IMG header.")
+		return Array()
+	
+	
+	# Extract image dimensions
+	var image_width: int = data.decode_u16(0x14)
+	var image_height: int = data.decode_u16(0x16)
+
+	# Extract palette data (1024 colors, 0x400 bytes)
+	var palette_offset: int = 0x18
+	var palette: PackedByteArray = PackedByteArray()
+	for i in range(0, 0x400):
+		palette.append(data.decode_u8(palette_offset + i))
+
+	# Unswizzle the palette
+	palette = ComFuncs.unswizzle_palette(palette, 32)
+
+	# If alpha needs to be removed, set it to 255
+	if remove_alpha:
+		for i in range(0, 0x400, 4):
+			palette.encode_u8(i + 3, 255)
+
+	# Extract raw pixel data
+	var image_data_offset: int = palette_offset + 0x400
+	var dec_size: int = data.decode_u32(image_data_offset + 4)
+	var pixel_data: PackedByteArray = ComFuncs.decompLZSS(data.slice(image_data_offset + 8), data.size(), dec_size)
+
+	# Create the image object
+	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+
+	# Process the pixel data and apply the palette
+	for y in range(image_height):
+		for x in range(image_width):
+			var pixel_index: int = pixel_data[x + y * image_width]
+			var r: int = palette[pixel_index * 4 + 0]
+			var g: int = palette[pixel_index * 4 + 1]
+			var b: int = palette[pixel_index * 4 + 2]
+			var a: int = palette[pixel_index * 4 + 3]
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			
+	var dat_arr: Array
+	dat_arr.append(pixel_data)
+	dat_arr.append(image)
+	return dat_arr
+	
 	
 func decrypt_rom_header(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedByteArray:
 	var word_1: int
@@ -528,6 +606,24 @@ func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
 		a3 += 1
 
 	return result
+	
+	
+func decrypt_rom_header_PARFAIT(rom: PackedByteArray) -> PackedByteArray:
+	var key: int = rom.decode_u32(0xC)
+	var rom_size: int = rom.size()
+	var off: int = 0x80
+	
+	key = ~key & 0xFFFFFFFF
+	while off < rom_size:
+		var v0: int = rom.decode_u32(off)
+		var a1: int = (key >> 17)
+		var a0: int = (key << 5)
+		v0 = (v0 ^ key) & 0xFFFFFFFF
+		rom.encode_s32(off, v0)
+		key = ~(a1 | a0) & 0xFFFFFFFF
+		off += 4
+	
+	return rom
 	
 	
 func decrypt_int_PURECURE(key: int) -> PackedInt64Array:
@@ -663,6 +759,9 @@ func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
 		out.resize(section_end)
 		a2 = section_start
 		a3 = section_end
+	elif hdr_str == "LZSS":
+		out = ComFuncs.decompLZSS(input.slice(0x10), input.size() - 0x10, input.decode_u32(4) - 0x10)
+		return out
 	elif hdr_str == "BUP2":
 		# There's a bunch of data in the headers still, this only semi works.
 		is_bup2 = true
