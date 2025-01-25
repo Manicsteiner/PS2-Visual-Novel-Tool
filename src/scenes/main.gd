@@ -69,6 +69,7 @@ enum {
 	JEWELSOCEAN,
 	JUUJIGEN,
 	KANON,
+	KATAKAMUNA,
 	KAZEIROSURF,
 	KIMISUTA,
 	KIRAKIRA, 
@@ -1010,7 +1011,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == YOAKE:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports most images. Lacks proper folders in 'bustup'"
 		game_type_selector.select(YOAKE)
 		game_type = YOAKE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1031,6 +1032,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
 		game_type_selector.select(PUREXCURE)
 		game_type = PUREXCURE
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
+	elif index == KATAKAMUNA:
+		game_type_sub_text.text = "Supports most images."
+		game_type_selector.select(KATAKAMUNA)
+		game_type = KATAKAMUNA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1164,6 +1171,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Kanon", KANON)
+	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)

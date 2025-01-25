@@ -78,10 +78,11 @@ func extractIso() -> void:
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
 	# Check BUPs for any weird missing / distorted image parts, as the method for PIC2s may need to be applied here.
+	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue still lacks proper bup folder support as there is multiple folders in "bustup"
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
+	# Katakamuna uses a different compression. Only extraction supported for now.
 	# Handle .txa decompression
 	# Handle .wip decompression
-	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue as bup files get overridden
 	# Need a Shift-JIS decoder to UTF-8 for .ads file names in Kono Aozora and Pure x Cure
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
@@ -140,7 +141,7 @@ func extractIso() -> void:
 	elif encryption_selected == enc_type.PURECURE:
 		var key: int = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
 		# Make lookup table for file decryption
-		var keys: PackedInt64Array = decrypt_int_PURECURE(key)
+		var keys: PackedInt64Array = decrypt_int_PURECURE(key) # Actually loads 2 u32s but Godot wraps around if loaded as a 32 array (treats as signed).
 		var off: int = 0
 		while off < 0x100F:
 			lookup_tbl.append(keys[1] & 0xFF)
@@ -154,7 +155,7 @@ func extractIso() -> void:
 		out_file.close()
 		
 		key = buff.decode_u32(0xC) # Initial key is at 0xC in ROM.BIN
-		keys = decrypt_int_PURECURE(key) # Actually loads 2 u32s but Godot wraps around if loaded as a 32 array (treats as signed).
+		keys = decrypt_int_PURECURE(key)
 		off = 0x10
 		while off < rom_size:
 			var byte: int = buff.decode_u8(off) ^ keys[1]
@@ -186,7 +187,7 @@ func extractIso() -> void:
 		last_tbl_pos = rom_file.get_position()
 		for file in num_files:
 			rom_file.seek(last_tbl_pos)
-			f_name_off = rom_file.get_32() # if highest 32 bit is 0x80 is a folder or sometimes nothing (0x2E)
+			f_name_off = rom_file.get_32() # if highest 32 bit is 0x80 is a folder.
 			f_offset = rom_file.get_32()
 			f_key = f_offset # Used as a key in PUREPURE/PIAGO encryption
 			f_size = rom_file.get_32()
@@ -198,6 +199,7 @@ func extractIso() -> void:
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 					
+				# This doesn't dynamically work. Yoake Mae Yori has multiple folders inside "bustup" which are not accounted for.
 				if !made_folders and !temp_folder == "":
 					if temp_folder not in folders:
 						folders[temp_folder] = {}
@@ -225,7 +227,7 @@ func extractIso() -> void:
 				continue
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "bup":
+			#if f_name.get_extension() != "pic":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -260,10 +262,28 @@ func extractIso() -> void:
 				out_file = FileAccess.open(folder_path + "/%s" % f_name + ".ORG", FileAccess.WRITE)
 				out_file.store_buffer(buff)
 				out_file.close()
+				
+				f_name = f_name.get_file()
 			
 			# Decompression ONLY for these files (other file types need checking)
 			if f_name.get_extension() == "pic" or f_name.get_extension() == "lzs" or f_name.get_extension() == "bup":
+				# *** Remove this section later
+				if Main.game_type == Main.KATAKAMUNA:
+					if made_folders and current_folder:
+						f_name = current_folder + "/" + f_name
+						var dir: DirAccess = DirAccess.open(folder_path)
+						dir.make_dir_recursive(folder_path + "/" + current_folder)
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+					f_name = f_name.get_file()
+					
+					print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+					continue
+				# ***
 				buff = decompress_sneo(buff)
+				
 				
 			hdr_bytes = buff.slice(0, 4)
 			var hdr_str: String = hdr_bytes.get_string_from_ascii()
@@ -290,6 +310,9 @@ func extractIso() -> void:
 				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
 			if hdr_str == "PIC ":
+				# TODO: At 0x001522C8.
+				# Comp size is after palette
+				# Reads byte + 4 after comp size for decompression routine
 				pass
 			elif hdr_str == "BUP2":
 				if made_folders and current_folder:
