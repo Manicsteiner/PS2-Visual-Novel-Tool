@@ -110,6 +110,7 @@ func extractIso() -> void:
 			OS.alert("ISO doesn't appear to be Katakamuna.")
 			return
 			
+	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	# Set decryption type
 	if dvd_str == "KEYORINA":
 		encryption_selected = enc_type.KEYORINA
@@ -221,24 +222,17 @@ func extractIso() -> void:
 			
 			
 			rom_file.seek(file_tbl + f_name_off)
-			f_name = rom_file.get_line()
+			var str_len: int = rom_file.get_line().length()
 			last_name_pos = rom_file.get_position()
-					
-			# Skip music names for Kono Aozora for now as they have Shift-JIS names which cause Godot to die.
-			if f_name.get_extension() == "ads" and dvd_str == "KONNYAKU":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
-			elif f_name.get_extension() == "ads" and dvd_str == "PURECURE":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
+			
+			in_file.seek(file_tbl + f_name_off)
+			f_name = ComFuncs.convert_jis_packed_byte_array(rom_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "lzs":
-				#if !last_name_pos % 16 == 0:
-					#last_name_pos = (last_name_pos + 15) & ~15
-				#continue
+			if f_name.get_extension() != "ads":
+				if !last_name_pos % 16 == 0:
+					last_name_pos = (last_name_pos + 15) & ~15
+				continue
 			
 			f_offset = (f_offset * 0x800) + rom_off
 			in_file.seek(f_offset)
@@ -609,19 +603,12 @@ func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
 	
 	
 func decrypt_rom_header_PARFAIT(rom: PackedByteArray) -> PackedByteArray:
-	var key: int = rom.decode_u32(0xC)
-	var rom_size: int = rom.size()
-	var off: int = 0x80
-	
-	key = ~key & 0xFFFFFFFF
-	while off < rom_size:
+	var key: int = ~rom.decode_u32(0xC) & 0xFFFFFFFF
+	for off in range(0x80, rom.size(), 4):
 		var v0: int = rom.decode_u32(off)
-		var a1: int = (key >> 17)
-		var a0: int = (key << 5)
-		v0 = (v0 ^ key) & 0xFFFFFFFF
-		rom.encode_s32(off, v0)
-		key = ~(a1 | a0) & 0xFFFFFFFF
-		off += 4
+		v0 ^= key
+		rom.encode_s32(off, v0 & 0xFFFFFFFF)
+		key = ~((key >> 17) | (key << 5)) & 0xFFFFFFFF
 	
 	return rom
 	

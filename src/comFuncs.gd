@@ -1,5 +1,63 @@
 extends Node
 
+
+func make_shift_jis_dic() -> Dictionary:
+	const shift_jis_path: String = "res://src/Shiftjis_utf8.txt"
+	var mappings: Dictionary = {}
+	
+	var shift_jis_file: FileAccess = FileAccess.open(shift_jis_path, FileAccess.READ)
+	if shift_jis_file:
+		while not shift_jis_file.eof_reached():
+			var line: String = shift_jis_file.get_line().strip_edges()
+			if line == "":
+				continue
+			var split_line: PackedStringArray = line.split("=")
+			if split_line.size() == 2:
+				var key: int = split_line[0].hex_to_int()
+				var value: String = split_line[1]  # The corresponding string to map to
+				mappings[key] = value  # Add mapping to dictionary
+		shift_jis_file.close()
+	else:
+		push_error("Failed to open mapping file: " + shift_jis_path)
+	
+	return mappings
+	
+	
+func convert_jis_packed_byte_array(input_data: PackedByteArray, mapping_dic: Dictionary) -> PackedByteArray:
+	if mapping_dic == {}:
+		push_error("Mapping file is empty or could not be loaded.")
+		return input_data
+
+	var output_data = PackedByteArray()
+	var idx: int = 0
+	while idx < input_data.size():
+		# Check if the current byte exists in the mapping
+		var current_byte: int = input_data[idx]
+		if mapping_dic.has(current_byte):
+			# Convert the corresponding mapped string to its byte representation
+			var mapped_string: String = mapping_dic[current_byte]
+			var bytes: PackedByteArray = mapped_string[0].to_utf8_buffer()  # Get the first byte
+			output_data.append_array(bytes)
+			idx += 1  # Move to the next byte
+		elif idx + 1 < input_data.size():
+			# Check if the next two bytes form a valid mapping
+			var two_bytes: int = swapNumber(input_data.decode_u16(idx), "16")
+			if mapping_dic.has(two_bytes):
+				# Convert the corresponding mapped string to its byte representation
+				var mapped_string: String = mapping_dic[two_bytes]
+				var bytes: PackedByteArray = mapped_string[0].to_utf8_buffer()  # Get the first byte
+				output_data.append_array(bytes)
+				idx += 2  # Skip the next byte since it's already processed
+			else:
+				output_data.append(current_byte)  # No mapping found for the two bytes, keep the current byte
+				idx += 1  # Proceed normally
+		else:
+			output_data.append(current_byte)  # Single byte, no match, keep the current byte
+			idx += 1  # Move to the next byte
+
+	return output_data
+	
+	
 func convert_rgba_5551_to_rgba8(image_data: PackedByteArray, palette_data: PackedByteArray, image_width: int, image_height: int) -> Image:
 	var pixel_count: int = image_width * image_height
 

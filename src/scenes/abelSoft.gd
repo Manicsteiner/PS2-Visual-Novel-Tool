@@ -8,6 +8,7 @@ var selected_file: String
 var chose_file: bool = false
 var chose_folder: bool = false
 
+
 func _process(_delta: float) -> void:
 	if chose_file and chose_folder:
 		extractArc()
@@ -30,14 +31,14 @@ func extractArc() -> void:
 	var off_tbl: int = 0x10
 	var dir: DirAccess
 	
-	#todo need Shift-JIS decoder for names
-	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
 	var bytes: int = in_file.get_32()
 	
 	if bytes != 0x20435241: #ARC\0x20
 		OS.alert("Not a valid ARC header.")
 		return
+	
+	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	
 	num_files = in_file.get_32()
 	arc_size = in_file.get_32()
@@ -52,7 +53,10 @@ func extractArc() -> void:
 		f_size = in_file.get_32()
 		
 		in_file.seek(f_name_off)
-		f_name = in_file.get_line()
+		var str_len: int = in_file.get_line().length()
+		
+		in_file.seek(f_name_off)
+		f_name = ComFuncs.convert_jis_packed_byte_array(in_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
 		
 		in_file.seek(f_offset)
 		buff = in_file.get_buffer(f_size)

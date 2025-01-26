@@ -128,6 +128,7 @@ enum {
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
+	RUNEPRINCESS,
 	RYUUKOKU,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
@@ -640,6 +641,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = FUKAKUTEI
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
+	elif index == RUNEPRINCESS:
+		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
+		game_type_selector.select(RUNEPRINCESS)
+		game_type = RUNEPRINCESS
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == FUTAKOI:
 		game_type_sub_text.text = "Supports 'Futakoi'."
 		game_type_selector.select(FUTAKOI)
@@ -1007,7 +1014,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
-		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_sub_text.text = "Supports most images."
 		game_type_selector.select(KONOAOZORA)
 		game_type = KONOAOZORA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1037,7 +1044,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PUREXCURE:
-		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_sub_text.text = "Supports most images."
 		game_type_selector.select(PUREXCURE)
 		game_type = PUREXCURE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1244,6 +1251,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
+	game_type_selector.add_item("Rune Princess", RUNEPRINCESS)
 	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
