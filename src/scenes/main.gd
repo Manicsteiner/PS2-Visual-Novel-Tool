@@ -1007,7 +1007,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
-		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_sub_text.text = "Supports most images."
 		game_type_selector.select(KONOAOZORA)
 		game_type = KONOAOZORA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1037,7 +1037,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PUREXCURE:
-		game_type_sub_text.text = "Supports most images\n Needs Shift-JIS decoding for .ads files (omitted)."
+		game_type_sub_text.text = "Supports most images."
 		game_type_selector.select(PUREXCURE)
 		game_type = PUREXCURE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")

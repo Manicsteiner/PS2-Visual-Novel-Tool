@@ -110,6 +110,7 @@ func extractIso() -> void:
 			OS.alert("ISO doesn't appear to be Katakamuna.")
 			return
 			
+	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	# Set decryption type
 	if dvd_str == "KEYORINA":
 		encryption_selected = enc_type.KEYORINA
@@ -221,24 +222,17 @@ func extractIso() -> void:
 			
 			
 			rom_file.seek(file_tbl + f_name_off)
-			f_name = rom_file.get_line()
+			var str_len: int = rom_file.get_line().length()
 			last_name_pos = rom_file.get_position()
-					
-			# Skip music names for Kono Aozora for now as they have Shift-JIS names which cause Godot to die.
-			if f_name.get_extension() == "ads" and dvd_str == "KONNYAKU":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
-			elif f_name.get_extension() == "ads" and dvd_str == "PURECURE":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
+			
+			in_file.seek(file_tbl + f_name_off)
+			f_name = ComFuncs.convert_jis_packed_byte_array(rom_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
 				
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "lzs":
-				#if !last_name_pos % 16 == 0:
-					#last_name_pos = (last_name_pos + 15) & ~15
-				#continue
+			if f_name.get_extension() != "ads":
+				if !last_name_pos % 16 == 0:
+					last_name_pos = (last_name_pos + 15) & ~15
+				continue
 			
 			f_offset = (f_offset * 0x800) + rom_off
 			in_file.seek(f_offset)
