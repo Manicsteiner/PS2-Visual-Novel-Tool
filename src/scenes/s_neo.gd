@@ -609,19 +609,12 @@ func decrypt_rom_header_PIAGO(rom: PackedByteArray) -> PackedByteArray:
 	
 	
 func decrypt_rom_header_PARFAIT(rom: PackedByteArray) -> PackedByteArray:
-	var key: int = rom.decode_u32(0xC)
-	var rom_size: int = rom.size()
-	var off: int = 0x80
-	
-	key = ~key & 0xFFFFFFFF
-	while off < rom_size:
+	var key: int = ~rom.decode_u32(0xC) & 0xFFFFFFFF
+	for off in range(0x80, rom.size(), 4):
 		var v0: int = rom.decode_u32(off)
-		var a1: int = (key >> 17)
-		var a0: int = (key << 5)
-		v0 = (v0 ^ key) & 0xFFFFFFFF
-		rom.encode_s32(off, v0)
-		key = ~(a1 | a0) & 0xFFFFFFFF
-		off += 4
+		v0 ^= key
+		rom.encode_s32(off, v0 & 0xFFFFFFFF)
+		key = ~((key >> 17) | (key << 5)) & 0xFFFFFFFF
 	
 	return rom
 	
