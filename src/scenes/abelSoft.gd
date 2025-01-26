@@ -53,10 +53,9 @@ func extractArc() -> void:
 		f_size = in_file.get_32()
 		
 		in_file.seek(f_name_off)
-		var str_len: int = in_file.get_line().length()
-		
-		in_file.seek(f_name_off)
-		f_name = ComFuncs.convert_jis_packed_byte_array(in_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
+		var result: Array = ComFuncs.find_end_bytes_file(in_file, 0)
+			
+		f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 		
 		in_file.seek(f_offset)
 		buff = in_file.get_buffer(f_size)
@@ -68,7 +67,7 @@ func extractArc() -> void:
 		
 		buff.clear()
 		
-		print("0x%08X 0x%08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
+		print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
 	
 	print_rich("[color=green]Finished![/color]")
 

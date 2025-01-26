@@ -58,6 +58,27 @@ func convert_jis_packed_byte_array(input_data: PackedByteArray, mapping_dic: Dic
 	return output_data
 	
 	
+func find_end_bytes_file(file: FileAccess, end_byte: int) -> Array:
+	# Helper function to find an end marker for Shift-JIS text as bytes. Godot's '.get_line()' will not work on Shift-JIS bytes properly.
+	# end_byte must be no larger than 255.
+	# Call with an already open FileAccess object.
+	# arr[0] contains the last position seeked to (after the end_byte).
+	# arr[1] contains the PackedByteArray of the text.
+	
+	var arr: Array
+	var name_bytes: PackedByteArray
+	
+	while true:
+		var byte: int = file.get_8()
+		if byte == end_byte:
+			break
+		name_bytes.append(byte)
+		
+	arr.append(file.get_position())
+	arr.append(name_bytes)
+	return arr
+	
+	
 func convert_rgba_5551_to_rgba8(image_data: PackedByteArray, palette_data: PackedByteArray, image_width: int, image_height: int) -> Image:
 	var pixel_count: int = image_width * image_height
 

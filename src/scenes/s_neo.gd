@@ -222,14 +222,14 @@ func extractIso() -> void:
 			
 			
 			rom_file.seek(file_tbl + f_name_off)
-			var str_len: int = rom_file.get_line().length()
-			last_name_pos = rom_file.get_position()
+			# Because Godot hates Shift-JIS, we must get each byte manually and detect where it ends.
+			var result: Array = ComFuncs.find_end_bytes_file(rom_file, 0)
+			last_name_pos = result[0]
 			
-			in_file.seek(file_tbl + f_name_off)
-			f_name = ComFuncs.convert_jis_packed_byte_array(rom_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
-				
+			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
+			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "ads":
+			#if f_name.get_extension() == "pic" or f_name.get_extension() == "bup" or f_name.get_extension() == "vds":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue

@@ -642,7 +642,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == RUNEPRINCESS:
-		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
+		game_type_sub_text.text = "Supports 'Rune Princess'."
 		game_type_selector.select(RUNEPRINCESS)
 		game_type = RUNEPRINCESS
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
