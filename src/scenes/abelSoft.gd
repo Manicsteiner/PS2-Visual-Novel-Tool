@@ -51,6 +51,8 @@ func extractArc() -> void:
 		f_name_off = in_file.get_32()
 		f_offset = in_file.get_32() * 0x800
 		f_size = in_file.get_32()
+		#if f_offset != 0x154D800:
+			#continue
 		
 		in_file.seek(f_name_off)
 		var result: Array = ComFuncs.find_end_bytes_file(in_file, 0)

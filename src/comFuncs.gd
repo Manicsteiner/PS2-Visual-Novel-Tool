@@ -36,9 +36,14 @@ func convert_jis_packed_byte_array(input_data: PackedByteArray, mapping_dic: Dic
 		if mapping_dic.has(current_byte):
 			# Convert the corresponding mapped string to its byte representation
 			var mapped_string: String = mapping_dic[current_byte]
-			var bytes: PackedByteArray = mapped_string[0].to_utf8_buffer()  # Get the first byte
-			output_data.append_array(bytes)
-			idx += 1  # Move to the next byte
+			# If current byte is a space, no need to convert it again.
+			if current_byte == 32:
+				output_data.append(current_byte)
+				idx += 1  # Move to the next byte
+			else:
+				var bytes: PackedByteArray = mapped_string[0].to_utf8_buffer()  # Get the first byte
+				output_data.append_array(bytes)
+				idx += 1  # Move to the next byte
 		elif idx + 1 < input_data.size():
 			# Check if the next two bytes form a valid mapping
 			var two_bytes: int = swapNumber(input_data.decode_u16(idx), "16")
