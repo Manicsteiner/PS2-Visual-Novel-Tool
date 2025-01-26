@@ -128,6 +128,7 @@ enum {
 	QUILT,
 	REGISTA, # temp value
 	ROZENDUEL,
+	RUNEPRINCESS,
 	RYUUKOKU,
 	SAISHUUSHIKEN,
 	SAKURASESTU,
@@ -638,6 +639,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
 		game_type_selector.select(FUKAKUTEI)
 		game_type = FUKAKUTEI
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == RUNEPRINCESS:
+		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
+		game_type_selector.select(RUNEPRINCESS)
+		game_type = RUNEPRINCESS
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == FUTAKOI:
@@ -1244,6 +1251,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
+	game_type_selector.add_item("Rune Princess", RUNEPRINCESS)
 	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
