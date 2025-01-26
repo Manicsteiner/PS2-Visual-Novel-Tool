@@ -32,6 +32,7 @@ enum {
 	DEARMYFRIEND,
 	DIGI,
 	DOKOHE,
+	DOUBLEREACTION,
 	DOUBLEWISH,
 	EF,
 	ELYSION,
@@ -725,6 +726,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HURRAH
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
+	elif index == DOUBLEREACTION:
+		game_type_sub_text.text = "Supports 'Double Reaction! Plus'."
+		game_type_selector.select(DOUBLEREACTION)
+		game_type = DOUBLEREACTION
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
 	elif index == PRIVATENURSE:
 		game_type_sub_text.text = "Supports 'Private Nurse: Maria'."
 		game_type_selector.select(PRIVATENURSE)
@@ -1155,6 +1162,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Dear My Friend: Love Like Powdery Snow", DEARMYFRIEND)
 	game_type_selector.add_item("Di Gi Charat Fantasy: Excellent", DIGI)
 	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
+	game_type_selector.add_item("Double Reaction! Plus", DOUBLEREACTION)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)

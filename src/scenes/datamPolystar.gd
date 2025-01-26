@@ -47,7 +47,7 @@ func convertImages() -> void:
 			var bits_per_color: int = 32
 			bpp = 32
 			
-			if (Main.game_type == Main.NORTHWIND or Main.game_type == Main.PUREPURE) and f_ext == "ps2":
+			if (Main.game_type == Main.NORTHWIND or Main.game_type == Main.PUREPURE or Main.game_type == Main.DOUBLEREACTION) and f_ext == "ps2":
 				file_type = buff.decode_u32(0x10)
 				buff = buff.slice(0x20)
 				
