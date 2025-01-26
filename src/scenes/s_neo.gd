@@ -229,10 +229,10 @@ func extractIso() -> void:
 			f_name = ComFuncs.convert_jis_packed_byte_array(rom_file.get_buffer(str_len), shift_jis_dic).get_string_from_utf8()
 				
 			# Use for debugging certain file(s)
-			if f_name.get_extension() != "ads":
-				if !last_name_pos % 16 == 0:
-					last_name_pos = (last_name_pos + 15) & ~15
-				continue
+			#if f_name.get_extension() != "ads":
+				#if !last_name_pos % 16 == 0:
+					#last_name_pos = (last_name_pos + 15) & ~15
+				#continue
 			
 			f_offset = (f_offset * 0x800) + rom_off
 			in_file.seek(f_offset)
