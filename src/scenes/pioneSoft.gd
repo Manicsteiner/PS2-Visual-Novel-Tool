@@ -11,7 +11,7 @@ var chose_folder: bool = false
 var folder_path: String
 var chose_saf: bool = false
 var usr_files: PackedStringArray
-var out_filenames: bool = true
+var remove_alpha: bool = true
 var out_decomp: bool = false
 var exe_path: String = ""
 
@@ -70,6 +70,10 @@ func makeFiles() -> void:
 	var saf_file_tbl_size: int
 	var ext: String
 	
+	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
+	
+	# TODO: Proper zlib decompression.
+	
 	for i in range(0, usr_files.size()):
 		file = FileAccess.open(usr_files[i], FileAccess.READ)
 		file_name = usr_files[i].get_file()
@@ -96,13 +100,8 @@ func makeFiles() -> void:
 			f_offset = file.get_32()
 			f_size = file.get_32()
 			dec_size = file.get_32()
+			f_name = ComFuncs.convert_jis_packed_byte_array(ComFuncs.find_end_bytes_file(file, 0)[1], shift_jis_dic).get_string_from_utf8()
 			
-			# Needs Shift-JIS decoding to UTF8 for properly handling.
-			if out_filenames:
-				f_name = file.get_line()
-			else:
-				f_name = "%04d" % saf_files
-				
 			file.seek(f_offset)
 			if f_size != dec_size:
 				buff = ComFuncs.decompress_raw_zlib(file.get_buffer(f_size), dec_size, true)
@@ -116,56 +115,10 @@ func makeFiles() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
-				img_bpp_type = buff.decode_u8(2)
-				img_type = buff.decode_u8(3)
-				if img_bpp_type == 0x51 and img_type == 0x14:
-					print_rich("[color=yellow]Skipping %s as image bpp %02X and image type %02X are unsupported.[/color]" % [f_name, img_bpp_type, img_type])
-					continue
-					
-				width = buff.decode_u16(0xC)
-				height = buff.decode_u16(0xE)
-				if img_type == 0x13:
-					width = (width + 7) >> 3 << 19 >> 16
-				elif img_type == 0x14:
-					width = (width + 0xF) >> 4 << 20 >> 16
-				elif img_type == 2:
-					width = (width + 3) >> 2 << 18 >> 16
-					
-				# Not sure what to do about the smaller palettes
-				if img_bpp_type == 0x53 & 2:
-					palette_size = 0x400
-				elif img_bpp_type == 0x51 & 2:
-					palette_size = 0x40
-					
-				if width == 24 and height == 22:
-					print_rich("[color=yellow]Skipping %s I have no clue what these are[/color]" % f_name)
-					continue
-					
-				pallete_data = ComFuncs.unswizzle_palette(buff.slice(0x10, 0x410), 32)
-				pallete_data = ComFuncs.rgba_to_bgra(pallete_data)
-				image_data = buff.slice(0x410)
-					
-				has_palette = true
-				bits_per_color = 32
-				bpp = 8
-				image_type = 1
-			
-				tga_header = ComFuncs.makeTGAHeader(has_palette, image_type, bits_per_color, bpp, width, height)
-				final_image.append_array(tga_header)
-				final_image.append_array(pallete_data)
-				final_image.append_array(image_data)
+				var png: Image = make_image(buff)
+				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
-				tga_header.clear()
-				image_data.clear()
-				pallete_data.clear()
-				
-				out_file = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-				out_file.store_buffer(final_image)
-				out_file.close()
-				final_image.clear()
-				buff.clear()
-				
-				print("0x%08X " % f_offset, "0x%08X " % dec_size + "0x%02X " % img_type + "0x%02X " % img_bpp_type + "%s" % folder_path + "/%s" % f_name)
+				print("%08X " % f_offset, "%08X " % dec_size + "%02X " % img_type + "%02X " % img_bpp_type + "%s" % folder_path + "/%s" % f_name)
 			else:
 				if buff.decode_u32(0) == 0x324D4954:
 					ext = ".TM2"
@@ -179,7 +132,7 @@ func makeFiles() -> void:
 				out_file.close()
 				buff.clear()
 			
-				print("0x%08X " % f_offset, "0x%08X " % dec_size + "%s" % folder_path + "/%s" % f_name)
+				print("%08X " % f_offset, "%08X " % dec_size + "%s" % folder_path + "/%s" % f_name)
 		
 		
 	print_rich("[color=green]Finished![/color]")
@@ -209,8 +162,60 @@ func extractFromExe() -> void:
 	out_file.close()
 	buff.clear()
 	
-	print("0x%08X " % saf_off, "0x%08X " % saf_size + "%s" % folder_path + "/%s" % script_saf_name)
+	print("%08X " % saf_off, "%08X " % saf_size + "%s" % folder_path + "/%s" % script_saf_name)
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func make_image(data: PackedByteArray) -> Image:
+	var img_bpp_type: int = data.decode_u8(2)
+	var img_type: int = data.decode_u8(3)
+	var image_width: int = data.decode_u16(0xC) & 0xFFF
+	var image_height: int = data.decode_u16(0xE) & 0xFFF
+	var palette_size: int
+	
+	if img_type == 0x13:
+		image_width = (image_width + 7) >> 3 << 19 >> 16
+	elif img_type == 0x14:
+		image_width = (image_width + 0xF) >> 4 << 20 >> 16
+	elif img_type == 2:
+		image_width = (image_width + 3) >> 2 << 18 >> 16
+		
+	if img_bpp_type & 1 == 1:
+		palette_size = 0x400
+		if img_bpp_type & 2 == 0: palette_size = 0x40
+		
+	if (image_width * image_height) + palette_size + 0x10 != data.size(): # Safety check if zlib decompression messes up
+		print_rich("[color=red]Image decompression likely failed. Expected: %08X, but got: %08X[/color]" % [(image_width * image_height) + palette_size + 0x10, data.size()])
+		return Image.create(1, 1, false, Image.FORMAT_RGBA8)
+		
+	var palette_offset: int = 0x10
+	var palette: PackedByteArray = PackedByteArray()
+	for i in range(0, palette_size):
+		palette.append(data.decode_u8(palette_offset + i))
+
+	palette = ComFuncs.unswizzle_palette(palette, 32)
+	if remove_alpha:
+		for i in range(0, palette_size, 4):
+			palette.encode_u8(i + 3, 255)
+
+	# Extract raw pixel data
+	var image_data_offset: int = palette_offset + 0x400
+	var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
+
+	# Create the image object
+	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+
+	# Process the pixel data and apply the palette
+	for y in range(image_height):
+		for x in range(image_width):
+			var pixel_index: int = pixel_data[x + y * image_width]
+			var r: int = palette[pixel_index * 4 + 0]
+			var g: int = palette[pixel_index * 4 + 1]
+			var b: int = palette[pixel_index * 4 + 2]
+			var a: int = palette[pixel_index * 4 + 3]
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+
+	return image
 	
 	
 func _on_decomp_button_toggled(_toggled_on: bool) -> void:
@@ -241,8 +246,7 @@ func _on_pione_load_exe_file_selected(path: String) -> void:
 	pione_load_exe.visible = false
 	pione_load_folder.visible = true
 	exe_path = path
-	
 
 
-func _on_filename_button_toggled(_toggled_on: bool) -> void:
-	out_filenames = !out_filenames
+func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
+	remove_alpha = !remove_alpha

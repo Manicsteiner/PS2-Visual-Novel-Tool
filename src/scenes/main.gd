@@ -11,6 +11,7 @@ enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
 	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
 	AIR,
+	AFTER,
 	ANGELSFEATHER,
 	ANGELWISH,
 	ARABIANS,
@@ -60,8 +61,10 @@ enum {
 	HEARTNOKUNI,
 	HIGURASHI,
 	HIGURASHIKAKERA,
-	HOOLIGAN, 
+	HIMEHIBINEW,
 	HOKENSHITSU,
+	HOOLIGAN,
+	HOSHIGARI,
 	HURRAH,
 	HYAKKO,
 	ICHIGOHUNDRED,
@@ -99,6 +102,7 @@ enum {
 	MOEKAN,
 	MONOCHROME,
 	MONOCHROMEFACTOR,
+	MUTSUBOSHI,
 	MYMARRYMAYBE,
 	MYMARRYWITHBE,
 	MYSTEREET,
@@ -149,6 +153,7 @@ enum {
 	SUIKA,
 	SUMOMOMO,
 	SWEETLEGACY, 
+	SWEETSEASON,
 	TENHIRO,
 	TENTAMA1ST,
 	TENTAMA2,
@@ -161,6 +166,7 @@ enum {
 	YOJINBO,
 	YOAKE,
 	YRMEMORIES,
+	YUKIGATARI,
 	YUMEMI,
 	YUMEMISHI,
 	ZNTKOAKUMA,
@@ -768,6 +774,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = JEWELSOCEAN
 		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
 		sceneChanger(next_scene)
+	elif index == AFTER:
+		game_type_sub_text.text = "Supports:\nImages: PNG/TM2"
+		game_type_selector.select(AFTER)
+		game_type = AFTER
+		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == MUTSUBOSHI:
+		game_type_sub_text.text = "Supports:\nImages: PNG/TM2"
+		game_type_selector.select(MUTSUBOSHI)
+		game_type = MUTSUBOSHI
+		var next_scene: PackedScene = load("res://src/scenes/PioneSoft.tscn")
+		sceneChanger(next_scene)
 	elif index == MYSTEREET:
 		game_type_sub_text.text = "Supports 'Mystereet: Yasogami Kaoru no Jiken File'."
 		game_type_selector.select(MYSTEREET)
@@ -1068,6 +1086,30 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PARFAIT
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == SWEETSEASON:
+		game_type_sub_text.text = "Supports extraction."
+		game_type_selector.select(SWEETSEASON)
+		game_type = SWEETSEASON
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == HOSHIGARI:
+		game_type_sub_text.text = "Supports extraction."
+		game_type_selector.select(HOSHIGARI)
+		game_type = HOSHIGARI
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == YUKIGATARI:
+		game_type_sub_text.text = "Supports extraction."
+		game_type_selector.select(YUKIGATARI)
+		game_type = YUKIGATARI
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == HIMEHIBINEW:
+		game_type_sub_text.text = "Supports extraction.\nLSD decompression not implemented yet."
+		game_type_selector.select(HIMEHIBINEW)
+		game_type = HIMEHIBINEW
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
 		game_type_selector.select(CAMBRIAN)
@@ -1141,6 +1183,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
 	game_type_selector.add_item("Air", AIR)
+	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
@@ -1190,8 +1233,10 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Heart no Kuni no Alice: Wonderful Wonder World", HEARTNOKUNI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri", HIGURASHI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri: Kakera Asobi", HIGURASHIKAKERA)
-	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
+	game_type_selector.add_item("Himehibi: New Princess Days!! Zoku! Nigakki", HIMEHIBINEW)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
+	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
+	game_type_selector.add_item("Hoshigari Empusa", HOSHIGARI)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
 	game_type_selector.add_item("Hyakko: Yorozuya Jikenbo!", HYAKKO)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
@@ -1229,6 +1274,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
 	game_type_selector.add_item("Monochrome", MONOCHROME)
 	game_type_selector.add_item("Monochrome Factor: Cross Road", MONOCHROMEFACTOR)
+	game_type_selector.add_item("Mutsuboshi Kirari: Hoshi Furu Miyako", MUTSUBOSHI)
 	game_type_selector.add_item("My Merry Maybe", MYMARRYMAYBE)
 	game_type_selector.add_item("My Merry May with be", MYMARRYWITHBE)
 	game_type_selector.add_item("Mystereet: Yasogami Kaoru no Jiken File", MYSTEREET)
@@ -1279,6 +1325,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
+	game_type_selector.add_item("Sweet Season", SWEETSEASON)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
@@ -1291,6 +1338,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue", YOAKE)
 	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)
+	game_type_selector.add_item("Yuki Gatari: Renewal Edition", YUKIGATARI)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
 	game_type_selector.add_item("Yumemishi", YUMEMISHI)
 	game_type_selector.add_item("Zero no Tsukaima: Koakuma to Harukaze no Concerto", ZNTKOAKUMA)

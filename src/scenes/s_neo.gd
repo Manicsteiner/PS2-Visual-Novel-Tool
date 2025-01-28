@@ -229,7 +229,7 @@ func extractIso() -> void:
 			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() == "pic" or f_name.get_extension() == "bup" or f_name.get_extension() == "vds":
+			#if f_name.get_extension() != "pic":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue

@@ -50,11 +50,10 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="filenameButton" type="CheckBox" parent="VBoxContainer"]
+[node name="removeAlpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
-tooltip_text = "Uncheck if errors occur."
 button_pressed = true
-text = "Extract Filenames"
+text = "Remove Alpha in PNGs"
 
 [node name="decompButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -92,7 +91,7 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadSAF" to="." method="_on_load_saf_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
-[connection signal="toggled" from="VBoxContainer/filenameButton" to="." method="_on_filename_button_toggled"]
+[connection signal="toggled" from="VBoxContainer/removeAlpha" to="." method="_on_remove_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/decompButton" to="." method="_on_decomp_button_toggled"]
 [connection signal="files_selected" from="PIONELoadSAF" to="." method="_on_pione_load_saf_files_selected"]
 [connection signal="file_selected" from="PIONELoadEXE" to="." method="_on_pione_load_exe_file_selected"]
