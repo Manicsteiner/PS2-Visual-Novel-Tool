@@ -14,6 +14,7 @@ enum {
 	AFTER,
 	ANGELSFEATHER,
 	ANGELWISH,
+	AONOMAMA,
 	ARABIANS,
 	BINCHOUTAN,
 	CAFELINDBERGHSUMMER,
@@ -82,6 +83,7 @@ enum {
 	KONOAOZORA,
 	LITTLEBUSTERS,
 	LNOKISETSU,
+	LOSTAYA,
 	LOSTPASSAGE,
 	LOVEDOLL,
 	LUXBEVIL,
@@ -147,6 +149,7 @@ enum {
 	SHUUMATSUSHOUJO,
 	SORAIROFUUKIN,
 	STARTRAIN,
+	STEADYXSTUDY,
 	STRAWBERRYPANIC,
 	STRIKEWITCHES,
 	SUIGETSUMAYOI,
@@ -1039,133 +1042,151 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(KONOAOZORA)
 		game_type = KONOAOZORA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == YOAKE:
-		game_type_sub_text.text = "Supports most images. Lacks proper folders in 'bustup'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(YOAKE)
 		game_type = YOAKE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == HIGURASHI:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(HIGURASHI)
 		game_type = HIGURASHI
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == HIGURASHIKAKERA:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(HIGURASHIKAKERA)
 		game_type = HIGURASHIKAKERA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PIAGO:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(PIAGO)
 		game_type = PIAGO
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PUREXCURE:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(PUREXCURE)
 		game_type = PUREXCURE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == KATAKAMUNA:
-		game_type_sub_text.text = "Supports extraction only."
+		game_type_sub_text.text = "Supports extraction only.\nDecompression routines not implemented yet."
 		game_type_selector.select(KATAKAMUNA)
 		game_type = KATAKAMUNA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PARFAIT:
-		game_type_sub_text.text = "Supports most images."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(PARFAIT)
 		game_type = PARFAIT
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
-		game_type_sub_text.text = "Supports extraction."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
 		game_type = SWEETSEASON
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
 	elif index == HOSHIGARI:
-		game_type_sub_text.text = "Supports extraction."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(HOSHIGARI)
 		game_type = HOSHIGARI
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
 	elif index == YUKIGATARI:
-		game_type_sub_text.text = "Supports extraction."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(YUKIGATARI)
 		game_type = YUKIGATARI
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
 	elif index == HIMEHIBINEW:
-		game_type_sub_text.text = "Supports extraction.\nLSD decompression not implemented yet."
+		game_type_sub_text.text = "Supports:\nExtraction\nLSD decompression not implemented yet."
 		game_type_selector.select(HIMEHIBINEW)
 		game_type = HIMEHIBINEW
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
+	elif index == LOSTAYA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(LOSTAYA)
+		game_type = LOSTAYA
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == AONOMAMA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(AONOMAMA)
+		game_type = AONOMAMA
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == STEADYXSTUDY:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(STEADYXSTUDY)
+		game_type = STEADYXSTUDY
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
-		game_type_sub_text.text = "Supports 'Cambrian QTS: Kaseki ni Nattemo'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(CAMBRIAN)
 		game_type = CAMBRIAN
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == HAKARENA:
-		game_type_sub_text.text = "Supports 'Hakarena Heart: Kimi ga Tame ni Kagayaki wo'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(HAKARENA)
 		game_type = HAKARENA
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == KAZEIROSURF:
-		game_type_sub_text.text = "Supports 'Kazeiro Surf'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(KAZEIROSURF)
 		game_type = KAZEIROSURF
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == ITSUKA:
-		game_type_sub_text.text = "Supports 'Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(ITSUKA)
 		game_type = ITSUKA
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == STRIKEWITCHES:
-		game_type_sub_text.text = "Supports 'Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(STRIKEWITCHES)
 		game_type = STRIKEWITCHES
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == SUMOMOMO:
-		game_type_sub_text.text = "Supports 'Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(SUMOMOMO)
 		game_type = SUMOMOMO
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == SHUUMATSUSHOUJO:
-		game_type_sub_text.text = "Supports 'Shuumatsu Shoujo Gensou Alicematic: Apocalypse'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(SHUUMATSUSHOUJO)
 		game_type = SHUUMATSUSHOUJO
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == ZNTKOAKUMA:
-		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Koakuma to Harukaze no Concerto'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(ZNTKOAKUMA)
 		game_type = ZNTKOAKUMA
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == ZNTMAIGO:
-		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Maigo no Period to Ikusen no Symphony'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(ZNTMAIGO)
 		game_type = ZNTMAIGO
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == ZNTMUMA:
-		game_type_sub_text.text = "Supports 'Zero no Tsukaima: Muma ga Tsumugu Yokaze no Fantasy'"
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(ZNTMUMA)
 		game_type = ZNTMUMA
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
@@ -1186,6 +1207,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
@@ -1254,6 +1276,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
+	game_type_selector.add_item("Lost Aya Sophia", LOSTAYA)
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
 	game_type_selector.add_item("Luxury & Beauty: Lucian Bee's - Evil Violet", LUXBEVIL)
@@ -1319,6 +1342,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
+	game_type_selector.add_item("Steady x Study", STEADYXSTUDY)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days", STRIKEWITCHES)
 	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)

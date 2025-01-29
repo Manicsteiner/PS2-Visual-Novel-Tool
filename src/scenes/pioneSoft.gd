@@ -38,27 +38,12 @@ func _process(_delta):
 		
 	
 func makeFiles() -> void:
-	var file:FileAccess
-	var new_file:FileAccess
-	var file_size:int
-	var file_name:String
-	var pallete_data:PackedByteArray
-	var image_data:PackedByteArray
-	var new_pal:PackedByteArray
-	var tga_header:PackedByteArray
-	var final_image:PackedByteArray
-	var palette_size: int
+	var file: FileAccess
+	var new_file: FileAccess
+	var file_name: String
 	var img_type: int
-	var img_bpp_type: int #?
+	var img_bpp_type: int
 	var buff: PackedByteArray
-	var width:int
-	var height:int
-	var has_palette:bool
-	var bits_per_color:int
-	var bpp:int
-	var bit_depth:int
-	var image_type:int
-	var swap:PackedByteArray
 	var num_files: int
 	var f_name: String
 	var f_size: int
@@ -69,7 +54,6 @@ func makeFiles() -> void:
 	var saf_type: int
 	var saf_file_tbl_size: int
 	var ext: String
-	
 	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	
 	# TODO: Proper zlib decompression.

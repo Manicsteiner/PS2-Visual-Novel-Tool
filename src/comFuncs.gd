@@ -2,6 +2,8 @@ extends Node
 
 
 func make_shift_jis_dic() -> Dictionary:
+	# TODO: Small Katakana and Hiragana characters not included yet.
+	
 	const shift_jis_path: String = "res://src/Shiftjis_utf8.txt"
 	var mappings: Dictionary = {}
 	
@@ -747,6 +749,8 @@ func tobpp(data:PackedByteArray, bpp:int) -> PackedByteArray:
 	return out
 	
 func unswizzle_palette(palBuffer: PackedByteArray, bpp: int) -> PackedByteArray:
+	# TODO: Update this function later with the one in ideaFactory.gd
+	
 	var newPal:PackedByteArray
 	var pos:int
 		

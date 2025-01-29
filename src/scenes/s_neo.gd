@@ -26,6 +26,7 @@ var chose_folder: bool = false
 var debug_out: bool = false
 var debug_raw_out: bool = false
 var remove_alpha: bool = true
+var remove_alpha_bup: bool = false
 
 # Table used for CRC - not needed
 #var xor_table: PackedByteArray
@@ -65,8 +66,10 @@ func extractIso() -> void:
 	var file_tbl: int
 	var pos: int
 	var made_folders: bool = false
+	var checked_2nd_folder: bool = false
 	var folders: Dictionary = {}
 	var current_folder: String
+	var last_folder: String
 	var rom_offsets: Dictionary = {
 	"KONNYAKU": 0x445C0, # Kono Aozora Ni
 	"HIGURASI": 0x445C0, # Higurashi no Naku Koro ni Matsuri
@@ -79,13 +82,10 @@ func extractIso() -> void:
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
 	# Check BUPs for any weird missing / distorted image parts, as the method for PIC2s may need to be applied here.
-	# Folder support for Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue still lacks proper bup folder support as there is multiple folders in "bustup"
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
 	# Katakamuna uses a different compression. Only extraction supported for now.
 	# Handle .txa decompression
 	# Handle .wip decompression
-	# Need a Shift-JIS decoder to UTF-8 for .ads file names in Kono Aozora and Pure x Cure
-	# Parfait is regular LZSS
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
 	# All other games besides Katakamuna have a dvd name.
@@ -208,28 +208,43 @@ func extractIso() -> void:
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 					
-				# This doesn't dynamically work. Yoake Mae Yori has multiple folders inside "bustup" which are not accounted for.
-				if !made_folders and !temp_folder == "":
+				if !temp_folder == "":
 					if temp_folder not in folders:
 						folders[temp_folder] = {}
 					folders[temp_folder]["ids"] = [[f_offset, f_size]]
-				elif made_folders:
-					for key in folders.keys():
-						if [f_offset, f_size] in folders[key].get("ids", []):
-							current_folder = key
-							break
+				if made_folders:
+					rom_file.seek(last_tbl_pos + 4)
+					var next_f_id: int = rom_file.get_32()
+					var next_f_id2: int = rom_file.get_32()
+					if temp_folder == "" and f_offset > 1:
+						for key in folders.keys():
+							if [f_offset, f_size] in folders[key].get("ids", []):
+								if !checked_2nd_folder:
+									var parts: PackedStringArray = current_folder.split("/")
+									if parts.size() > 1:
+										current_folder = "/".join(parts.slice(0, 1))
+									last_folder = current_folder
+									current_folder = key
+									temp_folder = key
+									break
+								temp_folder = key
+								break
+					if temp_folder == current_folder and !checked_2nd_folder:
+						for key in folders.keys():
+							if [next_f_id, next_f_id2] in folders[key].get("ids", []):
+								current_folder = last_folder + "/" + current_folder
+								checked_2nd_folder = true
+								break
 				continue
-			
 			
 			rom_file.seek(file_tbl + f_name_off)
 			# Because Godot hates Shift-JIS, we must get each byte manually and detect where it ends.
 			var result: Array = ComFuncs.find_end_bytes_file(rom_file, 0)
 			last_name_pos = result[0]
-			
 			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "pic":
+			#if f_name.get_extension() != "bup":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -362,7 +377,9 @@ func extractIso() -> void:
 			
 			print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 		
+		last_folder = ""
 		made_folders = true
+		checked_2nd_folder = false
 		pos = last_name_pos
 		if encryption_selected == enc_type.NONE or encryption_selected == enc_type.PARFAIT:
 			pos = (pos + 0x7F) & ~0x7F
@@ -474,7 +491,7 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 	palette = ComFuncs.unswizzle_palette(palette, 32)
 
 	# If alpha needs to be removed, set it to 255
-	if remove_alpha:
+	if remove_alpha_bup:
 		for i in range(0, 0x400, 4):
 			palette.encode_u8(i + 3, 255)
 
@@ -1033,3 +1050,7 @@ func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
 
 func _on_output_decrypted_toggled(_toggled_on: bool) -> void:
 	debug_raw_out = !debug_raw_out
+
+
+func _on_remove_bup_alpha_toggled(_toggled_on: bool) -> void:
+	remove_alpha_bup = !remove_alpha_bup
