@@ -77,6 +77,7 @@ func extractIso() -> void:
 	"PURECURE": 0x445C0, # Pure x Cure Recovery  (Angle Maneuver engine)
 	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
 	"PIAGO": 0x445C0, # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
+	"UTMC": 0x445C0, # Under the Moon: Crescent
 	"PARFAIT": 0x124F80 # Parfait - Chocolat Second Style
 	}
 	
@@ -126,6 +127,8 @@ func extractIso() -> void:
 		encryption_selected = enc_type.PARFAIT
 	elif dvd_str == "PURECURE":
 		encryption_selected = enc_type.PURECURE
+	elif dvd_str == "UTMC":
+		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "ROM":
 		encryption_selected = enc_type.NONE
 		
@@ -283,7 +286,7 @@ func extractIso() -> void:
 				f_name = f_name.get_file()
 			
 			# Decompression ONLY for these files (other file types need checking)
-			if f_name.get_extension() == "pic" or f_name.get_extension() == "lzs" or f_name.get_extension() == "bup":
+			if f_name.get_extension() == "pic" or f_name.get_extension() == "lzs" or f_name.get_extension() == "bup" or f_name.get_extension() == "bup_":
 				# *** Remove this section later
 				if Main.game_type == Main.KATAKAMUNA:
 					if made_folders and current_folder:

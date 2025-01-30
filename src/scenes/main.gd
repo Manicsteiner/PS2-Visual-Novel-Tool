@@ -165,12 +165,14 @@ enum {
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
+	UNDERTHEMOON,
 	WEARE,
 	WHITEBREATH,
 	YAMIYO,
 	YATOHIME,
 	YOJINBO,
 	YOAKE,
+	YOUKIHIMDEN,
 	YRMEMORIES,
 	YUKIGATARI,
 	YUMEMI,
@@ -1092,6 +1094,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PARFAIT
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == UNDERTHEMOON:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_selector.select(UNDERTHEMOON)
+		game_type = UNDERTHEMOON
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
@@ -1150,6 +1158,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(GAMENINATTA)
 		game_type = GAMENINATTA
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == YOUKIHIMDEN:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(YOUKIHIMDEN)
+		game_type = YOUKIHIMDEN
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1379,12 +1393,14 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
+	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
 	game_type_selector.add_item("Yamiyo ni Sasayaku: Tantei Sagara Kyouichirou", YAMIYO)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue", YOAKE)
+	game_type_selector.add_item("Youkihimeden: Ayakashi Gentoubanashi", YOUKIHIMDEN)
 	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)
 	game_type_selector.add_item("Yuki Gatari: Renewal Edition", YUKIGATARI)
 	game_type_selector.add_item("Yumemi Hakusho: Second Dream", YUMEMI)
