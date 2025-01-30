@@ -35,54 +35,104 @@ func extract_uni() -> void:
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
 		match selected_files[file].get_extension().to_lower():
 			"uni":
-				f_offset = 0xA000
-				last_f = f_offset
-				hdr_pos = 0
-				while true:
-					in_file.seek(hdr_pos)
-					f_id = in_file.get_16()
-					f_name = "%04d" % f_id
-					f_size = in_file.get_16() * 0x800
-					if f_size == 0: 
-						break
-						
-					hdr_pos += 4
-					f_offset = last_f
-					
-					in_file.seek(f_offset)
-					buff = in_file.get_buffer(f_size)
-					last_f = in_file.get_position()
-					
-					if buff.slice(0, 4).get_string_from_ascii() == "ART2":
-						f_name += "_%s" % ComFuncs.convert_jis_packed_byte_array(buff.slice(0x10, 0x20), shift_jis_dic).get_string_from_utf8()
-						
-						var png: Image = make_image(buff)
-						if png.get_width() == 1:
-							f_name += ".ART"
-							out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-							out_file.store_buffer(buff)
-							out_file.close()
-							buff.clear()
+				in_file.seek(0)
+				if in_file.get_buffer(4).get_string_from_ascii() != "UNI2":
+					f_offset = 0xA000
+					last_f = f_offset
+					hdr_pos = 0
+					while true:
+						in_file.seek(hdr_pos)
+						f_id = in_file.get_16()
+						f_name = "%05d" % f_id
+						f_size = in_file.get_16() * 0x800
+						if f_size == 0: 
+							break
 							
-							print("%04d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
-							continue
-						png.save_png(folder_path + "/%s" % f_name + ".PNG")
+						hdr_pos += 4
+						f_offset = last_f
 						
-						print("%04d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
-						continue
-					elif buff.slice(0, 8).get_string_from_ascii() == "IECSsreV":
-						f_name += ".HD"
-					elif buff.slice(0, 0x10).get_string_from_ascii() == "":
-						f_name += ".BD"
-					else:
-						f_name += ".BIN"
-					
-					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					buff.clear()
-					
-					print("%04d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+						in_file.seek(f_offset)
+						buff = in_file.get_buffer(f_size)
+						last_f = in_file.get_position()
+						
+						if buff.slice(0, 4).get_string_from_ascii() == "ART2":
+							f_name += "_%s" % ComFuncs.convert_jis_packed_byte_array(buff.slice(0x10, 0x20), shift_jis_dic).get_string_from_utf8()
+							
+							var png: Image = make_image(buff)
+							if png.get_width() == 1:
+								f_name += ".ART"
+								out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+								out_file.store_buffer(buff)
+								out_file.close()
+								buff.clear()
+								
+								print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+								continue
+							png.save_png(folder_path + "/%s" % f_name + ".PNG")
+							
+							print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+							continue
+						elif buff.slice(0, 8).get_string_from_ascii() == "IECSsreV":
+							f_name += ".HD"
+						elif buff.slice(0, 0x10).get_string_from_ascii() == "":
+							f_name += ".BD"
+						else:
+							f_name += ".BIN"
+						
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						buff.clear()
+						
+						print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+				else:
+					in_file.seek(4)
+					var unk1: int = in_file.get_32()
+					var num_files: int = in_file.get_32()
+					var unk2: int = in_file.get_32()
+					var init_off: int = in_file.get_32() * 0x800
+					hdr_pos = 0x800
+					for i in range(num_files):
+						in_file.seek(hdr_pos)
+						f_id = in_file.get_32()
+						f_name = "%05d" % f_id
+						f_offset = (in_file.get_32() * 0x800) + init_off
+						var f_sec_size: int = in_file.get_32() * 0x800
+						f_size = in_file.get_32()
+						if f_size == 0:
+							break
+							
+						hdr_pos += 0x10
+						
+						in_file.seek(f_offset)
+						buff = in_file.get_buffer(f_size)
+						
+						if buff.slice(0, 4).get_string_from_ascii() == "ART2":
+							f_name += "_%s" % ComFuncs.convert_jis_packed_byte_array(buff.slice(0x10, 0x20), shift_jis_dic).get_string_from_utf8()
+							
+							var png: Image = make_image(buff)
+							if png.get_width() == 1:
+								f_name += ".ART"
+								out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+								out_file.store_buffer(buff)
+								out_file.close()
+								buff.clear()
+								
+								print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+								continue
+							png.save_png(folder_path + "/%s" % f_name + ".PNG")
+							
+							print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+							continue
+						else:
+							f_name += ".BIN"
+						
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						buff.clear()
+						
+						print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
 			"vbg":
 				in_file.seek(0)
 				var num_files: int = in_file.get_16()
@@ -92,7 +142,7 @@ func extract_uni() -> void:
 					f_size = in_file.get_32()
 					f_offset = in_file.get_32()
 					f_id = in_file.get_16()
-					f_name = "%04d.ADPCM" % f_id
+					f_name = "%05d.ADPCM" % f_id
 					if f_size == 0: 
 						break
 					
@@ -106,7 +156,7 @@ func extract_uni() -> void:
 					out_file.close()
 					buff.clear()
 					
-					print("%04d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
+					print("%05d " % f_id, "%08X " % f_offset + "%08X " % f_size + "%s" % folder_path + "/%s" % f_name)
 	
 	print_rich("[color=green]Finished![/color]")
 			

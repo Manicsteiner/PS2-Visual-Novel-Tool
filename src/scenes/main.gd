@@ -53,6 +53,7 @@ enum {
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
 	GIFTPRISIM,
+	GAMENINATTA,
 	GINNOECLIPSE, 
 	HAKARENA,
 	HAKUSHAKU,
@@ -63,6 +64,7 @@ enum {
 	HIGURASHI,
 	HIGURASHIKAKERA,
 	HIMEHIBINEW,
+	HINOKAKERASHIN,
 	HOKENSHITSU,
 	HOOLIGAN,
 	HOSHIGARI,
@@ -165,6 +167,7 @@ enum {
 	TSUKIWAHIGASHI, 
 	WEARE,
 	WHITEBREATH,
+	YAMIYO,
 	YATOHIME,
 	YOJINBO,
 	YOAKE,
@@ -1131,6 +1134,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = STEADYXSTUDY
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == HINOKAKERASHIN:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(HINOKAKERASHIN)
+		game_type = HINOKAKERASHIN
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == YAMIYO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(YAMIYO)
+		game_type = YAMIYO
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == GAMENINATTA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(GAMENINATTA)
+		game_type = GAMENINATTA
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(CAMBRIAN)
@@ -1246,6 +1267,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
+	game_type_selector.add_item("Game ni Natta yo! Dokuro-chan - Kenkou Shindan Daisakusen", GAMENINATTA)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
@@ -1256,6 +1278,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri", HIGURASHI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri: Kakera Asobi", HIGURASHIKAKERA)
 	game_type_selector.add_item("Himehibi: New Princess Days!! Zoku! Nigakki", HIMEHIBINEW)
+	game_type_selector.add_item("Hiiro no Kakera: Shin Tamayorihime Denshou", HINOKAKERASHIN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
 	game_type_selector.add_item("Hoshigari Empusa", HOSHIGARI)
@@ -1358,6 +1381,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
+	game_type_selector.add_item("Yamiyo ni Sasayaku: Tantei Sagara Kyouichirou", YAMIYO)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue", YOAKE)
