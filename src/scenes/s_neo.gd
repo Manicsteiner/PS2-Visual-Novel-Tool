@@ -78,7 +78,9 @@ func extractIso() -> void:
 	"KEYORINA": 0x445C0, # Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
 	"PIAGO": 0x445C0, # Pia Carrot he Youkoso!! G.O. Summer Fair (Angel Maneuver engine)
 	"UTMC": 0x445C0, # Under the Moon: Crescent
-	"PARFAIT": 0x124F80 # Parfait - Chocolat Second Style
+	"PARFAIT": 0x124F80, # Parfait - Chocolat Second Style
+	"LDROPS": 0x445C0, # Love Drops
+	"CHANTER": 0x445C0 # Chanter
 	}
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
@@ -133,11 +135,15 @@ func extractIso() -> void:
 		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "KONNYAKU":
 		encryption_selected = enc_type.KONNYAKU
+	elif dvd_str == "LDROPS":
+		encryption_selected = enc_type.KONNYAKU
 	elif dvd_str == "PIAGO":
 		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "PARFAIT":
 		encryption_selected = enc_type.PARFAIT
 	elif dvd_str == "PURECURE":
+		encryption_selected = enc_type.PURECURE
+	elif dvd_str == "CHANTER":
 		encryption_selected = enc_type.PURECURE
 	elif dvd_str == "UTMC":
 		encryption_selected = enc_type.PIAGO
@@ -161,7 +167,11 @@ func extractIso() -> void:
 	elif encryption_selected == enc_type.PARFAIT:
 		buff = decrypt_rom_header_PARFAIT(buff)
 	elif encryption_selected == enc_type.PURECURE:
-		var key: int = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
+		var key: int
+		if dvd_str == "PUREPURE":
+			key = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
+		elif dvd_str == "CHANTER":
+			key = 0x3D378B65
 		# Make lookup table for file decryption
 		var keys: PackedInt64Array = decrypt_int_PURECURE(key) # Actually loads 2 u32s but Godot wraps around if loaded as a 32 array (treats as signed).
 		var off: int = 0

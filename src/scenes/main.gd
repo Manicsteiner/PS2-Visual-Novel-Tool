@@ -22,6 +22,7 @@ enum {
 	CAMBRIAN,
 	CANVAS1,
 	CASTLEFANTASIA,
+	CHANTER,
 	CLOVERNOKUNI,
 	COLORFULAQUA,
 	DABLACK,
@@ -52,6 +53,7 @@ enum {
 	GALAXYANGEL2ZE,
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
+	GETSUMENTO,
 	GIFTPRISIM,
 	GAMENINATTA,
 	GINNOECLIPSE, 
@@ -88,6 +90,7 @@ enum {
 	LOSTAYA,
 	LOSTPASSAGE,
 	LOVEDOLL,
+	LOVEDROPS,
 	LUXBEVIL,
 	MABINOSTYLE,
 	MAGI,
@@ -1107,6 +1110,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SUGARSPICE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == LOVEDROPS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_selector.select(LOVEDROPS)
+		game_type = LOVEDROPS
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
+	elif index == CHANTER:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_selector.select(CHANTER)
+		game_type = CHANTER
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
@@ -1171,6 +1186,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(YOUKIHIMDEN)
 		game_type = YOUKIHIMDEN
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == GETSUMENTO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(GETSUMENTO)
+		game_type = GETSUMENTO
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1257,6 +1278,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
+	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
@@ -1289,6 +1311,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Game ni Natta yo! Dokuro-chan - Kenkou Shindan Daisakusen", GAMENINATTA)
+	game_type_selector.add_item("Getsumento Heiki Mina: Futatsu no Project M", GETSUMENTO)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
@@ -1323,6 +1346,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Lost Aya Sophia", LOSTAYA)
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
+	game_type_selector.add_item("Love Drops", LOVEDROPS)
 	game_type_selector.add_item("Luxury & Beauty: Lucian Bee's - Evil Violet", LUXBEVIL)
 	game_type_selector.add_item("Mabino x Style", MABINOSTYLE)
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
