@@ -154,6 +154,7 @@ enum {
 	STEADYXSTUDY,
 	STRAWBERRYPANIC,
 	STRIKEWITCHES,
+	SUGARSPICE,
 	SUIGETSUMAYOI,
 	SUIKA,
 	SUMOMOMO,
@@ -1100,6 +1101,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = UNDERTHEMOON
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == SUGARSPICE:
+		game_type_sub_text.text = "Supports:\nExtraction only.\nDecompression routines not implemented yet."
+		game_type_selector.select(SUGARSPICE)
+		game_type = SUGARSPICE
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
@@ -1382,6 +1389,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Steady x Study", STEADYXSTUDY)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days", STRIKEWITCHES)
+	game_type_selector.add_item("Sugar + Spice! Ano Ko no Suteki na Nani mo Kamo", SUGARSPICE)
 	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)

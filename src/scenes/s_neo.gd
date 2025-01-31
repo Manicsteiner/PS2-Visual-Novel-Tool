@@ -85,12 +85,33 @@ func extractIso() -> void:
 	# Check BUPs for any weird missing / distorted image parts, as the method for PIC2s may need to be applied here.
 	# Check whatever is in .lzs files as I haven't fully verified if the data is correct.
 	# Katakamuna uses a different compression. Only extraction supported for now.
-	# Handle .txa decompression
+	# Handle .txa images
 	# Handle .wip decompression
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
-	# All other games besides Katakamuna have a dvd name.
-	if Main.game_type != Main.KATAKAMUNA:
+	
+	# All other games besides Katakamuna and Sugar + Spice have a dvd name.
+	if Main.game_type == Main.KATAKAMUNA:
+		in_file.seek(0xC3500000)
+		hdr_bytes = in_file.get_buffer(3)
+		dvd_str = hdr_bytes.get_string_from_ascii()
+		if dvd_str == "ROM":
+			rom_off = 0x186A00
+			encryption_selected = enc_type.NONE
+		else:
+			OS.alert("ISO doesn't appear to be Katakamuna.")
+			return
+	elif Main.game_type == Main.SUGARSPICE:
+		in_file.seek(0x1F4000)
+		hdr_bytes = in_file.get_buffer(3)
+		dvd_str = hdr_bytes.get_string_from_ascii()
+		if dvd_str == "ROM":
+			rom_off = 0x3E8
+			encryption_selected = enc_type.PIAGO
+		else:
+			OS.alert("ISO doesn't appear to be Sugar + Spice.")
+			return
+	else:
 		# Check if DVD name matches
 		in_file.seek(0x83071)
 		hdr_bytes = in_file.get_buffer(8)
@@ -100,15 +121,6 @@ func extractIso() -> void:
 		else:
 			var expected_str: String = ", ".join(rom_offsets.keys())
 			OS.alert("%s doesn't match known offset! Expected one of: %s, but got: %s." % [selected_file, expected_str, dvd_str])
-			return
-	elif Main.game_type == Main.KATAKAMUNA:
-		in_file.seek(0xC3500000)
-		hdr_bytes = in_file.get_buffer(3)
-		dvd_str = hdr_bytes.get_string_from_ascii()
-		if dvd_str == "ROM":
-			rom_off = 0x186A00
-		else:
-			OS.alert("ISO doesn't appear to be Katakamuna.")
 			return
 			
 	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
@@ -129,8 +141,6 @@ func extractIso() -> void:
 		encryption_selected = enc_type.PURECURE
 	elif dvd_str == "UTMC":
 		encryption_selected = enc_type.PIAGO
-	elif dvd_str == "ROM":
-		encryption_selected = enc_type.NONE
 		
 	rom_off *= 0x800
 	
@@ -186,7 +196,6 @@ func extractIso() -> void:
 	pos = 0x10
 	if encryption_selected == enc_type.NONE or encryption_selected == enc_type.PARFAIT: # Katakamuna/PARFAIT aligns to 0x80 for tables
 		pos = (pos + 0x7F) & ~0x7F
-		
 	while pos < rom_size:
 		rom_file.seek(pos)
 		if rom_file.eof_reached():
@@ -247,7 +256,7 @@ func extractIso() -> void:
 			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "bup":
+			#if f_name.get_extension() != "vpf":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -369,7 +378,49 @@ func extractIso() -> void:
 				
 				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
+			elif hdr_str == "OLZP": # Sugar + Spice headers
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
+						
+				if debug_raw_out:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
 				
+				buff = decompress_lzss_sneo(buff)
+				
+				hdr_bytes = buff.slice(0, 4)
+				hdr_str = hdr_bytes.get_string_from_ascii()
+				if hdr_str != "VPF0": # Contains multiple image parts
+					var imgs: Array[Image] = process_vpf_images(buff)
+					for i in range(0, imgs.size()):
+						var png: Image = imgs[i]
+						png.save_png(folder_path + "/%s" % f_name + "_%03d" % i + ".PNG")
+				elif hdr_str == "VPF0": # Only a single image
+					var png: Image = process_vpf_single_image(buff)
+					png.save_png(folder_path + "/%s" % f_name + ".PNG")
+					
+				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				continue
+			elif hdr_str == "VPF0": # Sugar + Spice single image header
+				if made_folders and current_folder:
+					f_name = current_folder + "/" + f_name
+					var dir: DirAccess = DirAccess.open(folder_path)
+					dir.make_dir_recursive(folder_path + "/" + current_folder)
+						
+				if debug_raw_out:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".DEC", FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+				var png: Image = process_vpf_single_image(buff)
+				png.save_png(folder_path + "/%s" % f_name + ".PNG")
+					
+				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
+				continue
 			if made_folders and current_folder:
 				f_name = current_folder + "/" + f_name
 				var dir: DirAccess = DirAccess.open(folder_path)
@@ -569,6 +620,112 @@ func process_img(data: PackedByteArray) -> Array:
 	return dat_arr
 	
 	
+func process_vpf_images(data: PackedByteArray) -> Array[Image]:
+	# Since its not very clear what these header offsets do, we scan each offset and keep track of visited offsets
+	# and look for "VPF0" signatures for image parts.
+	
+	var images: Array[Image] = []
+	var visited_offsets: Dictionary = {}  # Tracks processed offsets
+	var vpf_signature: PackedByteArray = PackedByteArray([0x56, 0x50, 0x46, 0x30])  # "VPF0"
+
+	# **Read offsets from the header**
+	var offsets: Array[int] = []
+	var max_offset_read: int = 0x200 
+	for i in range(0, max_offset_read, 4):
+		var entry_offset: int = data.decode_u32(i)
+
+		# **Skip invalid offsets** (0 or out of bounds)
+		if entry_offset == 0 or entry_offset >= data.size():
+			continue
+
+		offsets.append(entry_offset)
+
+	# **Sort and remove duplicates**
+	offsets.sort()
+	offsets = offsets.duplicate(false)  # Remove duplicate values
+
+	# **Determine search range (stop scanning at first valid offset)**
+	if offsets.is_empty():
+		return images  # No valid offsets found
+	var first_offset: int = offsets[0]  # Smallest offset found
+
+	# **Process images at each unique offset**
+	for offset in offsets:
+		if offset >= data.size():  
+			break  # **Stop processing beyond valid data size**
+		if offset in visited_offsets:
+			continue  # **Skip already processed offsets**
+
+		visited_offsets[offset] = true  # **Mark offset as visited**
+
+		# **Validate "VPF0" signature**
+		if offset + 4 > data.size() or data.slice(offset, offset + 4) != vpf_signature:
+			continue  # Skip invalid entries
+
+		# **Read image header**
+		var image_width: int = data.decode_u16(offset + 0xA)
+		var image_height: int = data.decode_u16(offset + 0xC)
+		var image_data_offset: int = offset + data.decode_u16(offset + 0x10)  # Image data start
+		var palette_offset: int = offset + data.decode_u16(offset + 0x18)  # Palette data start
+
+		# **Ensure offsets are within bounds**
+		if image_data_offset >= data.size() or palette_offset + 0x400 > data.size():
+			continue  # Skip corrupted entries
+
+		# **Extract and process palette (1024 bytes, 256 RGBA entries)**
+		var palette: PackedByteArray = data.slice(palette_offset, palette_offset + 0x400)
+		palette = ComFuncs.unswizzle_palette(palette, 32)
+
+		if remove_alpha:
+			for i in range(0, 0x400, 4):
+				palette.encode_u8(i + 3, 255)
+
+		# **Extract raw pixel data**
+		var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
+		var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+
+		for y in range(image_height):
+			for x in range(image_width):
+				var pixel_index: int = pixel_data[x + y * image_width]
+				var r: int = palette[pixel_index * 4 + 0]
+				var g: int = palette[pixel_index * 4 + 1]
+				var b: int = palette[pixel_index * 4 + 2]
+				var a: int = palette[pixel_index * 4 + 3]
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+
+		images.append(image)
+
+	return images
+	
+	
+func process_vpf_single_image(data: PackedByteArray) -> Image:
+	var image_width: int = data.decode_u16(0xA)
+	var image_height: int = data.decode_u16(0xC)
+	var image_data_offset: int = data.decode_u16(0x10)
+	var palette_offset: int = data.decode_u16(0x18)
+
+	var palette: PackedByteArray = data.slice(palette_offset, palette_offset + 0x400)
+	palette = ComFuncs.unswizzle_palette(palette, 32)
+
+	if remove_alpha:
+		for i in range(0, 0x400, 4):
+			palette.encode_u8(i + 3, 255)
+
+	var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
+	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+
+	for y in range(image_height):
+		for x in range(image_width):
+			var pixel_index: int = pixel_data[x + y * image_width]
+			var r: int = palette[pixel_index * 4 + 0]
+			var g: int = palette[pixel_index * 4 + 1]
+			var b: int = palette[pixel_index * 4 + 2]
+			var a: int = palette[pixel_index * 4 + 3]
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+
+	return image
+	
+	
 func decrypt_rom_header(rom: PackedByteArray, xor_tbl: PackedByteArray) -> PackedByteArray:
 	var word_1: int
 	var word_2: int
@@ -728,6 +885,82 @@ func decrypt_mem_file_PIAGO(input_buffer: PackedByteArray, decryption_key: int, 
 		a2 += sector_size
 
 	return result
+	
+	
+func decompress_lzss_sneo(input_data: PackedByteArray) -> PackedByteArray:
+	var out: PackedByteArray
+	var v0: int
+	var v1: int
+	var a0: int
+	var a1: int
+	var a2: int
+	var a3: int
+	var t0: int 
+	var t2: int
+	
+	a0 = 0 # Input header start
+	a1 = 0 # Out offset
+	a3 = input_data.decode_u32(0x8)
+	out.resize(input_data.decode_u32(0x4))
+	
+	a0 += 0xC
+	t0 = 2
+	t2 = 1
+	var goto: String = "001004AC"
+	while true:
+		match goto:
+			"00100458":
+				if v0 == 0:
+					out.encode_s8(a1, a2)
+					a1 += 1
+					goto = "001004AC"
+				else:
+					v1 = input_data.decode_u8(a0)
+					a3 -= 1
+					a0 += 1
+					v0 = v1 & 0xE0
+					v0 <<= 3
+					v1 &= 0x1F
+					v0 = a2 + v0
+					a2 = a1 - v0
+					v1 += 2
+					if v1 < 0:
+						goto = "001004AC"
+					else:
+						while v1 >= 0:
+							v0 = out.decode_u8(a2)
+							v1 -= 1
+							a2 += 1
+							out.encode_s8(a1, v0)
+							a1 += 1
+						goto = "001004B0"
+						if a0 >= input_data.size():
+							return out
+						a2 = input_data.decode_u8(a0)
+			"001004AC":
+				if a0 >= input_data.size():
+					return out
+				a2 = input_data.decode_u8(a0)
+				goto = "001004B0"
+			"001004B0":
+				t0 >>= 1
+				a0 += 1
+				if t0 != t2:
+					goto = "001004CC"
+				else:
+					t0 = a2 | 0x100
+					a3 -= 1
+					a2 = input_data.decode_u8(a0)
+					a0 += 1
+					goto = "001004CC"
+			"001004CC":
+				a3 -= 1
+				v0 = t0 & 1
+				if a3 >= 0:
+					goto = "00100458"
+				else:
+					return out
+	return out
 	
 	
 func decompress_sneo(input: PackedByteArray) -> PackedByteArray:
