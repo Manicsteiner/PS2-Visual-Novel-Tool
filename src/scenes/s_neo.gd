@@ -256,7 +256,7 @@ func extractIso() -> void:
 			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "vpf":
+			#if f_name.get_extension() != "vpp":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue
@@ -378,7 +378,8 @@ func extractIso() -> void:
 				
 				print("%08X " % f_offset, "%08X " % f_size, "%s" % folder_path + "/%s " % f_name)
 				continue
-			elif hdr_str == "OLZP": # Sugar + Spice headers
+			elif hdr_str == "OLZP" or f_name.get_extension() == "vpp": # Sugar + Spice headers
+				# Some vpps are compressed? c00.vpp?
 				if made_folders and current_folder:
 					f_name = current_folder + "/" + f_name
 					var dir: DirAccess = DirAccess.open(folder_path)
@@ -389,8 +390,8 @@ func extractIso() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
-				
-				buff = decompress_lzss_sneo(buff)
+				if hdr_str == "OLZP" and f_name.get_extension() != "vpp": # vpps aren't compressed.
+					buff = decompress_lzss_sneo(buff)
 				
 				hdr_bytes = buff.slice(0, 4)
 				hdr_str = hdr_bytes.get_string_from_ascii()
@@ -665,8 +666,17 @@ func process_vpf_images(data: PackedByteArray) -> Array[Image]:
 		# **Read image header**
 		var image_width: int = data.decode_u16(offset + 0xA)
 		var image_height: int = data.decode_u16(offset + 0xC)
-		var image_data_offset: int = offset + data.decode_u16(offset + 0x10)  # Image data start
-		var palette_offset: int = offset + data.decode_u16(offset + 0x18)  # Palette data start
+		var image_data_offset: int = data.decode_u16(offset + 0x10)  # Image data start
+		var palette_offset: int = data.decode_u16(offset + 0x18)  # Palette data start
+		if palette_offset == 0: # Assume RGB image if 0
+			image_data_offset += offset
+			var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height * 3)
+			var image: Image = Image.create_from_data(image_width, image_height, false, Image.FORMAT_RGB8, pixel_data)
+			images.append(image)
+			continue
+			
+		image_data_offset += offset
+		palette_offset += offset
 
 		# **Ensure offsets are within bounds**
 		if image_data_offset >= data.size() or palette_offset + 0x400 > data.size():
@@ -703,6 +713,10 @@ func process_vpf_single_image(data: PackedByteArray) -> Image:
 	var image_height: int = data.decode_u16(0xC)
 	var image_data_offset: int = data.decode_u16(0x10)
 	var palette_offset: int = data.decode_u16(0x18)
+	
+	if palette_offset == 0: # Assume RGB image if 0
+		var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height * 3)
+		return Image.create_from_data(image_width, image_height, false, Image.FORMAT_RGB8, pixel_data)
 
 	var palette: PackedByteArray = data.slice(palette_offset, palette_offset + 0x400)
 	palette = ComFuncs.unswizzle_palette(palette, 32)

@@ -1102,7 +1102,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == SUGARSPICE:
-		game_type_sub_text.text = "Supports:\nExtraction only.\nDecompression routines not implemented yet."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(SUGARSPICE)
 		game_type = SUGARSPICE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
