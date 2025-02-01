@@ -69,6 +69,7 @@ enum {
 	HINOKAKERASHIN,
 	HOKENSHITSU,
 	HOOLIGAN,
+	HOSHIFURU,
 	HOSHIGARI,
 	HURRAH,
 	HYAKKO,
@@ -116,6 +117,7 @@ enum {
 	NATSUIROHOSHI,
 	NATSUIROKOMACHI,
 	NATSUIROSUNADOKEI,
+	NATSUZORA,
 	NETTAITEIKIATSU,
 	NORTHWIND,
 	OJOUSAMAKUMI,
@@ -195,8 +197,8 @@ func _ready() -> void:
 	
 	game_type_selector.select(game_type)
 	game_type_text.text = "Choose game format type:"
-
-
+	
+	
 func _process(_delta: float) -> void:
 	var MEM: float = Performance.get_monitor(Performance.MEMORY_STATIC)
 	var MEM2: float = Performance.get_monitor(Performance.MEMORY_STATIC_MAX)
@@ -1038,50 +1040,56 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUMEMISHI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == HOSHIFURU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(HOSHIFURU)
+		game_type = HOSHIFURU
+		var next_scene: PackedScene = load("res://src/scenes/Piacci.tscn")
+		sceneChanger(next_scene)
 	elif index == TSUKIWAHIGASHI:
-		game_type_sub_text.text = "Supports 'Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary'."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(TSUKIWAHIGASHI)
 		game_type = TSUKIWAHIGASHI
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
 	elif index == PRINCESSHOLIDAY:
-		game_type_sub_text.text = "Supports 'Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya'."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(PRINCESSHOLIDAY)
 		game_type = PRINCESSHOLIDAY
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
 		game_type = KONOAOZORA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == YOAKE:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(YOAKE)
 		game_type = YOAKE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == HIGURASHI:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(HIGURASHI)
 		game_type = HIGURASHI
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == HIGURASHIKAKERA:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(HIGURASHIKAKERA)
 		game_type = HIGURASHIKAKERA
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PIAGO:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(PIAGO)
 		game_type = PIAGO
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PUREXCURE:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(PUREXCURE)
 		game_type = PUREXCURE
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1093,13 +1101,13 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == PARFAIT:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(PARFAIT)
 		game_type = PARFAIT
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == UNDERTHEMOON:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(UNDERTHEMOON)
 		game_type = UNDERTHEMOON
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1111,13 +1119,13 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == LOVEDROPS:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(LOVEDROPS)
 		game_type = LOVEDROPS
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
 	elif index == CHANTER:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(CHANTER)
 		game_type = CHANTER
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
@@ -1192,6 +1200,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(GETSUMENTO)
 		game_type = GETSUMENTO
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == NATSUZORA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(NATSUZORA)
+		game_type = NATSUZORA
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1325,6 +1339,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Hiiro no Kakera: Shin Tamayorihime Denshou", HINOKAKERASHIN)
 	game_type_selector.add_item("Hokenshitsu he Youkoso", HOKENSHITSU)
 	game_type_selector.add_item("Hooligan: Kimi no Naka no Yuuki", HOOLIGAN)
+	game_type_selector.add_item("Hoshifuru: Hoshi no Furu Machi", HOSHIFURU)
 	game_type_selector.add_item("Hoshigari Empusa", HOSHIGARI)
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
 	game_type_selector.add_item("Hyakko: Yorozuya Jikenbo!", HYAKKO)
@@ -1372,6 +1387,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuiro: Hoshikuzu no Memory", NATSUIROHOSHI)
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
 	game_type_selector.add_item("Natsuiro no Sunadokei", NATSUIROSUNADOKEI)
+	game_type_selector.add_item("Natsuzora no Monologue", NATSUZORA)
 	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
