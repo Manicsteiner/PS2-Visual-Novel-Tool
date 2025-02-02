@@ -1,10 +1,10 @@
 extends Control
 
+# 株式会社クオン dev is Kuon? Qon?
+
 @onready var load_exe: FileDialog = $LoadEXE
 @onready var load_tmz: FileDialog = $LoadTMZ
 @onready var load_folder: FileDialog = $LoadFOLDER
-
-# Unknown Developer
 
 var exe_path: String
 var folder_path: String
@@ -38,7 +38,6 @@ func extract_tmz() -> void:
 			OS.alert("Please load SLPM_669.20 first.")
 			return
 			
-		var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
 		
@@ -86,8 +85,7 @@ func extract_tmz() -> void:
 				f_dec_size = 0x00040440
 			
 			exe_file.seek(f_name_off - entry_point)
-			f_name = ComFuncs.convert_jis_packed_byte_array(exe_file.get_buffer(0x10), shift_jis_dic).get_string_from_utf8()
-			f_name += ".TM2"
+			f_name = exe_file.get_line() + ".TM2"
 			
 			in_file.seek(f_offset)
 			buff = decompress_lz77(in_file.get_buffer(f_size), f_dec_size)
@@ -99,6 +97,7 @@ func extract_tmz() -> void:
 			print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 	
 	print_rich("[color=green]Finished![/color]")
+	
 	
 func decompress_lz77(compressed: PackedByteArray, dec_size: int) -> PackedByteArray:
 	var out: PackedByteArray

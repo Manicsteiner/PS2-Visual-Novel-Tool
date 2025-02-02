@@ -21,6 +21,7 @@ enum {
 	CAFELITTLEWISH,
 	CAMBRIAN,
 	CANVAS1,
+	CANVAS2,
 	CASTLEFANTASIA,
 	CHANTER,
 	CLOVERNOKUNI,
@@ -53,9 +54,9 @@ enum {
 	GALAXYANGEL2ZE,
 	GALAXYANGELETERNAL,
 	GALAXYANGELMOON,
+	GAMENINATTA,
 	GETSUMENTO,
 	GIFTPRISIM,
-	GAMENINATTA,
 	GINNOECLIPSE, 
 	HAKARENA,
 	HAKUSHAKU,
@@ -162,6 +163,7 @@ enum {
 	SUGARSPICE,
 	SUIGETSUMAYOI,
 	SUIKA,
+	SUISUISWEET,
 	SUMOMOMO,
 	SWEETLEGACY, 
 	SWEETSEASON,
@@ -211,6 +213,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == SUISUISWEET:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(SUISUISWEET)
+		game_type = SUISUISWEET
+		var next_scene: PackedScene = load("res://src/scenes/BillikenSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == CANVAS2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(CANVAS2)
+		game_type = CANVAS2
+		var next_scene: PackedScene = load("res://src/scenes/Tose.tscn")
 		sceneChanger(next_scene)
 	elif index == TWELVERIVEN:
 		game_type_sub_text.text = "Supports '12Riven: The Psi-Climinal of Integral'."
@@ -1291,6 +1305,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
+	game_type_selector.add_item("Canvas 2: Akaneiro no Palette", CANVAS2)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
@@ -1323,9 +1338,9 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Galaxy Angel II: Zettai Ryouiki no Tobira", GALAXYANGEL2ZE)
 	game_type_selector.add_item("Galaxy Angel: Eternal Lovers", GALAXYANGELETERNAL)
 	game_type_selector.add_item("Galaxy Angel: Moonlit Lovers", GALAXYANGELMOON)
-	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Game ni Natta yo! Dokuro-chan - Kenkou Shindan Daisakusen", GAMENINATTA)
 	game_type_selector.add_item("Getsumento Heiki Mina: Futatsu no Project M", GETSUMENTO)
+	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
@@ -1432,6 +1447,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sugar + Spice! Ano Ko no Suteki na Nani mo Kamo", SUGARSPICE)
 	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
+	game_type_selector.add_item("SuiSui Sweet: ~Amai Koi No Mitsukekata~")
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Sweet Season", SWEETSEASON)
