@@ -36,7 +36,7 @@ text = "Load EXE
 [node name="LoadPIG" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 tooltip_text = "Extract from PFW3 archive."
-text = "Load PIG.BIN
+text = "Load PIG.BIN / .BIN
 "
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]

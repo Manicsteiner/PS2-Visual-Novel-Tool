@@ -35,11 +35,7 @@ func extract_pig() -> void:
 	
 	for file in range(selected_files.size()):
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
-		if selected_files[file].get_file() == "PIG2.BIN":
-			tbl_start = 0x0019D600 - entry_point
-		elif selected_files[file].get_file() == "PIG.BIN":
-			tbl_start = 0x00195C40 - entry_point
-		elif in_file.get_buffer(4).get_string_from_ascii() == "Wpbb":
+		if in_file.get_buffer(4).get_string_from_ascii() == "Wpbb":
 			in_file.seek(4)
 			var num_files: int = in_file.get_32()
 			var pos: int = 0x8
@@ -65,6 +61,14 @@ func extract_pig() -> void:
 				pos += 8
 			
 		else:
+			if selected_files[file].get_file() == "PIG2.BIN":
+				tbl_start = 0x0019D600 - entry_point
+			elif selected_files[file].get_file() == "PIG.BIN":
+				tbl_start = 0x00195C40 - entry_point
+			else:
+				OS.alert("Unknown bin file loaded.")
+				continue
+			
 			if exe_path == "":
 				OS.alert("Please load SLPM_662.65 first.")
 				return
@@ -131,8 +135,6 @@ func extract_pig() -> void:
 				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 				
 				pos += 0x20
-				OS.alert("Unknown bin file loaded.")
-				continue
 			
 	
 	print_rich("[color=green]Finished![/color]")
