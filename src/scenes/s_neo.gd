@@ -168,7 +168,7 @@ func extractIso() -> void:
 		buff = decrypt_rom_header_PARFAIT(buff)
 	elif encryption_selected == enc_type.PURECURE:
 		var key: int
-		if dvd_str == "PUREPURE":
+		if dvd_str == "PURECURE":
 			key = 0x151F2326 # Key is derived from a CRC lookup table to verify files, but we only need the last key from the table.
 		elif dvd_str == "CHANTER":
 			key = 0x3D378B65
