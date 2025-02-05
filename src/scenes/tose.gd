@@ -75,6 +75,7 @@ func extract_pig() -> void:
 				
 			exe_file = FileAccess.open(exe_path, FileAccess.READ)
 			var pos: int = tbl_start
+			var tile_type: int
 			var width: int
 			var height: int
 			var img_off: int
@@ -86,6 +87,14 @@ func extract_pig() -> void:
 				f_offset = exe_file.get_32() << 2
 				if f_offset >= 0xFFFFFFFF:
 					break
+				
+				in_file.seek(f_offset + 0xC)
+				tile_type = in_file.get_16()
+				if tile_type > 8:
+					# Used in Princess Maker 5, currently don't know tiling order for these
+					push_error("Skipping %s as tile type is > 8 (Currently unknown image processing)." % f_name)
+					pos += 0x20
+					continue
 					
 				in_file.seek(f_offset + 0x20)
 				width = 1 << in_file.get_16()
