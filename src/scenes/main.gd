@@ -154,8 +154,8 @@ enum {
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
 	SHIROGANE,
-	SKIPBEAT,
 	SHUUMATSUSHOUJO,
+	SKIPBEAT,
 	SORAIROFUUKIN,
 	STARTRAIN,
 	STEADYXSTUDY,
@@ -1239,6 +1239,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
 		game_type_selector.select(HAKARENA)
 		game_type = HAKARENA
+		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
+		sceneChanger(next_scene)
+	elif index == SHIROGANE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2 and some BMP)."
+		game_type_selector.select(SHIROGANE)
+		game_type = SHIROGANE
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
 	elif index == KAZEIROSURF:

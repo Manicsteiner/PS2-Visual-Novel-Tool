@@ -96,7 +96,7 @@ func extract_image() -> void:
 				dir.make_dir_recursive(folder_path + "/" + arc_name)
 				f_name = buffers[arr_idx]
 				buff = buffers[arr_idx + 1]
-				if f_name.get_extension() == "bst":
+				if f_name.get_extension() == "bst" or f_name.get_extension() == "abg":
 					num_files = buff.decode_u16(2)
 					pos = 0x10
 					for i in num_files:
@@ -106,11 +106,11 @@ func extract_image() -> void:
 						f_name = buff.slice(pos + 0x10, pos + 0x30).get_string_from_ascii()
 						
 						var new_buff: PackedByteArray = buff.slice(f_offset, f_offset + f_size)
-						if f_name.get_extension() == "tm2" and debug_out:
+						if (f_name.get_extension() == "tm2" or f_name.get_extension() == "tex") and debug_out:
 							out_file = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name, FileAccess.WRITE)
 							out_file.store_buffer(new_buff)
 							out_file.close()
-						elif f_name.get_extension() != "tm2" or f_name.get_extension() != "tex":
+						elif f_name.get_extension() != "tm2" and f_name.get_extension() != "tex":
 							out_file = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name, FileAccess.WRITE)
 							out_file.store_buffer(new_buff)
 							out_file.close()
