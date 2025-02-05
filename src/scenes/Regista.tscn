@@ -51,6 +51,7 @@ ok_button_text = "Open"
 file_mode = 1
 access = 2
 filters = PackedStringArray("*.spc")
+use_native_dialog = true
 
 [node name="REGISTALoadFOLDER" type="FileDialog" parent="."]
 title = "Open a Directory"
@@ -59,6 +60,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Select Current Folder"
 file_mode = 2
 access = 2
+use_native_dialog = true
 
 [connection signal="pressed" from="Control/LoadSPC" to="." method="_on_load_spc_pressed"]
 [connection signal="toggled" from="Control/decompButton" to="." method="_on_decomp_button_toggled"]

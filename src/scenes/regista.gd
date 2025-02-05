@@ -78,10 +78,11 @@ func makeSpcFiles() -> void:
 		height = buff.decode_u16(header_start + 6)
 		image_type = buff.decode_u8(header_start + 0xC)
 		
-		if image_type == 3:
-			buff = buff.slice(header_start + 0x10)
-			var image: Image = ComFuncs.create_tiled_image_vertically(buff, width, height, tile_size)
-			image.save_png(folder_path + "/%s" % file_name + ".png")
+		if image_type == 0:
+			var images: Array[Image] = extract_images(buff)
+			for img in images.size():
+				var image: Image = images[img]
+				image.save_png(folder_path + "/%s" % file_name + "%02d" % img + ".PNG")
 		elif image_type == 5:
 			#don't know yet. tile size is 128.
 			buff = buff.slice(header_start + 0x10)
@@ -143,41 +144,62 @@ func create_tiled_image_vertically_grey(image_data: PackedByteArray, final_width
 	return final_image_data
 
 
-func create_tiled_image_vertically(image_data: PackedByteArray, final_width: int, final_height: int, tile_size: int) -> Image:
-	# Calculate the number of tiles along width and height
-	var tiles_x:int = final_width / tile_size
-	var tiles_y:int = final_height / tile_size
+func extract_images(data: PackedByteArray) -> Array[Image]:
+	var images: Array[Image] = []
+	var idx: int = 0
 	
-	# Expected bytes per tile for RGBA8 format
-	var tile_data_size:int = tile_size * tile_size * 4  # 4 bytes per pixel for RGBA8 format
+	# Read image part headers
+	var offsets: Array = []
+	while idx + 16 <= data.size():
+		var start: int = data.decode_u32(idx)
+		var end: int = data.decode_u32(idx + 4)
+		if start == 0 and end == 0:
+			break
+		offsets.append([start, end])
+		idx += 16
 	
-	# Create the final image with the specified width and height
-	var final_image:Image = Image.create_empty(final_width, final_height, false, Image.FORMAT_RGBA8)
-	
-	# Loop through each tile and place it in the final image
-	for x in range(tiles_x):  # Loop through columns first for vertical tiling
-		for y in range(tiles_y):  # Then loop through rows
-			# Calculate the offset in the data for the current tile
-			var tile_index:int = (x * tiles_y + y) * tile_data_size
+	for offset in offsets:
+		var start: int = offset[0]
+		var end: int = offset[1]
+		if start >= data.size() or end > data.size() or start >= end:
+			continue
+		
+		# Verify 'LBGx20'
+		if data.decode_u32(start) != 0x2047424C:
+			continue
+		
+		# Read width and height
+		var width: int = data.decode_u16(start + 4)
+		var height: int = data.decode_u16(start + 6)
+		
+		# Extract raw image data
+		var image_data: PackedByteArray = data.slice(0x20, 0x118020)
+		
+		# Handle tiling if width or height is >= 128
+		var image: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
+		var tile_size: int = 128
+		var row_tiles: int = (width + tile_size - 1) / tile_size
+		var col_tiles: int = (height + tile_size - 1) / tile_size
+		var tile_idx: int = 0
+		
+		for y in range(col_tiles):
+			for x in range(row_tiles):
+				var tile_x: int = x * tile_size
+				var tile_y: int = y * tile_size
+				var tile_width: int = min(tile_size, width - tile_x)
+				var tile_height: int = min(tile_size, height - tile_y)
+				var tile_offset: int = tile_idx * tile_size * tile_size * 4
 				
-			# Ensure we don't exceed the length of the data
-			if tile_index + tile_data_size > image_data.size():
-				push_error("Data size is smaller than expected for the given tile dimensions.")
-				return final_image
+				if tile_offset + (tile_width * tile_height * 4) > image_data.size():
+					continue
 				
-			var tile_data:PackedByteArray = image_data.slice(tile_index, tile_index + tile_data_size)
-			
-			# Create an image for the tile and populate it with the raw data
-			var tile_image:Image = Image.create_from_data(tile_size, tile_size, false, Image.FORMAT_RGBA8, tile_data)
-			
-			# Copy the tile into the correct position in the final image
-			for ty in range(tile_size):
-				for tx in range(tile_size):
-					if tx < tile_image.get_width() and ty < tile_image.get_height():
-						var color:Color = tile_image.get_pixel(tx, ty)
-						final_image.set_pixel(x * tile_size + tx, y * tile_size + ty, color)
-			
-	return final_image
+				var tile_image: Image = Image.create_from_data(tile_width, tile_height, false, Image.FORMAT_RGBA8, image_data.slice(tile_offset, tile_offset + (tile_width * tile_height * 4)))
+				image.blit_rect(tile_image, Rect2i(0, 0, tile_width, tile_height), Vector2i(tile_x, tile_y))
+				tile_idx += 1
+		
+		images.append(image)
+	
+	return images
 	
 	
 func processImg(data:PackedByteArray, imgdat_off:int, w:int, h:int, bpp:int, pal_pos:int) -> Image:

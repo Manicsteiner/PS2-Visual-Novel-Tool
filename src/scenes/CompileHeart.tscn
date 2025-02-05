@@ -1,0 +1,83 @@
+[gd_scene load_steps=2 format=3 uid="uid://beqoick4rtj4a"]
+
+[ext_resource type="Script" path="res://src/scenes/compileHeart.gd" id="1_x2a52"]
+
+[node name="CompileHeart" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_x2a52")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.5
+offset_top = -15.5
+offset_right = 51.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="LoadImage" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Convert .abg/.tex/.bst/.pac"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -192.5
+offset_top = 38.5
+offset_right = 207.5
+offset_bottom = 150.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = -4
+
+[node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Remove Alpha Channel in PNGs"
+
+[node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Decompressed Files (Debug)"
+
+[node name="FILELoadIMAGE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.abg, *.tex, *.bst, *.pac")
+use_native_dialog = true
+
+[node name="FILELoadFOLDER" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[connection signal="pressed" from="HBoxContainer/LoadImage" to="." method="_on_load_image_pressed"]
+[connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
+[connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
+[connection signal="files_selected" from="FILELoadIMAGE" to="." method="_on_file_load_image_files_selected"]
+[connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

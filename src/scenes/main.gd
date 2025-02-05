@@ -142,6 +142,7 @@ enum {
 	PUREXCURE,
 	QUILT,
 	REGISTA, # temp value
+	ROSARIO,
 	ROZENDUEL,
 	RUNEPRINCESS,
 	RYUUKOKU,
@@ -225,6 +226,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(CANVAS2)
 		game_type = CANVAS2
 		var next_scene: PackedScene = load("res://src/scenes/Tose.tscn")
+		sceneChanger(next_scene)
+	elif index == ROSARIO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (custom TM2 to PNG). Most images supported."
+		game_type_selector.select(ROSARIO)
+		game_type = ROSARIO
+		var next_scene: PackedScene = load("res://src/scenes/CompileHeart.tscn")
 		sceneChanger(next_scene)
 	elif index == TWELVERIVEN:
 		game_type_sub_text.text = "Supports '12Riven: The Psi-Climinal of Integral'."
@@ -1426,6 +1433,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pure x Cure Recovery", PUREXCURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
+	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
 	game_type_selector.add_item("Rune Princess", RUNEPRINCESS)
 	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
