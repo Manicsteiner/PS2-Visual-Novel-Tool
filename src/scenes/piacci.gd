@@ -40,6 +40,7 @@ func extract_tmz() -> void:
 			
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
+		var arc_name: String = selected_files[file].get_file()
 		
 		if selected_files[file].get_file() == "BG.TMZ":
 			tmz_tbl_start = 0x00257320 - entry_point
@@ -90,11 +91,14 @@ func extract_tmz() -> void:
 			in_file.seek(f_offset)
 			buff = decompress_lz77(in_file.get_buffer(f_size), f_dec_size)
 			
-			out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+			var dir: DirAccess = DirAccess.open(folder_path)
+			dir.make_dir_recursive(folder_path + "/" + arc_name)
+			
+			out_file = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			out_file.close()
 			
-			print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
+			print("%08X %08X %s/%s/%s" % [f_offset, f_size, folder_path, arc_name, f_name])
 	
 	print_rich("[color=green]Finished![/color]")
 	
