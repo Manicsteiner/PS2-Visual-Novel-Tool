@@ -2,19 +2,42 @@ extends Control
 
 @onready var file_load_image: FileDialog = $FILELoadIMAGE
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
+@onready var load_image: Button = $HBoxContainer/LoadImage
+@onready var load_ptd: Button = $HBoxContainer/LoadPTD
+@onready var file_load_ptd: FileDialog = $FILELoadPTD
+@onready var remove_alpha_box: CheckBox = $"VBoxContainer/Remove Alpha"
+@onready var output_debug: CheckBox = $"VBoxContainer/Output Debug"
 
 var folder_path: String
 var selected_files: PackedStringArray
+var selected_ptds: PackedStringArray
 var remove_alpha: bool = true
 var debug_out: bool = false
 
 # TODO: Make sense of number of colors in an image. See make_img()
 
+func _ready() -> void:
+	if Main.game_type == Main.ROSARIO:
+		load_image.show()
+		load_ptd.hide()
+		remove_alpha_box.show()
+		output_debug.show()
+	elif Main.game_type == Main.JIGOKUSHOUJO:
+		load_image.hide()
+		load_ptd.show()
+		remove_alpha_box.hide()
+		output_debug.hide()
+	
+	
 func _process(_delta: float) -> void:
 	if folder_path and selected_files:
 		extract_image()
 		folder_path = ""
 		selected_files.clear()
+	elif folder_path and selected_ptds:
+		extract_ptd()
+		folder_path = ""
+		selected_ptds.clear()
 		
 		
 func extract_image() -> void:
@@ -132,6 +155,89 @@ func extract_image() -> void:
 						out_file.close()
 						
 					print("%08X %08X %s %s/%s/%s" % [f_offset, f_size, arc_name, folder_path, arc_name, f_name])
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func extract_ptd() -> void:
+	var buff: PackedByteArray
+	var in_file: FileAccess
+	var out_file: FileAccess
+	var ptd_all_file: FileAccess
+	var tables: Dictionary = {}
+	var ptd_names_off: int
+	var ptd_name: String
+	var num_files: int
+	var f_name: String
+	var f_size: int
+	var f_offset: int
+	var pos: int
+	var off_tbl: int
+	var last_tbl: int
+	
+	for file in range(selected_ptds.size()):
+		in_file = FileAccess.open(selected_ptds[file], FileAccess.READ)
+		ptd_all_file = FileAccess.open(selected_ptds[file].get_base_dir() + "/PTDALL.PID", FileAccess.READ)
+		if ptd_all_file == null:
+			OS.alert("Please place 'PTDALL.PID' in the same directory as your selected .PTD file.")
+			return
+			
+		var selected_ptd_name: String = selected_ptds[file].get_file()
+		
+		ptd_all_file.seek(0)
+		num_files = ptd_all_file.get_32()
+		ptd_names_off = (num_files << 2) + 4
+		off_tbl = (num_files << 4) + 0x34
+		
+		ptd_all_file.seek(ptd_names_off)
+		ptd_name = ptd_all_file.get_line()
+		
+		for tbl in range(0, num_files):
+			ptd_all_file.seek((tbl * 0x10) + ptd_names_off)
+			ptd_name = ptd_all_file.get_line()
+			
+			ptd_all_file.seek((tbl * 4) + 4)
+			var ptd_files: int = ptd_all_file.get_32()
+			last_tbl = (ptd_files << 3) + off_tbl
+			var info: Array[int] = [ptd_files, off_tbl]
+			tables[ptd_name] = info.duplicate()
+			info.clear()
+			
+			off_tbl = last_tbl
+		if selected_ptd_name in tables:
+			var dir: DirAccess = DirAccess.open(folder_path)
+			dir.make_dir_recursive(folder_path + "/" + selected_ptd_name)
+			
+			off_tbl = tables[selected_ptd_name][1]
+			for ptd_file in range(0, tables[selected_ptd_name][0]):
+				f_name = "%08d" % ptd_file
+				
+				ptd_all_file.seek((ptd_file * 8) + off_tbl)
+				f_offset = ptd_all_file.get_32() * 0x800
+				f_size = ptd_all_file.get_32()
+				if f_size == 0:
+					continue
+					
+				in_file.seek(f_offset)
+				buff = in_file.get_buffer(f_size)
+				if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+					f_name += ".TM2"
+				elif buff.decode_u32(0) == 0:
+					f_name += ".ADPCM"
+				else:
+					if selected_ptd_name == "PTD000.PTD":
+						var tm2_arr: Array[PackedByteArray] = ComFuncs.tim2_scan_buffer(buff, 4)
+						for tm2 in range(0, tm2_arr.size()):
+							out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name + "/%s" % f_name + ".BIN_%04d.TM2" % tm2, FileAccess.WRITE)
+							out_file.store_buffer(tm2_arr[tm2])
+							out_file.close()
+					f_name += ".BIN"
+					
+				out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+						
+				print("%08X %08X %s %s/%s/%s" % [f_offset, f_size, selected_ptd_name, folder_path, selected_ptd_name, f_name])
+				
 	print_rich("[color=green]Finished![/color]")
 	
 	
@@ -376,14 +482,14 @@ func lzr_decompress(compressed: PackedByteArray) -> PackedByteArray:
 
 
 func make_img(data: PackedByteArray) -> Image:
-	var color_order: int = data.decode_u16(0) # 1 = 8bb, 2 = 16bpp, 3 = 32bpp
+	var bpp: int = data.decode_u16(0) # 1 = 8bb, 2 = 16bpp, 3 = 32bpp
 	var image_width: int = data.decode_u16(2)
 	var image_height: int = data.decode_u16(4)
 	var num_colors: int = data.decode_u16(6) # Determines palette size as well
 	if num_colors != 256:
 		push_error("Number of colors in image isn't 256. Output will be wrong!")
 		#return Image.create(1, 1, false, Image.FORMAT_RGBA8)
-	if color_order != 1:
+	if bpp != 1:
 		push_error("image bpp isn't 8. Output will be wrong!")
 		#return Image.create(1, 1, false, Image.FORMAT_RGBA8)
 
@@ -436,3 +542,12 @@ func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
 
 func _on_output_debug_toggled(_toggled_on: bool) -> void:
 	debug_out = !debug_out
+
+
+func _on_file_load_ptd_files_selected(paths: PackedStringArray) -> void:
+	selected_ptds = paths
+	file_load_folder.show()
+
+
+func _on_load_ptd_pressed() -> void:
+	file_load_ptd.show()

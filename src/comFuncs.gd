@@ -1121,6 +1121,45 @@ func tim2_scan_file(in_file: FileAccess) -> void:
 	return
 	
 	
+func tim2_scan_buffer(buffer: PackedByteArray, alignment: int) -> Array[PackedByteArray]:
+	# Scans a PackedByteArray for TIM2 images and extracts them.
+	# Returns an array of PackedByteArray containing extracted TIM2 data.
+	
+	var extracted_tm2: Array[PackedByteArray] = []
+	var pos: int = 0
+	var buffer_size: int = buffer.size()
+	
+	while pos < buffer_size:
+		if pos + 4 > buffer_size:
+			break
+		
+		var tm2_bytes: int = buffer.decode_u32(pos)
+		var last_pos: int = pos + 4
+		
+		if tm2_bytes == 0x324D4954:
+			if last_pos + 0x10 > buffer_size:
+				break
+			
+			var tm2_size: int = buffer.decode_u32(last_pos + 0xC)
+			var total_size: int = tm2_size + 0x10
+			
+			if pos + total_size > buffer_size:
+				break
+			
+			extracted_tm2.append(buffer.slice(pos, pos + total_size))
+			
+			last_pos = pos + total_size
+			if last_pos % alignment != 0:  # Align to specified boundary
+				last_pos = (last_pos + (alignment - 1)) & ~(alignment - 1)
+		else:
+			if last_pos % alignment != 0:  # Align to specified boundary
+				last_pos = (last_pos + (alignment - 1)) & ~(alignment - 1)
+		
+		pos = last_pos
+	
+	return extracted_tm2
+	
+	
 func swapNumber(num:int, bit_swap:String) -> int:
 	var swapped:int
 	

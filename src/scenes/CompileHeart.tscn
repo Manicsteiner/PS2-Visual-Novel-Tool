@@ -31,6 +31,10 @@ theme_override_constants/separation = 28
 layout_mode = 2
 text = "Convert .abg/.tex/.bst/.pac"
 
+[node name="LoadPTD" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract .PTD"
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -66,6 +70,17 @@ access = 2
 filters = PackedStringArray("*.abg, *.tex, *.bst, *.pac")
 use_native_dialog = true
 
+[node name="FILELoadPTD" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.PTD")
+use_native_dialog = true
+
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open a Directory"
@@ -77,7 +92,9 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadImage" to="." method="_on_load_image_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadPTD" to="." method="_on_load_ptd_pressed"]
 [connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="files_selected" from="FILELoadIMAGE" to="." method="_on_file_load_image_files_selected"]
+[connection signal="files_selected" from="FILELoadPTD" to="." method="_on_file_load_ptd_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

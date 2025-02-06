@@ -79,6 +79,7 @@ enum {
 	INTERLUDE,
 	ITSUKA,
 	JEWELSOCEAN,
+	JIGOKUSHOUJO,
 	JUUJIGEN,
 	KANON,
 	KATAKAMUNA,
@@ -231,6 +232,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (custom TM2 to PNG). Most images supported."
 		game_type_selector.select(ROSARIO)
 		game_type = ROSARIO
+		var next_scene: PackedScene = load("res://src/scenes/CompileHeart.tscn")
+		sceneChanger(next_scene)
+	elif index == JIGOKUSHOUJO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(JIGOKUSHOUJO)
+		game_type = JIGOKUSHOUJO
 		var next_scene: PackedScene = load("res://src/scenes/CompileHeart.tscn")
 		sceneChanger(next_scene)
 	elif index == TWELVERIVEN:
@@ -1376,6 +1383,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
+	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
 	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
