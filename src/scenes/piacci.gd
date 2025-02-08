@@ -40,7 +40,7 @@ func extract_tmz() -> void:
 			
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
-		var arc_name: String = selected_files[file].get_file()
+		var arc_name: String = selected_files[file].get_file().get_basename()
 		
 		if selected_files[file].get_file() == "BG.TMZ":
 			tmz_tbl_start = 0x00257320 - entry_point

@@ -205,7 +205,7 @@ func extract_ptd() -> void:
 			off_tbl = last_tbl
 		if selected_ptd_name in tables:
 			var dir: DirAccess = DirAccess.open(folder_path)
-			dir.make_dir_recursive(folder_path + "/" + selected_ptd_name)
+			dir.make_dir_recursive(folder_path + "/" + selected_ptd_name.get_basename())
 			
 			off_tbl = tables[selected_ptd_name][1]
 			for ptd_file in range(0, tables[selected_ptd_name][0]):
@@ -227,16 +227,16 @@ func extract_ptd() -> void:
 					if selected_ptd_name == "PTD000.PTD":
 						var tm2_arr: Array[PackedByteArray] = ComFuncs.tim2_scan_buffer(buff, 4)
 						for tm2 in range(0, tm2_arr.size()):
-							out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name + "/%s" % f_name + ".BIN_%04d.TM2" % tm2, FileAccess.WRITE)
+							out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name + ".BIN_%04d.TM2" % tm2, FileAccess.WRITE)
 							out_file.store_buffer(tm2_arr[tm2])
 							out_file.close()
 					f_name += ".BIN"
 					
-				out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name + "/%s" % f_name, FileAccess.WRITE)
+				out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name, FileAccess.WRITE)
 				out_file.store_buffer(buff)
 				out_file.close()
 						
-				print("%08X %08X %s %s/%s/%s" % [f_offset, f_size, selected_ptd_name, folder_path, selected_ptd_name, f_name])
+				print("%08X %08X %s %s/%s/%s" % [f_offset, f_size, selected_ptd_name.get_basename(), folder_path, selected_ptd_name.get_basename(), f_name])
 				
 	print_rich("[color=green]Finished![/color]")
 	

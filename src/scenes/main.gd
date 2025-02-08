@@ -144,6 +144,7 @@ enum {
 	QUILT,
 	REGISTA, # temp value
 	ROSARIO,
+	ROUTESPE,
 	ROZENDUEL,
 	RUNEPRINCESS,
 	RYUUKOKU,
@@ -221,6 +222,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SUISUISWEET)
 		game_type = SUISUISWEET
 		var next_scene: PackedScene = load("res://src/scenes/BillikenSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == ROUTESPE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_selector.select(ROUTESPE)
+		game_type = ROUTESPE
+		var next_scene: PackedScene = load("res://src/scenes/Sting.tscn")
 		sceneChanger(next_scene)
 	elif index == CANVAS2:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
@@ -1448,6 +1455,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
+	game_type_selector.add_item("Routes PE", ROUTESPE)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)
 	game_type_selector.add_item("Rune Princess", RUNEPRINCESS)
 	game_type_selector.add_item("Ryuu Koku", RYUUKOKU)
