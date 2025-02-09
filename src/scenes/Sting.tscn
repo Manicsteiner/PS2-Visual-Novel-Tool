@@ -67,7 +67,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray("SLPS_257.27")
+filters = PackedStringArray("SLPS_257.27, SLPS_254.12")
 use_native_dialog = true
 
 [node name="FILELoadSFS" type="FileDialog" parent="."]
@@ -78,7 +78,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray("RT_DATA.SFS, *.SFS")
+filters = PackedStringArray("RT_DATA.SFS, TOH_DATA.SFS, TOHSOUND.SFS")
 use_native_dialog = true
 
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]

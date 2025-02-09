@@ -173,6 +173,7 @@ enum {
 	TENHIRO,
 	TENTAMA1ST,
 	TENTAMA2,
+	TOHEART,
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
@@ -227,6 +228,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
 		game_type_selector.select(ROUTESPE)
 		game_type = ROUTESPE
+		var next_scene: PackedScene = load("res://src/scenes/Sting.tscn")
+		sceneChanger(next_scene)
+	elif index == TOHEART:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_selector.select(TOHEART)
+		game_type = TOHEART
 		var next_scene: PackedScene = load("res://src/scenes/Sting.tscn")
 		sceneChanger(next_scene)
 	elif index == CANVAS2:
@@ -1484,6 +1491,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
+	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
