@@ -3,6 +3,7 @@ extends Control
 @onready var file_load_exe: FileDialog = $FILELoadEXE
 @onready var file_load_sfs: FileDialog = $FILELoadSFS
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
+@onready var load_exe: Button = $HBoxContainer/LoadExe
 
 var folder_path: String
 var selected_file: String
@@ -10,7 +11,21 @@ var exe_path: String
 var remove_alpha: bool = true
 var debug_out: bool = false
 
-
+func _ready() -> void:
+	if Main.game_type == Main.ROUTESPE or Main.game_type == Main.TOHEART:
+		load_exe.show()
+	else:
+		load_exe.hide()
+		
+	file_load_sfs.filters = [
+	"RT_DATA.SFS,
+	RTSOUND.SFS,
+	TOH_DATA.SFS,
+	TOHSOUND.SFS,
+	TH2DATA.000,
+	TH2SOUND.SFS"]
+		
+		
 func _process(_delta: float) -> void:
 	if folder_path and selected_file:
 		extract_sfs()
@@ -22,6 +37,7 @@ func extract_sfs() -> void:
 	var buff: PackedByteArray
 	var in_file: FileAccess
 	var out_file: FileAccess
+	var in_file_part: FileAccess
 	var exe_file: FileAccess
 	var f_name: String
 	var f_name_off: int
@@ -38,7 +54,7 @@ func extract_sfs() -> void:
 	
 	if Main.game_type == Main.ROUTESPE:
 		step_mod = 4
-	elif Main.game_type == Main.TOHEART:
+	elif Main.game_type == Main.TOHEART or Main.game_type == Main.TOHEART2:
 		step_mod = 0x10
 		
 	if (
@@ -136,9 +152,59 @@ func extract_sfs() -> void:
 			out_file = FileAccess.open(folder_path + "%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			out_file.close()
-	else:
+	elif selected_file.get_file() == "TH2DATA.000":
 		in_file = FileAccess.open(selected_file, FileAccess.READ)
+		in_file_part = FileAccess.open(selected_file.get_basename() + ".001", FileAccess.READ)
+		if in_file_part == null:
+			OS.alert("Could not open %s" % selected_file.get_basename() + ".001")
+			return
+			
+		var i: int = 8
+		while true:
+			in_file.seek(i)
+			f_name = in_file.get_line()
+			
+			in_file.seek(i + 0x18)
+			f_offset = in_file.get_32()
+			f_size = in_file.get_32()
+			if f_size == 0 or in_file.eof_reached():
+				break
+			#if f_name != "SAKURA.BM2":
+				#i += 0x20
+				#continue
+			
+			in_file_part.seek(f_offset)
+			buff = in_file_part.get_buffer(f_size)
+			
+			print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
+			
+			if f_name.get_extension().to_lower() == "bm2":
+				if debug_out:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+				if buff.decode_u16(0x1C) == 8:
+					var png: Image = make_bmp8_png(buff)
+					f_name += ".PNG"
+					png.save_png(folder_path + "/%s" % f_name)
+				else:
+					buff = swap_bmp_colors(buff)
+					f_name = f_name.replace(".BM2", ".BMP")
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+			else:
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+			
+			i += 0x20
+	elif (
+		selected_file.get_file() == "TOHSOUND.SFS" or 
+		selected_file.get_file() == "TH2SOUND.SFS"
+		):
 		
+		in_file = FileAccess.open(selected_file, FileAccess.READ)
 		var i: int = 0
 		var cnt: int = 0
 		while true:
@@ -171,6 +237,10 @@ func extract_sfs() -> void:
 				else:
 					f_name += ".BIN"
 					
+				var temp_n: String = get_unique_filename(folder_path, f_name.get_basename(), f_name.get_extension())
+				if !temp_n == "":
+					f_name = temp_n
+					
 				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
 				
 				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
@@ -197,15 +267,146 @@ func extract_sfs() -> void:
 				else:
 					f_name += ".BIN"
 					
+				var temp_n: String = get_unique_filename(folder_path, f_name.get_basename(), f_name.get_extension())
+				if !temp_n == "":
+					f_name = temp_n
+					
 				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
-				
 				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 				out_file.store_buffer(buff)
 				out_file.close()
 			
+			
 	print_rich("[color=green]Finished![/color]")
 	
+
+func get_unique_filename(folder_path: String, base_name: String, extension: String) -> String:
+	var dir: DirAccess = DirAccess.open(folder_path)
+	if not dir:
+		return ""
 	
+	var highest_id: int = 0
+	var base_file: String = "%s.%s" % [base_name, extension]
+	var file_pattern: String = "%s_" % base_name
+	var file_found: bool = false
+
+	# Scan folder for matching files
+	for file in dir.get_files():
+		if file == base_file:
+			file_found = true
+			highest_id = max(highest_id, 1)  # Base file exists, start IDs from 1
+		elif file.begins_with(file_pattern) and file.ends_with("." + extension):
+			var id_str: String = file.trim_prefix(file_pattern).trim_suffix("." + extension)
+			var id: int = id_str.to_int()
+			if id > 0:
+				highest_id = max(highest_id, id)
+				file_found = true
+
+	if file_found:
+		return "%s_%05d.%s" % [base_name, highest_id + 1, extension]
+	
+	return ""
+	
+	
+func make_bmp8_png(bmp: PackedByteArray) -> Image:
+	var w: int = bmp.decode_u32(0x12)
+	var h: int = bmp.decode_s32(0x16)
+	if h < 0:
+		h = 0 - h
+	var img_off: int = bmp.decode_u16(0xA)
+	var palette_offset: int = 0x40
+	var palette: PackedByteArray = PackedByteArray()
+	for i in range(0, 0x400):
+		palette.append(bmp.decode_u8(palette_offset + i))
+	palette = ComFuncs.unswizzle_palette(palette, 32)
+	if remove_alpha:
+		for i in range(0, 0x400, 4):
+			palette.encode_u8(i + 3, 255)
+	else:
+		palette = bmp.slice(palette_offset, img_off)
+	
+	var image_data_offset: int = 0x10
+	var pixel_data: PackedByteArray = bmp.slice(img_off, img_off + w * h)
+
+	var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+
+	for y in range(h):
+		for x in range(w):
+			var pixel_index: int = pixel_data[x + y * w]
+			var r: int = palette[pixel_index * 4 + 0]
+			var g: int = palette[pixel_index * 4 + 1]
+			var b: int = palette[pixel_index * 4 + 2]
+			var a: int = palette[pixel_index * 4 + 3]
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			
+	return image
+	
+	
+func swap_bmp_colors(raw_bmp_data: PackedByteArray) -> PackedByteArray:
+	var f_img: PackedByteArray
+	var bmp_hdr: PackedByteArray = raw_bmp_data.slice(0, 0x40)
+	var pixel_data_offset: int = 0x40
+	var width: int = raw_bmp_data.decode_u32(0x12)
+	var height: int = raw_bmp_data.decode_s32(0x16)
+	if height < 0:
+		height = 0 - height
+		bmp_hdr.encode_u32(0x16, height)
+
+	var bpp: int = raw_bmp_data.decode_u16(0x1C)
+	var bytes_per_pixel: int = int(bpp / 8)
+	var row_size: int = width * bytes_per_pixel
+	var padded_row_size: int = (row_size + 3) & ~3
+	
+	var output_data = PackedByteArray()
+	output_data.resize(height * padded_row_size)
+	
+	for output_row in range(height):
+		var bmp_row: int = height - 1 - output_row
+		var bmp_row_start: int = pixel_data_offset + bmp_row * padded_row_size
+		var output_row_start: int = output_row * padded_row_size
+		
+		for col in range(width):
+			var bmp_pixel_index: int = bmp_row_start + col * bytes_per_pixel
+			var output_pixel_index: int = output_row_start + col * bytes_per_pixel
+			
+			if bpp == 24:
+				var b: int = raw_bmp_data[bmp_pixel_index]
+				var g: int = raw_bmp_data[bmp_pixel_index + 1]
+				var r: int = raw_bmp_data[bmp_pixel_index + 2]
+				# Write as R, G, B
+				output_data.encode_u8(output_pixel_index, r)
+				output_data.encode_u8(output_pixel_index + 1, g)
+				output_data.encode_u8(output_pixel_index + 2, b)
+				
+			elif bpp == 32:
+				var b: int = raw_bmp_data[bmp_pixel_index]
+				var g: int = raw_bmp_data[bmp_pixel_index + 1]
+				var r: int = raw_bmp_data[bmp_pixel_index + 2]
+				var a: int = raw_bmp_data[bmp_pixel_index + 3]
+				# Write as R, G, B, A
+				output_data.encode_u8(output_pixel_index, r)
+				output_data.encode_u8(output_pixel_index + 1, g)
+				output_data.encode_u8(output_pixel_index + 2, b)
+				output_data.encode_u8(output_pixel_index + 3, a)
+			else:
+				push_error("Unsupported Bits Per Pixel: %s" % bpp)
+				return output_data
+				
+		for pad in range(row_size, padded_row_size):
+			output_data.encode_u8(output_row_start + pad, 0)
+			
+	bmp_hdr.encode_u16(0xA, 0x40)
+	f_img.append_array(bmp_hdr)
+	f_img.append_array(output_data)
+	return f_img
+	
+	
+func swap16(val: int) -> int:
+	return ((val & 0xFF) << 8) | ((val >> 8) & 0xFF)
+
+func swap32(val: int) -> int:
+	return ((val & 0xFF) << 24) | (((val >> 8) & 0xFF) << 16) | (((val >> 16) & 0xFF) << 8) | ((val >> 24) & 0xFF)
+
 #func lzss_toheart_mips(compressed: PackedByteArray) -> PackedByteArray:
 	#var out: PackedByteArray
 	#var out_size: int = compressed.decode_u32(0)

@@ -42,10 +42,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -192.5
-offset_top = 38.5
-offset_right = 207.5
-offset_bottom = 150.5
+offset_left = -160.0
+offset_top = 40.0
+offset_right = 240.0
+offset_bottom = 152.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = -4
@@ -53,7 +53,7 @@ theme_override_constants/separation = -4
 [node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha In Character Images"
+text = "Remove Alpha Channel in Images"
 
 [node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -78,7 +78,6 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray("RT_DATA.SFS, TOH_DATA.SFS, TOHSOUND.SFS")
 use_native_dialog = true
 
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]
