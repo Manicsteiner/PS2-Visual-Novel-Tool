@@ -4,18 +4,22 @@ extends Control
 @onready var file_load_sfs: FileDialog = $FILELoadSFS
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
 @onready var load_exe: Button = $HBoxContainer/LoadExe
+@onready var remove_alpha_2: CheckBox = $"VBoxContainer/Remove Alpha2"
 
 var folder_path: String
 var selected_file: String
 var exe_path: String
 var remove_alpha: bool = true
+var remove_alpha2: bool = false
 var debug_out: bool = false
 
 func _ready() -> void:
 	if Main.game_type == Main.ROUTESPE or Main.game_type == Main.TOHEART:
 		load_exe.show()
+		remove_alpha_2.show()
 	else:
 		load_exe.hide()
+		remove_alpha_2.hide()
 		
 	file_load_sfs.filters = [
 	"RT_DATA.SFS,
@@ -84,7 +88,7 @@ func extract_sfs() -> void:
 		var cnt: int = 0
 		while true:
 			# Count offsets since there's no good way to determine table ends
-			in_file.seek(i )
+			in_file.seek(i)
 			f_offset = in_file.get_32()
 			if f_offset == 0:
 				num_files = cnt - 1
@@ -103,9 +107,11 @@ func extract_sfs() -> void:
 			exe_file.seek(f_name_off)
 			f_name = exe_file.get_line()
 			
-			#if f_name.get_file() != "C0C01.tpp":
+			#if f_name.get_file() != "MONTH01.tpp":
 				#continue
-			
+			#if f_name.get_base_dir().erase(0) != "char":
+				#continue
+				
 			in_file.seek(f_offset)
 			buff = in_file.get_buffer(f_size)
 			
@@ -145,7 +151,7 @@ func extract_sfs() -> void:
 						out_file.close()
 					continue
 				buff = lzss_toheart(buff)
-				var png: Image = make_tpp(buff, f_name.get_file(), f_name.get_base_dir().erase(0))
+				var png: Image = make_tpp(buff, f_name.get_base_dir().erase(0))
 				png.save_png(folder_path + "%s" % f_name + ".png")
 				continue
 
@@ -565,73 +571,208 @@ func lzss_toheart(compressed: PackedByteArray) -> PackedByteArray:
 	return output
 	
 	
-func make_tpp(data: PackedByteArray, image_name: String, base_dir: String) -> Image:
-	# This format sucks. Different flags likely represent certain things but I'll be damned.
-	
-	if base_dir == "etc": # these folders is has a bunch of weirdly sized tiles
-		push_error("Skipping folder 'etc' and 'sam' as these have different tile sizes")
-		return Image.create_empty(1, 1, false, Image.FORMAT_RGBA8)
-	
+func make_tpp(data: PackedByteArray, base_dir: String) -> Image:
 	var num_img_parts: int = data.decode_u32(0)
-	var f_img: Image
+	var img_name: String = data.slice(4, 0xC).get_string_from_ascii()
 	var img: Image
 	var img_part: PackedByteArray
 	var palette: PackedByteArray
 	var arr: Array[Image]
 	var has_pal: bool = data.decode_u32(0x10)  != 0
-	var tile_size_flag: int = data.decode_u32(0x2C)
+	var columns: int
+	var rows: int
+	#var tile_size_flag: int = data.decode_u32(0x2C) # No idea what these are or how the game tiles stuff in rows/columns
+	var max_part_width: int = 0
+	var max_part_height: int = 0
+
+	for part in range(num_img_parts):
+		var unk_1: int = data.decode_u16((part * 0x20) + 0x10 + 0x14) & 0xF
+		var part_width: int = data.decode_u16((part * 0x20) + 0x10 + 0x16)
+		var part_height: int = part_width
+		var unk_2: int = part_width & 0x3F
+		part_width = 1 << ((part_width & 0x3C0) >> 6)
+		part_height = 1 << ((part_height & 0x3C00) >> 10)
+
+		max_part_width = max(max_part_width, part_width)
+		max_part_height = max(max_part_height, part_height)
+		
+	# Why does this image format SUCK
+	if num_img_parts == 1:
+		rows = 1
+		columns = 1
+	elif base_dir == "char":
+		if num_img_parts == 4:
+			rows = 2
+			columns = 3
+		elif num_img_parts <= 8:
+			rows = num_img_parts / 2
+			columns = int(ceil(rows - 1.0))
+		elif num_img_parts == 9:
+			rows = num_img_parts / 3
+			columns = rows
+		elif img_name == "C2001" or img_name == "C2002" or img_name == "C2003":
+			rows = num_img_parts / 4
+			columns = rows
+		elif img_name == "C0607":
+			rows = num_img_parts / 4
+			columns = rows + 1
+		elif num_img_parts == 0xC:
+			rows = num_img_parts / 3
+			columns = int(ceil(rows - 1.0))
+		elif num_img_parts >= 0x14:
+			columns = int(ceil(sqrt(num_img_parts)))
+			rows = int(ceil(num_img_parts / float(columns)))
+		else:
+			rows = 4
+			columns = 5
+			#columns = floor(float(num_img_parts) / 2)
+			#rows = ceil(float(num_img_parts) / columns)
+	elif base_dir == "BG" or base_dir == "visual":
+		rows = 2
+		columns = 3
+	elif base_dir == "etc":
+		if img_name.contains("BTL"):
+			rows = 2
+			columns = 3
+		elif img_name.contains("MUL"):
+			rows = 2
+			columns = 3
+		elif img_name == "CALAN00" or img_name == "CALAN01" or img_name == "CALAN02" or img_name == "CALAN03":
+			rows = 3
+			columns = 3
+		elif img_name == "CALAN04" or img_name == "CALAN05":
+			rows = 4
+			columns = 4
+		elif img_name == "CALAN06":
+			rows = 4
+			columns = 5
+		elif img_name == "CALAN07":
+			rows = 3
+			columns = 4
+		elif img_name == "GD_00_" or img_name == "NM_00_":
+			columns = floor(float(num_img_parts) / 2)
+			rows = ceil(float(num_img_parts) / columns)
+		elif img_name.contains("MONTH") or img_name.contains("NM_")or img_name.contains("GD_"):
+			columns = 1
+			rows = 1
+		elif img_name.contains("MAP") or img_name == "CAL_BASE" or img_name == "EXFADE23":
+			columns = int(ceil(sqrt(num_img_parts)))
+			rows = int(ceil(num_img_parts / float(columns)))
+		else:
+			columns = floor(float(num_img_parts) / 2)
+			rows = ceil(float(num_img_parts) / columns)
+	else:
+		columns = floor(float(num_img_parts) / 2)
+		rows = ceil(float(num_img_parts) / columns)
+	
+	var final_width: int = columns * max_part_width
+	var final_height: int = rows * max_part_height
+	if base_dir == "visual" or base_dir == "BG":
+		final_width = 640
+		final_height = 448
+	elif img_name == "NM_00":
+		final_width = 384
+		final_height = 256
+	elif img_name.contains("MONTH") or img_name.contains("NM_"):
+		final_width = 384
+		final_height = 128
+	var f_img: Image = Image.create_empty(final_width, final_height, false, Image.FORMAT_RGBA8)
 	
 	if !has_pal:
 		# RGBA
 		for part in range(0, num_img_parts):
 			var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
-			var part_width: int
-			var part_height: int
-			if tile_size_flag == 2:
-				part_width = 128
-				part_height = 128
-			elif tile_size_flag == 1:
-				part_width = 256
-				part_height = 128
-			else:
-				part_width = 256
-				part_height = 256
+			var unk_1: int = data.decode_u16((part * 0x20) + 0x10 + 0x14) & 0xF
+			var part_width: int = data.decode_u16((part * 0x20) + 0x10 + 0x16)
+			var part_height: int = part_width
+			var unk_2: int = part_width & 0x3F
+			part_width = 1 << ((part_width & 0x3C0) >> 6)
+			part_height = 1 << ((part_height & 0x3C00) >> 10)
+
 			var part_size: int = (part_width * part_height) << 2
 			img_part = data.slice(part_start + 0x20, part_start + 0x20 + part_size)
-			if remove_alpha:
+			if remove_alpha and not base_dir == "etc" and not base_dir == "char":
 				for i in range(0, part_size, 4):
 					img_part.encode_u8(i + 3, 255)
-				
+			elif remove_alpha2:
+				for i in range(0, part_size, 4):
+					img_part.encode_u8(i + 3, 255)
 			img = Image.create_from_data(part_width, part_height, false, Image.FORMAT_RGBA8, img_part)
-			arr.append(img)
+			var x: int
+			var y: int
+			var col: int
+			var row: int
+			if base_dir == "char" or base_dir == "etc" and not img_name.contains("MUL"):
+				col = int(part / rows)
+				row = part % rows
+				x = col * max_part_width
+				y = row * max_part_height
+			else:
+				x = (part % columns) * max_part_width
+				y = int(part / columns) * max_part_height
+			# Blend tile into final image
+			f_img.blend_rect(img, Rect2i(0, 0, part_width, part_height), Vector2i(x, y))
 	else:
-		if base_dir == "ending":
-			# 4 bit + palette
-			for part in range(0, num_img_parts):
-				var part_pal_start: int = data.decode_u32((part * 0x20) + 0x10)
-				var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
-				var part_width: int
-				var part_height: int
-				if image_name.contains("spic"):
-					part_width = 256
-					part_height = 256
+		# 8 or 4 bit images
+		for part in range(0, num_img_parts):
+			var part_pal_start: int = data.decode_u32((part * 0x20) + 0x10)
+			var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
+			var unk_1: int = data.decode_u16((part * 0x20) + 0x10 + 0x14) & 0xF
+			var part_width: int = data.decode_u16((part * 0x20) + 0x10 + 0x16)
+			var part_height: int = part_width
+			var unk_2: int = part_width & 0x3F
+			part_width = 1 << ((part_width & 0x3C0) >> 6)
+			part_height = 1 << ((part_height & 0x3C00) >> 10)
+			
+			var part_size: int = (part_width * part_height)
+			var is_4bit: bool = data.decode_u8(part_pal_start + 0x10) << 4 == 0x40
+			var pal_size: int
+			if is_4bit:
+				# Oddly these are 8 bit palettes with 0x40 size. Not bgr555 palettes.
+				pal_size = 0x40
+				#palette = data.slice(part_pal_start + 0x20, part_pal_start + 0x20 + pal_size)
+				#var n_pal: PackedByteArray = PackedByteArray()
+				#for i in range(0, 0x40, 2):
+					#var bgr555: int = palette.decode_u16(i)
+					#var r: int = ((bgr555 >> 10) & 0x1F) * 8
+					#var g: int = ((bgr555 >> 5) & 0x1F) * 8
+					#var b: int = (bgr555 & 0x1F) * 8
+					#n_pal.append(r)
+					#n_pal.append(g)
+					#n_pal.append(b)
+					#n_pal.append(255)
+				# palette = n_pal
+			else:
+				pal_size = 0x400
+			palette = data.slice(part_pal_start + 0x20, part_pal_start + 0x20 + pal_size)
+			img_part = data.slice(part_start + 0x20, part_start + 0x20 + part_size)
+			img = Image.create_empty(part_width, part_height, false, Image.FORMAT_RGBA8)
+			if remove_alpha and not base_dir == "etc" and not base_dir == "char":
+				if is_4bit:
+					for i in range(0, 0x40, 4):
+						palette.encode_u8(i + 3, 255)
 				else:
-					part_width = 512
-					part_height = 512
-					
-				var part_size: int = (part_width * part_height)
-				palette = data.slice(part_pal_start + 0x20, part_pal_start + 0x20 + 0x40)
-				img_part = data.slice(part_start + 0x20, part_start + 0x20 + part_size)
-				for i in range(0, 0x40, 2):
-					var bgr555: int = data.decode_u16(0x20 + i)
-					var r: int = ((bgr555 >> 10) & 0x1F) * 8
-					var g: int = ((bgr555 >> 5) & 0x1F) * 8
-					var b: int = (bgr555 & 0x1F) * 8
-					palette.append(r)
-					palette.append(g)
-					palette.append(b)
-					palette.append(255)
-				img = Image.create_empty(part_width, part_height, false, Image.FORMAT_RGBA8)
+					for i in range(0, 0x400, 4):
+						palette.encode_u8(i + 3, 255)
+			elif remove_alpha2:
+				if is_4bit:
+					for i in range(0, 0x40, 4):
+						palette.encode_u8(i + 3, 255)
+				else:
+					for i in range(0, 0x400, 4):
+						palette.encode_u8(i + 3, 255)
+			if not is_4bit:
+				# Character images seem to only need unswizzling, but not sure how it's determined.
+				palette = ComFuncs.unswizzle_palette(palette, 32)
+				for y in range(part_height):
+					for x in range(part_width):
+						var pixel_index: int = img_part[x + y * part_width]
+						var r: int = palette[pixel_index * 4 + 0]
+						var g: int = palette[pixel_index * 4 + 1]
+						var b: int = palette[pixel_index * 4 + 2]
+						var a: int = palette[pixel_index * 4 + 3]
+						img.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			else:
 				for y in range(part_height):
 					for x in range(0, part_width, 2):  # Two pixels per byte
 						var byte_index: int  = (x + y * part_width) / 2
@@ -652,135 +793,20 @@ func make_tpp(data: PackedByteArray, image_name: String, base_dir: String) -> Im
 							var b2: int = palette[pixel_index_2 * 4 + 2]
 							var a2: int = palette[pixel_index_2 * 4 + 3]
 							img.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
-				arr.append(img)
-		else:
-			# 8 bit + pal
-			for part in range(0, num_img_parts):
-				var part_pal_start: int = data.decode_u32((part * 0x20) + 0x10)
-				var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
-				var part_width: int
-				var part_height: int
-				if tile_size_flag == 2 or image_name == "C2901.tpp": # why do these formats suck
-					part_width = 128
-					part_height = 128
-				elif base_dir == "sam":
-					part_width = 256
-					part_height = 128
-				else:
-					part_width = 256
-					part_height = 256
-				var part_size: int = (part_width * part_height)
-				palette = data.slice(part_pal_start + 0x20, part_pal_start + 0x20 + 0x400)
-				img_part = data.slice(part_start + 0x20, part_start + 0x20 + part_size)
-				if remove_alpha:
-					for i in range(0, 0x400, 4):
-						palette.encode_u8(i + 3, 255)
-						
-				palette = ComFuncs.unswizzle_palette(palette, 32)
-				img = Image.create_empty(part_width, part_height, false, Image.FORMAT_RGBA8)
-				for y in range(part_height):
-					for x in range(part_width):
-						var pixel_index: int = img_part[x + y * part_width]
-						var r: int = palette[pixel_index * 4 + 0]
-						var g: int = palette[pixel_index * 4 + 1]
-						var b: int = palette[pixel_index * 4 + 2]
-						var a: int = palette[pixel_index * 4 + 3]
-						img.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
-				arr.append(img)
-	
-	var tile_size: int
-	var tiles_per_row: int
-	var tiles_per_col: int
-	# Likely a better way to do this.
-	if tile_size_flag == 2 or image_name == "C2901.tpp" and base_dir != "ending":
-		tile_size = 128
-		if image_name.begins_with("AL_"):
-			tiles_per_row = 1
-			tiles_per_col = num_img_parts
-		elif num_img_parts == 8:
-			tiles_per_row = 4
-			tiles_per_col = 4
-		elif num_img_parts == 9:
-			tiles_per_row = 3
-			tiles_per_col = 4
-		elif num_img_parts == 0xC:
-			tiles_per_row = 4
-			tiles_per_col = 5
-		elif num_img_parts == 0x14:
-			tiles_per_row = 4
-			tiles_per_col = 6
-		else:
-			tiles_per_row = ceil(sqrt(num_img_parts))
-			tiles_per_col = ceil(float(num_img_parts) / tiles_per_row)
-	elif tile_size_flag == 1:
-		tile_size = 256
-		tiles_per_row = ceil(sqrt(num_img_parts))
-		tiles_per_col = ceil(float(num_img_parts) / tiles_per_row)
-	else:
-		if base_dir == "ending":
-			tile_size = 512
-		else:
-			tile_size = 256
-		tiles_per_row = ceil(sqrt(num_img_parts))
-		tiles_per_col = ceil(float(num_img_parts) / tiles_per_row)
-	var w: int = tiles_per_row * tile_size
-	var h: int = tiles_per_col * tile_size
-	var final_dims: Vector2i
-	if image_name == "C2901.tpp":
-		final_dims = Vector2i(num_img_parts * tile_size / 4, num_img_parts * tile_size / 4)
-	elif image_name.contains("AL_"):
-		final_dims = Vector2i(num_img_parts * tile_size, 128)
-	elif base_dir == "ending":
-		if image_name.contains("spic"):
-			final_dims = Vector2i(512, 256)
-		else:
-			final_dims = Vector2i(512, 512)
-	elif tile_size_flag == 2 and num_img_parts == 0xC:
-		final_dims = Vector2i(512, 512)
-	elif tile_size_flag == 2 and num_img_parts == 0x14:
-		final_dims = Vector2i(640, 512)
-	elif tile_size_flag == 1 and base_dir == "visual":
-		final_dims = Vector2i(w, h)
-	elif tile_size_flag == 1:
-		final_dims = Vector2i(tile_size * 2, tile_size * 2)
-	else:
-		final_dims = Vector2i(w, h)
-	var final_w: int = final_dims.x
-	var final_h: int = final_dims.y
-
-	f_img = Image.create_empty(final_w, final_h, false, Image.FORMAT_RGBA8)
-
-	var img_i: int = 0
-	if base_dir == "visual" and tile_size_flag == 1:
-		for row in range(tiles_per_col):
-			for col in range(tiles_per_row):
-				if img_i >= num_img_parts:
-					break
-				var dst_x: int = col * tile_size
-				var dst_y: int = row * tile_size
-				var tile_img: Image = arr[img_i]
-				f_img.blend_rect(tile_img, Rect2i(0, 0, tile_size, tile_size), Vector2i(dst_x, dst_y))
-				img_i += 1
-	elif tile_size_flag == 2 or tile_size_flag == 1 or image_name == "C2901.tpp":
-		for row in range(tiles_per_col):
-			for col in range(tiles_per_row):
-				if img_i >= num_img_parts:
-					break
-				var dst_y: int = col * tile_size
-				var dst_x: int = row * tile_size
-				var tile_img: Image = arr[img_i]
-				f_img.blend_rect(tile_img, Rect2i(0, 0, tile_size, tile_size), Vector2i(dst_x, dst_y))
-				img_i += 1
-	else:
-		for row in range(tiles_per_col):
-			for col in range(tiles_per_row):
-				if img_i >= num_img_parts:
-					break
-				var dst_x: int = col * tile_size
-				var dst_y: int = row * tile_size
-				var tile_img: Image = arr[img_i]
-				f_img.blend_rect(tile_img, Rect2i(0, 0, tile_size, tile_size), Vector2i(dst_x, dst_y))
-				img_i += 1
+			var x: int
+			var y: int
+			var col: int
+			var row: int
+			if base_dir == "char" or base_dir == "etc":
+				col = int(part / rows)
+				row = part % rows
+				x = col * max_part_width
+				y = row * max_part_height
+			else:
+				x = (part % columns) * max_part_width
+				y = int(part / columns) * max_part_height
+			f_img.blend_rect(img, Rect2i(0, 0, part_width, part_height), Vector2i(x, y))
+			
 	return f_img
 	
 	
@@ -795,32 +821,35 @@ func make_tpp_debug(data: PackedByteArray) -> Array[PackedByteArray]:
 	if !has_pal:
 		for part in range(0, num_img_parts):
 			var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
-			var part_width: int
-			var part_height: int
-			if tile_size_flag == 2:
-				part_width = 128
-				part_height = 128
-			else:
-				part_width = 256
-				part_height = 256
-			var part_size: int = (part_width * part_height) * 3
+			var unk_1: int = data.decode_u16((part * 0x20) + 0x10 + 0x14) & 0xF
+			var part_width: int = data.decode_u16((part * 0x20) + 0x10 + 0x16)
+			var part_height: int = part_width
+			var unk_2: int = part_width & 0x3F
+			part_width = 1 << ((part_width & 0x3C0) >> 6)
+			part_height = 1 << ((part_height & 0x3C00) >> 10)
+
+			var part_size: int = (part_width * part_height) << 2
 			img_part = data.slice(part_start, part_start + 0x20 + part_size)
 			arr.append(img_part)
 	else:
-		# 8 bit + pal
 		for part in range(0, num_img_parts):
 			var part_pal_start: int = data.decode_u32((part * 0x20) + 0x10)
 			var part_start: int = data.decode_u32((part * 0x20) + 0x10 + 4)
-			var part_width: int
-			var part_height: int
-			if tile_size_flag == 2:
-				part_width = 128
-				part_height = 128
-			else:
-				part_width = 256
-				part_height = 256
+			var unk_1: int = data.decode_u16((part * 0x20) + 0x10 + 0x14) & 0xF
+			var part_width: int = data.decode_u16((part * 0x20) + 0x10 + 0x16)
+			var part_height: int = part_width
+			var unk_2: int = part_width & 0x3F
+			part_width = 1 << ((part_width & 0x3C0) >> 6)
+			part_height = 1 << ((part_height & 0x3C00) >> 10)
+			
 			var part_size: int = (part_width * part_height)
-			palette = data.slice(part_pal_start, part_pal_start + 0x20 + 0x400)
+			var is_4bit: bool = data.decode_u8(part_pal_start + 0x10) << 4 == 0x40
+			var pal_size: int
+			if is_4bit:
+				pal_size = 0x40
+			else:
+				pal_size = 0x400
+			palette = data.slice(part_pal_start, part_pal_start + 0x20 + pal_size)
 			img_part = data.slice(part_start, part_start + 0x20 + part_size)
 			arr.append(palette)
 			arr.append(img_part)
@@ -1038,3 +1067,7 @@ func _on_output_debug_toggled(_toggled_on: bool) -> void:
 
 func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
 	remove_alpha = !remove_alpha
+
+
+func _on_remove_alpha_2_toggled(_toggled_on: bool) -> void:
+	remove_alpha2 = !remove_alpha2

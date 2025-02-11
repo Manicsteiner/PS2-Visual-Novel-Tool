@@ -232,7 +232,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/Sting.tscn")
 		sceneChanger(next_scene)
 	elif index == TOHEART:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(TOHEART)
 		game_type = TOHEART
 		var next_scene: PackedScene = load("res://src/scenes/Sting.tscn")
