@@ -30,6 +30,7 @@ func extract_dat() -> void:
 	var f_dec_size: int
 	var f_size: int
 	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
+	var name_align: int
 	var is_enc: bool
 	var dat_names: PackedStringArray = [
 		# Archives that don't need file decryption / decompression
@@ -39,6 +40,11 @@ func extract_dat() -> void:
 		"DATA09"
 	]
 	
+	if Main.game_type == Main.PRINCESSCONCERTO:
+		name_align = 1
+	else:
+		name_align = 0
+	
 	for file in range(0, selected_files.size()):
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
 		var arc_name: String = selected_files[file].get_file().get_basename()
@@ -46,6 +52,8 @@ func extract_dat() -> void:
 		
 		if arc_name == "DATA10":
 			OS.alert("DATA10.DAT is just a .PSS movie file :)")
+			continue
+		elif Main.game_type == Main.MEITANTEIEVA and arc_name == "DATA00":
 			continue
 			
 		if arc_name in dat_names:
@@ -101,7 +109,7 @@ func extract_dat() -> void:
 			out_file.store_buffer(buff)
 			out_file.close()
 		
-			hdr_pos += 0xC + f_name_size + 1
+			hdr_pos += 0xC + f_name_size + name_align
 			if hdr_pos + 8 >= hdr_dec_size:
 				break
 				
@@ -109,32 +117,24 @@ func extract_dat() -> void:
 	
 	
 func decrypt_file(dat: PackedByteArray, comp_size: int, dec_size: int) -> PackedByteArray:
-	var out: PackedByteArray
-	var a1: int = comp_size
-	var a0: int = 0xC
-	
+	var out: PackedByteArray = PackedByteArray()
 	out.resize(comp_size + 0xC)
-	out.encode_u32(0, dec_size)
-	out.encode_u32(4, comp_size)
-	
+	#out.encode_u32(0, dec_size)
+	#out.encode_u32(4, comp_size)
+
 	var t0: int = dat.decode_u8(8)
 	var a3: int = dat.decode_u8(9)
 	var a2: int = dat.decode_u8(10)
 	var v1: int = dat.decode_u8(11)
-	
-	a3 = t0 + a3
-	a2 = a2 + a3
-	v1 = v1 + a2 
-	a2 = v1 & 0xFF
-	
-	if a2 == 0:
-		a2 = 0xAA
-	a1 = a0 + a1 
-	while a0 < a1:
-		v1 = dat.decode_u8(a0)
-		v1 = v1 ^ a2
-		out.encode_u8(a0, v1)
-		a0 += 1
+
+	a3 += t0
+	a2 += a3
+	v1 += a2
+	a2 = (v1 & 0xFF) if (v1 & 0xFF) != 0 else 0xAA
+
+	for i: int in range(0xC, comp_size + 0xC):
+		out.encode_u8(i, dat.decode_u8(i) ^ a2)
+
 	return out
 
 

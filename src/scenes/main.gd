@@ -99,6 +99,7 @@ enum {
 	MAGI,
 	MAGICAL,
 	MAIHIME,
+	MEITANTEIEVA,
 	MEMORIESOFF5EN,
 	MEMORIESOFF5TO,
 	MEMORIESOFF6NEXT,
@@ -224,6 +225,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
 		game_type_selector.select(PRINCESSCONCERTO)
 		game_type = PRINCESSCONCERTO
+		var next_scene: PackedScene = load("res://src/scenes/Headlock.tscn")
+		sceneChanger(next_scene)
+	elif index == MEITANTEIEVA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
+		game_type_selector.select(MEITANTEIEVA)
+		game_type = MEITANTEIEVA
 		var next_scene: PackedScene = load("res://src/scenes/Headlock.tscn")
 		sceneChanger(next_scene)
 	elif index == SUISUISWEET:
@@ -1431,6 +1438,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Meitantei Evangelion", MEITANTEIEVA)
 	game_type_selector.add_item("Memories Off 5: Encore", MEMORIESOFF5EN)
 	game_type_selector.add_item("Memories Off 5: Togireta Film", MEMORIESOFF5TO)
 	game_type_selector.add_item("Memories Off 6: Next Relation", MEMORIESOFF6NEXT)
