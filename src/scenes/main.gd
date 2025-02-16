@@ -133,6 +133,7 @@ enum {
 	PIAGO,
 	PIZZICATOPOLKA,
 	PLANETARIAN,
+	PRINCESSCONCERTO,
 	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
 	PRINCESSPRINCESS,
@@ -218,6 +219,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == PRINCESSCONCERTO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
+		game_type_selector.select(PRINCESSCONCERTO)
+		game_type = PRINCESSCONCERTO
+		var next_scene: PackedScene = load("res://src/scenes/Headlock.tscn")
 		sceneChanger(next_scene)
 	elif index == SUISUISWEET:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1458,6 +1465,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pia Carrot he Youkoso!! G.O. Summer Fair", PIAGO)
 	game_type_selector.add_item("Pizzicato Polka: Suisei Genya", PIZZICATOPOLKA)
 	game_type_selector.add_item("Planetarian: Chiisana Hoshi no Yume", PLANETARIAN)
+	game_type_selector.add_item("Princess Concerto", PRINCESSCONCERTO)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
