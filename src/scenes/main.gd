@@ -11,6 +11,7 @@ enum {
 	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
 	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
 	AIR,
+	AIYORIAOSHI,
 	AFTER,
 	ANGELSFEATHER,
 	ANGELWISH,
@@ -22,6 +23,7 @@ enum {
 	CAMBRIAN,
 	CANVAS1,
 	CANVAS2,
+	CARTAGRA,
 	CASTLEFANTASIA,
 	CHANTER,
 	CLOVERNOKUNI,
@@ -81,6 +83,7 @@ enum {
 	JEWELSOCEAN,
 	JIGOKUSHOUJO,
 	JUUJIGEN,
+	KANOKON,
 	KANON,
 	KATAKAMUNA,
 	KAZEIROSURF,
@@ -123,6 +126,7 @@ enum {
 	NATSUZORA,
 	NETTAITEIKIATSU,
 	NORTHWIND,
+	NURSEWITCH,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
 	OTOMENOJIJOU,
@@ -181,6 +185,7 @@ enum {
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
+	UMISHO,
 	UNDERTHEMOON,
 	WEARE,
 	WHITEBREATH,
@@ -286,6 +291,36 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports '12Riven: The Psi-Climinal of Integral'."
 		game_type_selector.select(TWELVERIVEN)
 		game_type = TWELVERIVEN
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == AIYORIAOSHI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(AIYORIAOSHI)
+		game_type = AIYORIAOSHI
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == KANOKON:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(KANOKON)
+		game_type = KANOKON
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == CARTAGRA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(CARTAGRA)
+		game_type = CARTAGRA
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == NURSEWITCH:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(NURSEWITCH)
+		game_type = NURSEWITCH
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == UMISHO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(UMISHO)
+		game_type = UMISHO
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MIZUNOSENRITSU:
@@ -1357,6 +1392,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
 	game_type_selector.add_item("Air", AIR)
+	game_type_selector.add_item("Ai Yori Aoshi", AIYORIAOSHI)
 	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
@@ -1368,6 +1404,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
 	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
 	game_type_selector.add_item("Canvas 2: Akaneiro no Palette", CANVAS2)
+	game_type_selector.add_item("Cartagra: Tamashii no Kunou", CARTAGRA)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
@@ -1427,6 +1464,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
+	game_type_selector.add_item("Kanokon Esuii", KANOKON)
 	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
@@ -1469,6 +1507,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuzora no Monologue", NATSUZORA)
 	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
+	game_type_selector.add_item("Nurse Witch Komugi-chan Maji-Karte", NURSEWITCH)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
 	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
@@ -1527,6 +1566,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
+	game_type_selector.add_item("Umisho", UMISHO)
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)

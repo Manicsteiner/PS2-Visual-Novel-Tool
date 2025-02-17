@@ -29,7 +29,7 @@ theme_override_constants/separation = 28
 
 [node name="LoadAFS" type="Button" parent="HBoxContainer"]
 layout_mode = 2
-text = "Extract .AFS"
+text = "Extract .AFS / .DAT"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -45,14 +45,15 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-text = "Output Compressed .KLZ Files (Debug)"
-
-[node name="Export Tiled" type="CheckBox" parent="VBoxContainer"]
+[node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
 visible = false
 layout_mode = 2
-text = "Export Tiled Images"
+button_pressed = true
+text = "Remove Alpha Channel in PNGs"
+
+[node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Compressed / Decompressed Files (Debug)"
 
 [node name="FILELoadAFS" type="FileDialog" parent="."]
 auto_translate_mode = 1
@@ -62,7 +63,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 1
 access = 2
-filters = PackedStringArray("*.AFS")
+filters = PackedStringArray("*.AFS, *.DAT")
 use_native_dialog = true
 
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]
@@ -76,6 +77,7 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadAFS" to="." method="_on_load_afs_pressed"]
+[connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="files_selected" from="FILELoadAFS" to="." method="_on_file_load_afs_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]
