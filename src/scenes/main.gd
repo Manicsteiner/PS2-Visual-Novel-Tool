@@ -157,6 +157,7 @@ enum {
 	SCHOOLNI,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
+	SHINSEIKIEVABATTLE,
 	SHIROGANE,
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
@@ -231,6 +232,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
 		game_type_selector.select(MEITANTEIEVA)
 		game_type = MEITANTEIEVA
+		var next_scene: PackedScene = load("res://src/scenes/Headlock.tscn")
+		sceneChanger(next_scene)
+	elif index == SHINSEIKIEVABATTLE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
+		game_type_selector.select(SHINSEIKIEVABATTLE)
+		game_type = SHINSEIKIEVABATTLE
 		var next_scene: PackedScene = load("res://src/scenes/Headlock.tscn")
 		sceneChanger(next_scene)
 	elif index == SUISUISWEET:
@@ -1496,6 +1503,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
+	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)

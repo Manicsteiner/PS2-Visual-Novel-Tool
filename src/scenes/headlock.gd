@@ -50,10 +50,10 @@ func extract_dat() -> void:
 		var arc_name: String = selected_files[file].get_file().get_basename()
 		dat_hdr_name = selected_files[file].get_file() + ".HED"
 		
-		if arc_name == "DATA10":
-			OS.alert("DATA10.DAT is just a .PSS movie file :)")
+		if arc_name == "DATA10" or arc_name == "OP":
+			OS.alert("DATA10.DAT / OP.DAT is just a .PSS movie file :)")
 			continue
-		elif Main.game_type == Main.MEITANTEIEVA and arc_name == "DATA00":
+		elif arc_name == "DATA00" and (Main.game_type == Main.MEITANTEIEVA or Main.game_type == Main.SHINSEIKIEVABATTLE):
 			continue
 			
 		if arc_name in dat_names:
