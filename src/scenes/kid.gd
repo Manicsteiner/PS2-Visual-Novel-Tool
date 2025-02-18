@@ -13,10 +13,10 @@ var remove_alpha: bool = true
 var scr_names: PackedStringArray
 
 func _ready() -> void:
-	#var in_file: FileAccess = FileAccess.open("G:/SLPM_668.64", FileAccess.READ)
+	#var in_file: FileAccess = FileAccess.open("G:/SLPM_669.36", FileAccess.READ)
 	#var ent_pnt: int = 0xFF000
-	#var tbl_s: int = 0x001c12e0 - ent_pnt
-	#var tbl_e: int = 0x001c1390 - ent_pnt
+	#var tbl_s: int = 0x002102a8 - ent_pnt
+	#var tbl_e: int = 0x00210364 - ent_pnt
 	#var off: int = tbl_s
 	#while off < tbl_e:
 		#in_file.seek(off)
@@ -24,7 +24,6 @@ func _ready() -> void:
 		#if scr_off == 0:
 			#break
 		#scr_off -= ent_pnt
-		#
 		#in_file.seek(scr_off)
 		#print(in_file.get_line() + ",")
 		#off += 4
@@ -95,6 +94,123 @@ func _ready() -> void:
 		"S8_02.scr", "S8_03.scr", "S8_04.scr", "S8_05.scr", "S8_06.scr",
 		"Startup.scr", "system.scr", "Xcharatest.scr", "XDBG00.scr", "XDBG01.scr",
 		"XDBG02.scr", "XDBG03.scr", "XDMENU.scr", "ZZZ.scr"
+		]
+	elif Main.game_type == Main.ERDE:
+		scr_names = [
+		"a01.scr", "a02.scr", "a03.scr", "a04.scr", "a05.scr", "a06.scr", "a07.scr", "a08.scr",
+		"a09.scr", "a10.scr", "a11.scr", "a12.scr", "a13.scr", "a14.scr", "a15.scr", "a16.scr",
+		"a17.scr", "a18.scr", "a19.scr", "a20.scr", "a21.scr", "a22.scr", "a23.scr", "a24.scr",
+		"e01.scr", "e02.scr", "e03.scr", "e04.scr", "e05.scr", "e06.scr", "e07.scr", "e08.scr",
+		"e09.scr", "e10.scr", "e11.scr", "e12.scr", "e13.scr", "e14.scr", "e15.scr", "e16.scr",
+		"e17.scr", "e18.scr", "k01.scr", "k02.scr", "k03.scr", "k04.scr", "k05.scr", "k06.scr",
+		"k07.scr", "k08.scr", "k09.scr", "k10.scr", "k11.scr", "k12.scr", "k13.scr", "k14.scr",
+		"k15.scr", "k16.scr", "k17.scr", "k18.scr", "k19.scr", "k20.scr", "macrosys.scr",
+		"r01.scr", "r02.scr", "r03.scr", "r04.scr", "r05.scr", "r06.scr", "r07.scr", "r08.scr",
+		"r09.scr", "r10.scr", "r11.scr", "r12.scr", "r13.scr", "r14.scr", "r15.scr", "r16.scr",
+		"r17.scr", "r18.scr", "s00.scr", "s01.scr", "s02.scr", "s03.scr", "s04.scr", "s05.scr",
+		"s06.scr", "s07.scr", "s08.scr", "s09.scr", "s10.scr", "s11.scr", "s12.scr", "s13.scr",
+		"s14.scr", "s15.scr", "s16.scr", "s17.scr", "s18.scr", "s19.scr", "s20.scr", "s21.scr",
+		"s22.scr", "s23.scr", "Startup.scr", "system.scr", "y01.scr", "y02.scr", "y03.scr",
+		"y04.scr", "y05.scr", "y06.scr", "y07.scr", "y08.scr", "y09.scr", "y10.scr", "y11.scr",
+		"y12.scr", "y13.scr", "y14.scr", "y15.scr", "y16.scr", "y17.scr", "y18.scr", "y19.scr",
+		"y20.scr", "y21.scr", "y22.scr", "y23.scr", "y24.scr", "y25.scr"
+		]
+	elif Main.game_type == Main.WHITEPRINCESS:
+		scr_names = [
+		"macrosys.scr", "macrosys2.scr", "MAIN00.scr", "mstart.scr",
+		"S00_EV00_OPEN00.scr", "S00_EV00_OPEN01.scr", "S00_EV00_OPEN02.scr",
+		"S00_EV00_OPEN03.scr", "S00_EV00_OPEN04.scr", "S01_EV00_HONO.scr",
+		"S01_EV00_KAOR.scr", "S01_EV00_KOKO.scr", "S01_EV00_NARU.scr",
+		"S01_EV00_SIRE.scr", "S01_EV00_TOHK.scr", "S01_EV00_YUIN.scr",
+		"S01_EV01_HONO.scr", "S01_EV01_KOKO.scr", "S01_EV01_RENA.scr",
+		"S01_EV01_SIBA.scr", "S01_EV01_TOHK.scr", "S01_EV01_YUIN.scr",
+		"S01_EV02_FEST.scr", "S01_EV03_DATE.scr", "S01_EV04_HONO.scr",
+		"S01_EV04_KOKO.scr", "S01_EV04_RENA.scr", "S01_EV04_SIBA.scr",
+		"S01_EV04_TOHK.scr", "S01_EV04_YUIN.scr", "S02_EV00_PREP00.scr",
+		"S02_EV00_PREP01.scr", "S02_EV00_PREP02.scr", "S02_EV00_PREP03.scr",
+		"S02_EV00_PREP04.scr", "S02_EV00_PREP05.scr", "S02_EV00_PREP06.scr",
+		"S02_EV00_PREP07.scr", "S02_EV00_PREP08.scr", "S02_EV00_PREP09.scr",
+		"S02_EV00_PREP10.scr", "S02_EV00_PREP11.scr", "S02_EV01_FEST00.scr",
+		"S02_EV01_FEST01.scr", "S03_EV00_00.scr", "S03_EV01_00.scr",
+		"S03_EV01_HINA00.scr", "S03_EV01_HONO00.scr", "S03_EV01_HONO01.scr",
+		"S03_EV01_KOKO00.scr", "S03_EV01_KOKO01.scr", "S03_EV01_RENA00.scr",
+		"S03_EV01_SIBA00.scr", "S03_EV01_TOHK00.scr", "S03_EV01_TOHK01.scr",
+		"S03_EV01_YUIN00.scr", "S03_EV02_KIMO00.scr", "S03_EV02_KIMO01.scr",
+		"S03_EV02_KIMOHI.scr", "S03_EV03_HINA.scr", "S03_EV03_HONO.scr",
+		"S03_EV03_KOKO.scr", "S03_EV03_SIRE.scr", "S03_EV03_TOHK.scr",
+		"S03_EV03_YUIN.scr", "S04_EV00_HINA00.scr", "S04_EV00_HINA01.scr",
+		"S04_EV00_KOKO00.scr", "S04_EV00_KOKO01.scr", "S04_EV00_SIRE00.scr",
+		"S04_EV00_TOHK00.scr", "S04_EV00_TOHK01.scr", "S04_EV01_00.scr",
+		"S04_EV01_HINA00.scr", "S04_EV01_HORE00.scr", "S04_EV01_KOSI00.scr",
+		"S04_EV01_TOHK00.scr", "S04_EV01_YUIN00.scr", "S04_EV02_HORE00.scr",
+		"S04_EV02_KOSI00.scr", "S04_EV02_RENA00.scr", "S04_EV02_SIBA00.scr",
+		"S04_EV02_SIBA01.scr", "S05_ED00_KOKO.scr", "S05_ED00_KOTO.scr",
+		"S05_ED01_TOHK.scr", "S05_ED01_TOKA.scr", "S05_ED02_INCH.scr",
+		"S05_ED02_YUIN.scr", "S05_ED02_YUNA.scr", "S05_ED03_HONO.scr",
+		"S05_ED03_HORE.scr", "S05_ED04_KOSI.scr", "S05_ED04_SIBA00.scr",
+		"S05_ED04_SIBA01.scr", "S05_ED05_RENA.scr", "S05_ED05_SIRE.scr",
+		"S05_ED06_HINA.scr", "Startup.scr", "system.scr", "zzz.scr"
+		]
+	elif Main.game_type == Main.FESTAHYPER:
+		scr_names = [
+		"DBG00.scr", "DBG01.scr", "DBG02.scr", "DBG03.scr", "DMENU.scr", "END.scr", 
+		"k_sss_a1.scr", "k_sss_a2.scr", "k_sss_a3.scr", "k_sss_a4.scr", "k_sss_b1.scr", "k_sss_b2.scr", 
+		"k_sss_b3.scr", "k_sss_b4.scr", "krj.scr", "m_sss_a1.scr", "m_sss_a2.scr", "m_sss_a3.scr", 
+		"m_sss_a4.scr", "m_sss_b1.scr", "m_sss_b2.scr", "m_sss_b3.scr", "m_sss_b4.scr", "macrosys.scr", 
+		"macrosys2.scr", "MAIN00.scr", "mrj.scr", "mstart.scr", "SC000.scr", "SC001.scr", "SC002.scr", 
+		"SC003.scr", "SC004.scr", "SC005.scr", "SC006.scr", "SC007.scr", "SC008.scr", "SC009.scr", 
+		"SC010.scr", "SC011.scr", "SC012.scr", "SC013.scr", "SC014.scr", "SC015.scr", "SC016.scr", 
+		"SC017.scr", "SC018.scr", "SC019.scr", "SC020.scr", "SC021.scr", "SC022.scr", "SC023.scr", 
+		"SC024.scr", "SC025.scr", "SC026.scr", "SC027.scr", "SC028.scr", "SC029.scr", "SC030.scr", 
+		"SC031.scr", "SC032.scr", "SC033.scr", "SC034.scr", "SC035.scr", "SC036.scr", "SC037.scr", 
+		"SC038.scr", "SC039.scr", "SC040.scr", "SC041.scr", "SC042.scr", "SC043.scr", "SC044.scr", 
+		"SC045.scr", "SC046.scr", "SC047.scr", "SC048.scr", "SC049.scr", "SC050.scr", "SC051.scr", 
+		"SC052.scr", "SC053.scr", "SC054.scr", "SC055.scr", "SC056.scr", "SC057.scr", "SC070.scr", 
+		"SC071.scr", "SC072.scr", "SC073.scr", "SC074.scr", "SC075.scr", "SC076.scr", "SC077.scr", 
+		"SC078.scr", "SC079.scr", "SC101.scr", "SC102.scr", "SC103.scr", "SC104.scr", "SC105.scr", 
+		"SC106.scr", "SC107.scr", "SC108.scr", "SC109.scr", "SC110.scr", "SC111.scr", "SC112.scr", 
+		"SC113.scr", "SC114.scr", "SC115.scr", "SC116.scr", "SC117.scr", "SC118.scr", "SC119.scr", 
+		"SC120.scr", "SC121.scr", "SC122.scr", "SC123.scr", "SC124.scr", "SC125.scr", "SC126.scr", 
+		"SC127.scr", "SC128.scr", "SC129.scr", "SC130.scr", "SC131.scr", "SC132.scr", "SC133.scr", 
+		"SC134.scr", "SC135.scr", "SC136.scr", "SC137.scr", "SC138.scr", "SC139.scr", "SC140.scr", 
+		"SC141.scr", "SC142.scr", "SC143.scr", "SC144.scr", "SC145.scr", "SC146.scr", "SC147.scr", 
+		"SC148.scr", "SC149.scr", "SC151.scr", "SC152.scr", "SC153.scr", "SC154.scr", "SC155.scr", 
+		"SC156.scr", "SC157.scr", "SC158.scr", "SC200.scr", "SC201.scr", "SC202.scr", "SC203.scr", 
+		"SC204.scr", "SC210.scr", "SC220.scr", "SC221.scr", "SC222.scr", "SC230.scr", "SC240.scr", 
+		"SC250.scr", "SC251.scr", "SC260.scr", "SC261.scr", "SC300.scr", "SC301.scr", "SC301_a.scr", 
+		"SC302.scr", "SC302_a.scr", "SC303_AY_A.scr", "SC303_AY_B.scr", "SC303_AY_C.scr", "SC303_KO_A.scr", 
+		"SC303_KO_B.scr", "SC303_RE_A.scr", "SC303_RE_B.scr", "SC308.scr", "SC309.scr", "SC310.scr", 
+		"SC320.scr", "SC321.scr", "SC322.scr", "SC323.scr", "SC324.scr", "SC330.scr", "SC331.scr", 
+		"SC332.scr", "SC335.scr", "SC336.scr", "SC340.scr", "SC341.scr", "SC342.scr", "SC350.scr", 
+		"SC351.scr", "SC352.scr", "SC360.scr", "SC361.scr", "SC390.scr", "SC390_AY.scr", "SC390_KO.scr", 
+		"SC391.scr", "SC401.scr", "SC402.scr", "SC410.scr", "SC420.scr", "SC430.scr", "SC450.scr", 
+		"SC460.scr", "SC500.scr", "SC501.scr", "SC502.scr", "SC503.scr", "SC504.scr", "SC600.scr", 
+		"START.scr", "Startup.scr", "stickreg.scr", "system.scr", "ZZZ.scr"
+		]
+	elif Main.game_type == Main.KAIKETSUOSHABAKIINA:
+		scr_names = [
+		"ex01.scr", "EX01A.scr", "ex02.scr", "EX02A.scr", 
+		"ex04.scr", "macrosys.scr", "macrosys2.scr", "mstart.scr", 
+		"s01.scr", "s02.scr", "S02A.scr", "s03.scr", 
+		"S03A.scr", "s04.scr", "S04A.scr", "s05.scr", 
+		"s05A.scr", "s06.scr", "s07.scr", "s07A.scr", 
+		"s08_1.scr", "s08_2.scr", "s08_3.scr", "Startup.scr", 
+		"system.scr", "zzz.scr"
+		]
+	elif Main.game_type == Main.NIGHTWIZARD:
+		scr_names = [
+		"macrosys.scr", "macrosys2.scr", "main00.scr", "mstart.scr",
+		"S1MA.scr", "S1SA.scr", "S2MA.scr", "S2SA.scr",
+		"S3MA.scr", "S3SA.scr", "S4MA.scr", "S4SA.scr",
+		"S5MA.scr", "S5SA.scr", "S6MA.scr", "S6SA.scr",
+		"S6SB.scr", "S6SC.scr", "S6SD.scr", "S6SE.scr",
+		"S6SF.scr", "S6SG.scr", "S6SH.scr", "S6SI.scr",
+		"S6SJ.scr", "S6SK.scr", "S6SL.scr", "S6SM.scr",
+		"S6SN.scr", "S6SO.scr", "S6SP.scr", "S6SQ.scr",
+		"S6SR.scr", "S6SS.scr", "S6ST.scr", "S6SU.scr",
+		"S6SV.scr", "S6SW.scr", "Startup.scr", "system.scr",
+		"Xcharatest.scr", "XDBG00.scr", "XDBG01.scr", "XDBG02.scr",
+		"XDBG03.scr", "XDMENU.scr", "ZZZ.scr"
 		]
 	elif Main.game_type == Main.AIYORIAOSHI:
 		scr_names = [
@@ -233,14 +349,34 @@ func extract_arcs() -> void:
 				
 				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 		elif selected_files[file].get_extension().to_lower() == "dat":
-			var start_off: int = 0x8000
+			var start_off: int
+			var is_lnk: bool
+			var pos: int
+			in_file.seek(0)
+			if in_file.get_buffer(4).get_string_from_ascii() == "LNK4":
+				is_lnk = true
+				start_off = in_file.get_32()
+				pos = 8
+			else:
+				is_lnk = false
+				start_off = 0x8000
+				pos = 0
+				
 			var f_id: int = 0
-			var pos: int = 0
 			while true:
 				in_file.seek(pos)
 				f_name = "%04d" % f_id
 				f_offset = (in_file.get_32() * 0x800) + start_off
-				f_size = (in_file.get_32() * 0x800)
+				if is_lnk:
+					f_size = (in_file.get_32() >> 1) * 0x800
+				else:
+					f_size = (in_file.get_32() * 0x800)
+				# These two files are actually from Cartagra
+				if Main.game_type == Main.FESTAHYPER and arc_name == "SYSTEM":
+					if f_id == 58:
+						f_size = 0x18800
+					elif f_id == 59:
+						f_size = 0x3A000
 				if f_size == 0:
 					break
 				
@@ -255,7 +391,7 @@ func extract_arcs() -> void:
 				in_file.seek(f_offset)
 				buff = in_file.get_buffer(f_size)
 				if buff.slice(0, 3).get_string_from_ascii() == "CPS":
-					buff = GSLmeltData(buff)
+					buff = GSLmeltData(buff, f_id, arc_name)
 					
 					if debug_out:
 						out_file = FileAccess.open(folder_path + "/" + arc_name + "/%s" % f_name + ".DEC", FileAccess.WRITE)
@@ -310,10 +446,12 @@ func extract_arcs() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
-func GSLmeltData(buff: PackedByteArray) -> PackedByteArray:
+func GSLmeltData(buff: PackedByteArray, f_id: int, arc_name: String) -> PackedByteArray:
 	# Function name taken from debug name in Ai yori Aoshi
 	# In Ai Yori Aoshi, name offsets appear to be at memory address 0x001bcc00
 	# but don't seem to match. Might be an old list.
+	
+	# f_id and arc_name are only needed for 2 dummy images in Festa hyper girls as they are from Cartagra.
 	
 	var dec_keys: Array[int]
 	var in_pos: int
@@ -336,6 +474,30 @@ func GSLmeltData(buff: PackedByteArray) -> PackedByteArray:
 		dec_keys = [
 		0xBB6F4087, 0x16219633, 0xD1656A1D, 0xD0A7470B,
 		0x89F3412F, 0x92E7C23B, 0xFC7F5E3D, 0x197B6D41
+		]
+	elif Main.game_type == Main.WHITEPRINCESS:
+		needs_keys = true
+		dec_keys = [
+		0x0D4BD621, 0x7CCB88CB, 0x676316B9, 0x81851CCB,
+		0xFF17A64D, 0x6537C7C1, 0xA6AF5E8F, 0xE73F714B
+		]
+	elif Main.game_type == Main.FESTAHYPER:
+		needs_keys = true
+		if arc_name == "SYSTEM" and (f_id == 58 or f_id == 59):
+			dec_keys = [
+			0xB739A245, 0x9D95B93F, 0x44C3F5DF, 0x0E870733,
+			0xDBB9EA9B, 0x7C31C2ED, 0x5D95284D, 0x14C5ACCB
+			]
+		else:
+			dec_keys = [
+			0x87458C39, 0x082F1053, 0x39EF777D, 0xEFF76633,
+			0x72832D4D, 0x0AE9CED9, 0xA7AB4CC5, 0x8437CD5D
+			]
+	elif Main.game_type == Main.NIGHTWIZARD:
+		needs_keys = true
+		dec_keys = [
+		0x368DCE75, 0x2907484D, 0xD969F69D, 0x08591533,
+		0xF363434F, 0x18757237, 0xD015A49F, 0xDA693AB3
 		]
 	else:
 		needs_keys = false
@@ -409,9 +571,9 @@ func GSLmeltData(buff: PackedByteArray) -> PackedByteArray:
 					
 	var f_buff: PackedByteArray
 	if needs_keys:
-		f_buff = PackedByteArray(buff.slice(0x20, 0x28))
+		f_buff = buff.slice(0x20, 0x28)
 	else:
-		f_buff = PackedByteArray(buff.slice(0x14, 0x1C))
+		f_buff = buff.slice(0x14, 0x1C)
 	f_buff.append_array(out)
 	return f_buff
 	

@@ -42,7 +42,9 @@ enum {
 	DOUBLEWISH,
 	EF,
 	ELYSION,
+	ERDE,
 	FANATIC,
+	FESTAHYPER,
 	FINALA,
 	FINALA2,
 	FINALIST,
@@ -83,6 +85,7 @@ enum {
 	JEWELSOCEAN,
 	JIGOKUSHOUJO,
 	JUUJIGEN,
+	KAIKETSUOSHABAKIINA,
 	KANOKON,
 	KANON,
 	KATAKAMUNA,
@@ -125,6 +128,7 @@ enum {
 	NATSUIROSUNADOKEI,
 	NATSUZORA,
 	NETTAITEIKIATSU,
+	NIGHTWIZARD,
 	NORTHWIND,
 	NURSEWITCH,
 	OJOUSAMAKUMI,
@@ -189,6 +193,7 @@ enum {
 	UNDERTHEMOON,
 	WEARE,
 	WHITEBREATH,
+	WHITEPRINCESS,
 	YAMIYO,
 	YATOHIME,
 	YOJINBO,
@@ -299,6 +304,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = AIYORIAOSHI
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
+	elif index == ERDE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(ERDE)
+		game_type = ERDE
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
 	elif index == KANOKON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(KANOKON)
@@ -321,6 +332,30 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(UMISHO)
 		game_type = UMISHO
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == WHITEPRINCESS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(WHITEPRINCESS)
+		game_type = WHITEPRINCESS
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == FESTAHYPER:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(FESTAHYPER)
+		game_type = FESTAHYPER
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == KAIKETSUOSHABAKIINA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(KAIKETSUOSHABAKIINA)
+		game_type = KAIKETSUOSHABAKIINA
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == NIGHTWIZARD:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(NIGHTWIZARD)
+		game_type = NIGHTWIZARD
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MIZUNOSENRITSU:
@@ -1423,7 +1458,9 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)
+	game_type_selector.add_item("Erde: Nezu no Ki no Shita de", ERDE)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
+	game_type_selector.add_item("Festa!! Hyper Girls Party", FESTAHYPER)
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
@@ -1464,6 +1501,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
+	game_type_selector.add_item("Kaiketsu! Osabakiina", KAIKETSUOSHABAKIINA)
 	game_type_selector.add_item("Kanokon Esuii", KANOKON)
 	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
@@ -1506,6 +1544,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuiro no Sunadokei", NATSUIROSUNADOKEI)
 	game_type_selector.add_item("Natsuzora no Monologue", NATSUZORA)
 	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
+	game_type_selector.add_item("Night Wizard the Video Game - Denial of the World", NIGHTWIZARD)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Nurse Witch Komugi-chan Maji-Karte", NURSEWITCH)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
@@ -1555,7 +1594,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("SuiSui Sweet: ~Amai Koi No Mitsukekata~")
-	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome - Keishou Shimasho! Koi no Hanamuko Soudatsu-sen!!", SUMOMOMO)
+	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome", SUMOMOMO)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Sweet Season", SWEETSEASON)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
@@ -1570,6 +1609,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
+	game_type_selector.add_item("White Princess the Second", WHITEPRINCESS)
 	game_type_selector.add_item("Yamiyo ni Sasayaku: Tantei Sagara Kyouichirou", YAMIYO)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
