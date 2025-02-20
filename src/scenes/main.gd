@@ -48,9 +48,11 @@ enum {
 	FINALA,
 	FINALA2,
 	FINALIST,
+	FRAGMENTSBLUE,
 	FRIENDS,
 	FUKAKUTEI,
 	FUTAKOI,
+	FUTAKOIALT,
 	FUTAKOIJIMA,
 	GALAXYANGEL,
 	GALAXYANGEL2EI,
@@ -62,6 +64,7 @@ enum {
 	GETSUMENTO,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
+	GUISARD,
 	HAKARENA,
 	HAKUSHAKU,
 	HAPPYBREED,
@@ -129,6 +132,7 @@ enum {
 	NATSUZORA,
 	NETTAITEIKIATSU,
 	NIGHTWIZARD,
+	NOGIZAKA,
 	NORTHWIND,
 	NURSEWITCH,
 	OJOUSAMAKUMI,
@@ -165,8 +169,11 @@ enum {
 	SCHOOLNI,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
+	SHAKUGAN,
+	SHINE,
 	SHINSEIKIEVABATTLE,
 	SHIROGANE,
+	SHUFFLE,
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
 	SORAIROFUUKIN,
@@ -356,6 +363,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(NIGHTWIZARD)
 		game_type = NIGHTWIZARD
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == GUISARD:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(GUISARD)
+		game_type = GUISARD
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == MIZUNOSENRITSU:
@@ -1348,6 +1361,42 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = NATSUZORA
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == SHUFFLE:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(SHUFFLE)
+		game_type = SHUFFLE
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
+	elif index == FRAGMENTSBLUE:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(FRAGMENTSBLUE)
+		game_type = FRAGMENTSBLUE
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
+	elif index == SHINE:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports some images"
+		game_type_selector.select(SHINE)
+		game_type = SHINE
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
+	elif index == SHAKUGAN:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports most images."
+		game_type_selector.select(SHAKUGAN)
+		game_type = SHAKUGAN
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
+	elif index == FUTAKOIALT:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports most images."
+		game_type_selector.select(FUTAKOIALT)
+		game_type = FUTAKOIALT
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
+	elif index == NOGIZAKA:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports BK images only."
+		game_type_selector.select(NOGIZAKA)
+		game_type = NOGIZAKA
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(CAMBRIAN)
@@ -1464,9 +1513,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
+	game_type_selector.add_item("Fragments Blue", FRAGMENTSBLUE)
 	game_type_selector.add_item("Friends: Seishun no Kagayaki", FRIENDS)
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
+	game_type_selector.add_item("Futakoi Alternative: Koi to Shoujo to Machine Gun", FUTAKOIALT)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
 	game_type_selector.add_item("Galaxy Angel II: Eigou Kaiki no Toki", GALAXYANGEL2EI)
@@ -1478,6 +1529,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Getsumento Heiki Mina: Futatsu no Project M", GETSUMENTO)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
+	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
@@ -1545,6 +1597,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuzora no Monologue", NATSUZORA)
 	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
 	game_type_selector.add_item("Night Wizard the Video Game - Denial of the World", NIGHTWIZARD)
+	game_type_selector.add_item("Nogizaka Haruka no Himitsu: Cosplay, Hajimemashita", NOGIZAKA)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
 	game_type_selector.add_item("Nurse Witch Komugi-chan Maji-Karte", NURSEWITCH)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
@@ -1581,9 +1634,12 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
+	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)
+	game_type_selector.add_item("Shine: Kotoba wo Tsumui de", SHINE)
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
+	game_type_selector.add_item("Shuffle! On the Stage", SHUFFLE)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)

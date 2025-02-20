@@ -13,10 +13,10 @@ var remove_alpha: bool = true
 var scr_names: PackedStringArray
 
 func _ready() -> void:
-	#var in_file: FileAccess = FileAccess.open("G:/SLPM_669.36", FileAccess.READ)
+	#var in_file: FileAccess = FileAccess.open("G:/SLPM_658.86", FileAccess.READ)
 	#var ent_pnt: int = 0xFF000
-	#var tbl_s: int = 0x002102a8 - ent_pnt
-	#var tbl_e: int = 0x00210364 - ent_pnt
+	#var tbl_s: int = 0x0019c3a0 - ent_pnt
+	#var tbl_e: int = 0x0019c434 - ent_pnt
 	#var off: int = tbl_s
 	#while off < tbl_e:
 		#in_file.seek(off)
@@ -211,6 +211,19 @@ func _ready() -> void:
 		"S6SV.scr", "S6SW.scr", "Startup.scr", "system.scr",
 		"Xcharatest.scr", "XDBG00.scr", "XDBG01.scr", "XDBG02.scr",
 		"XDBG03.scr", "XDMENU.scr", "ZZZ.scr"
+		]
+	elif Main.game_type == Main.GUISARD:
+		scr_names = [
+		"battle_end.scr", "battle_init.scr", "battle_main.scr", "isc0.scr",
+		"isc1.scr", "isc2.scr", "isc3.scr", "isc4.scr",
+		"isc5.scr", "isc6.scr", "isc7.scr", "isc8.scr",
+		"macrosys.scr", "macrosys2.scr", "macrosys3.scr", "mstart.scr",
+		"sc0.scr", "sc1.scr", "sc1b.scr", "sc2.scr",
+		"sc2b.scr", "sc3.scr", "sc3b.scr", "sc4.scr",
+		"sc4b.scr", "sc5.scr", "sc5b.scr", "sc6.scr",
+		"sc6b.scr", "sc7.scr", "sc7b.scr", "sc8.scr",
+		"sc8b.scr", "Startup.scr", "system.scr", "system2.scr",
+		"zzz.scr"
 		]
 	elif Main.game_type == Main.AIYORIAOSHI:
 		scr_names = [
