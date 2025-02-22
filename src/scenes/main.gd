@@ -186,6 +186,7 @@ enum {
 	SUIKA,
 	SUISUISWEET,
 	SUMOMOMO,
+	SUZUMIYA,
 	SWEETLEGACY, 
 	SWEETSEASON,
 	TENHIRO,
@@ -1397,6 +1398,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = NOGIZAKA
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
+	elif index == SUZUMIYA:
+		game_type_sub_text.text = "Supports:\nExtraction, images  (Custom TM2?)"
+		game_type_selector.select(SUZUMIYA)
+		game_type = SUZUMIYA
+		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
+		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(CAMBRIAN)
@@ -1638,8 +1645,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shine: Kotoba wo Tsumui de", SHINE)
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
-	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Shuffle! On the Stage", SHUFFLE)
+	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
@@ -1651,6 +1658,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("SuiSui Sweet: ~Amai Koi No Mitsukekata~")
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome", SUMOMOMO)
+	game_type_selector.add_item("Suzumiya Haruhi no Tomadoi", SUZUMIYA)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Sweet Season", SWEETSEASON)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
