@@ -84,6 +84,7 @@ enum {
 	ICHIGOHUNDRED,
 	IINAZUKE,
 	INTERLUDE,
+	INUYASHATHESECRET,
 	ITSUKA,
 	JEWELSOCEAN,
 	JIGOKUSHOUJO,
@@ -103,10 +104,13 @@ enum {
 	LOSTPASSAGE,
 	LOVEDOLL,
 	LOVEDROPS,
+	LOVEHINA,
 	LUXBEVIL,
 	MABINOSTYLE,
 	MAGI,
 	MAGICAL,
+	MAHOUSENSEINEGIMA1,
+	MAHOUSENSEINEGIMA2,
 	MAIHIME,
 	MEITANTEIEVA,
 	MEMORIESOFF5EN,
@@ -1399,9 +1403,33 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
 	elif index == SUZUMIYA:
-		game_type_sub_text.text = "Supports:\nExtraction, images  (Custom TM2?)"
+		game_type_sub_text.text = "Supports:\nExtraction, images (Custom TM2?)"
 		game_type_selector.select(SUZUMIYA)
 		game_type = SUZUMIYA
+		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
+		sceneChanger(next_scene)
+	elif index == MAHOUSENSEINEGIMA1:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)"
+		game_type_selector.select(MAHOUSENSEINEGIMA1)
+		game_type = MAHOUSENSEINEGIMA1
+		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
+		sceneChanger(next_scene)
+	elif index == MAHOUSENSEINEGIMA2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)"
+		game_type_selector.select(MAHOUSENSEINEGIMA2)
+		game_type = MAHOUSENSEINEGIMA2
+		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
+		sceneChanger(next_scene)
+	elif index == INUYASHATHESECRET:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)"
+		game_type_selector.select(INUYASHATHESECRET)
+		game_type = INUYASHATHESECRET
+		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
+		sceneChanger(next_scene)
+	elif index == LOVEHINA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)"
+		game_type_selector.select(LOVEHINA)
+		game_type = LOVEHINA
 		var next_scene: PackedScene = load("res://src/scenes/AtelierDouble.tscn")
 		sceneChanger(next_scene)
 	elif index == CAMBRIAN:
@@ -1556,6 +1584,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Interlude", INTERLUDE)
+	game_type_selector.add_item("Inuyasha: The Secret of the Cursed Mask", INUYASHATHESECRET)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)
@@ -1575,10 +1604,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Lost Passage: Ushinawareta Hitofushi", LOSTPASSAGE)
 	game_type_selector.add_item("Love Doll: Lovely Idol", LOVEDOLL)
 	game_type_selector.add_item("Love Drops", LOVEDROPS)
+	game_type_selector.add_item("Love Hina Gorgeous: Chiratto Happening!!", LOVEHINA)
 	game_type_selector.add_item("Luxury & Beauty: Lucian Bee's - Evil Violet", LUXBEVIL)
 	game_type_selector.add_item("Mabino x Style", MABINOSTYLE)
 	game_type_selector.add_item("Ma-Gi: Marginal", MAGI)
 	game_type_selector.add_item("Magical Tale: Chiicha na Mahoutsukai", MAGICAL)
+	game_type_selector.add_item("Mahou Sensei Negima! 1-Jikanme ~Okochama Sensei wa Mahoutsukai!~", MAHOUSENSEINEGIMA1)
+	game_type_selector.add_item("Mahou Sensei Negima! 2-jikanme Tatakau Otome-tachi! Mahora Daiundoukai Special!", MAHOUSENSEINEGIMA2)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
 	game_type_selector.add_item("Meitantei Evangelion", MEITANTEIEVA)
 	game_type_selector.add_item("Memories Off 5: Encore", MEMORIESOFF5EN)
