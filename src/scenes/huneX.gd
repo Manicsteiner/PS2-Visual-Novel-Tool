@@ -9,13 +9,13 @@ extends Node
 
 var folder_path: String
 var selected_file: String
-var elf_path: String
+var exe_path: String
 var debug_output: bool = false
 
 
 func _ready() -> void:
 	load_exe.filters = [
-		"SLPM_657.17, SLPM_655.85, SLPM_550.98"
+		"SLPM_657.17, SLPM_655.85, SLPM_550.98, MAIN.ELF"
 		]
 		
 		
@@ -40,17 +40,20 @@ func extract_cd_bin() -> void:
 	
 	
 	in_file = FileAccess.open(selected_file, FileAccess.READ)
-	exe_file = FileAccess.open(elf_path, FileAccess.READ)
+	exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
-	if elf_path.get_file() == "SLPM_550.98": # Koi suru Otome to Shugo no Tate: The Shield of AIGIS
+	if exe_path.get_file() == "SLPM_550.98": # Koi suru Otome to Shugo no Tate: The Shield of AIGIS
 		tbl_start = 0x45480
 		tbl_end = 0x7D820
-	elif elf_path.get_file() == "SLPM_655.85": # Princess Holiday - Korogaru Ringo Tei Sen'ya Ichiya
+	elif exe_path.get_file() == "SLPM_655.85": # Princess Holiday - Korogaru Ringo Tei Sen'ya Ichiya
 		tbl_start = 0x51A00
 		tbl_end = 0x65DC8
-	elif elf_path.get_file() == "SLPM_657.17": # Tsuki wa Higashi ni Hi wa Nishi ni - Operation Sanctuary
+	elif exe_path.get_file() == "SLPM_657.17": # Tsuki wa Higashi ni Hi wa Nishi ni - Operation Sanctuary
 		tbl_start = 0x4A780
 		tbl_end = 0x76188
+	elif exe_path.get_file() == "MAIN.ELF": # Tsuki wa Higashi ni Hi wa Nishi ni - Operation Sanctuary (Dengeki D73 demo)
+		tbl_start = 0x60810
+		tbl_end = 0x61378
 	
 	f_id = 0
 	for pos: int in range(tbl_start, tbl_end, 8):
@@ -143,22 +146,52 @@ func make_img(data: PackedByteArray) -> Image:
 	var img_size: int = data.decode_u32(0xC) << 8
 	var pal_size: int = data.decode_u32(img_size + 0x2C) << 8
 	
-	if bpp != 8:
+	if bpp != 8 and bpp != 4:
 		print_rich("[color=red]Unknown BPP %02d!" % bpp)
 		return Image.create_empty(1, 1, false, Image.FORMAT_RGB8)
-		
-	var img_dat:PackedByteArray = data.slice(0x20, img_size + 0x20)
-	var pal: PackedByteArray = ComFuncs.unswizzle_palette(data.slice(img_size + 0x40, img_size + 0x40 + pal_size), 32)
 	
 	var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGB8)
-	for y in range(h):
-		for x in range(w):
-			var pixel_index: int = img_dat[x + y * w]
-			var r: int = pal[pixel_index * 4 + 0]
-			var g: int = pal[pixel_index * 4 + 1]
-			var b: int = pal[pixel_index * 4 + 2]
-			#var a: int = palette[pixel_index * 4 + 3]
-			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+	
+	if bpp == 8:
+		var img_dat:PackedByteArray = data.slice(0x20, img_size + 0x20)
+		var pal: PackedByteArray = ComFuncs.unswizzle_palette(data.slice(img_size + 0x40, img_size + 0x40 + pal_size), 32)
+		
+		for y in range(h):
+			for x in range(w):
+				var pixel_index: int = img_dat[x + y * w]
+				var r: int = pal[pixel_index * 4 + 0]
+				var g: int = pal[pixel_index * 4 + 1]
+				var b: int = pal[pixel_index * 4 + 2]
+				#var a: int = palette[pixel_index * 4 + 3]
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+	elif bpp == 4:
+		pal_size = 0x40
+		var img_dat:PackedByteArray = data.slice(0x20, img_size + 0x20)
+		var pal: PackedByteArray = data.slice(img_size + 0x40, img_size + 0x40 + pal_size)
+		
+		for y in range(h):
+			for x in range(0, w, 2):  # Two pixels per byte
+				var byte_index: int  = (x + y * w) / 2
+				var byte_value: int  = img_dat[byte_index]
+
+				# Extract two 4-bit indices (little-endian order)
+				var pixel_index_1 = byte_value & 0xF  # Low nibble (left pixel)
+				var pixel_index_2 = (byte_value >> 4) & 0xF  # High nibble (right pixel)
+
+				# Set first pixel
+				var r1: int = pal[pixel_index_1 * 4 + 0]
+				var g1: int = pal[pixel_index_1 * 4 + 1]
+				var b1: int = pal[pixel_index_1 * 4 + 2]
+				var a1: int = pal[pixel_index_1 * 4 + 3]
+				image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0))
+
+				# Set second pixel (only if within bounds)
+				if x + 1 < w:
+					var r2: int = pal[pixel_index_2 * 4 + 0]
+					var g2: int = pal[pixel_index_2 * 4 + 1]
+					var b2: int = pal[pixel_index_2 * 4 + 2]
+					var a2: int = pal[pixel_index_2 * 4 + 3]
+					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0))
 	return image
 	
 	
@@ -167,7 +200,7 @@ func _on_load_folder_dir_selected(dir):
 	
 	
 func _on_load_cd_bin_file_pressed():
-	if elf_path == "":
+	if exe_path == "":
 		OS.alert("EXE must be selected first.")
 		return
 		
@@ -179,7 +212,7 @@ func _on_load_exe_pressed() -> void:
 	
 	
 func _on_load_exe_file_selected(path: String) -> void:
-	elf_path = path
+	exe_path = path
 	
 	
 func _on_debug_output_pressed() -> void:
