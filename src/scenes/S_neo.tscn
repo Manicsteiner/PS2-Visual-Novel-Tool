@@ -49,7 +49,7 @@ theme_override_constants/separation = -4
 [node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha Channel in .pic Images"
+text = "Remove Alpha Channel in PNGs"
 
 [node name="Remove Bup Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2

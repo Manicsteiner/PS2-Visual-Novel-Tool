@@ -80,7 +80,8 @@ func extractIso() -> void:
 	"UTMC": 0x445C0, # Under the Moon: Crescent
 	"PARFAIT": 0x124F80, # Parfait - Chocolat Second Style
 	"LDROPS": 0x445C0, # Love Drops
-	"CHANTER": 0x445C0 # Chanter
+	"CHANTER": 0x445C0, # Chanter
+	"TOGADOG": 0x445C0 # Togainu no Chi
 	}
 	
 	# TODO: There's a lot of encrypted data before ROM start, but it seems not needed? What is it all?
@@ -145,6 +146,8 @@ func extractIso() -> void:
 		encryption_selected = enc_type.PURECURE
 	elif dvd_str == "CHANTER":
 		encryption_selected = enc_type.PURECURE
+	elif dvd_str == "TOGADOG":
+		encryption_selected = enc_type.PIAGO
 	elif dvd_str == "UTMC":
 		encryption_selected = enc_type.PIAGO
 		
@@ -466,12 +469,14 @@ func process_pic2ps2_image(data: PackedByteArray) -> Image:
 
 	# Unswizzle the palette
 	palette = ComFuncs.unswizzle_palette(palette, 32)
-	if remove_alpha:
-		for i in range(0, 0x400, 4):
-			palette.encode_u8(i + 3, 255)
+	#if remove_alpha:
+		#for i in range(0, 0x400, 4):
+			#palette.encode_u8(i + 3, 255)
 
 	# Create the final image with a size large enough to fit all parts
 	var final_image: Image = Image.create(final_width, final_height, false, Image.FORMAT_RGBA8)
+	if remove_alpha:
+		final_image = Image.create(final_width, final_height, false, Image.FORMAT_RGB8)
 
 	# Read number of parts
 	var num_parts: int = data.decode_u32(0x1C)
@@ -507,6 +512,8 @@ func process_pic2ps2_image(data: PackedByteArray) -> Image:
 
 				# Create a new image for the tile
 				var tile_image: Image = Image.create(tile_width, tile_height, false, Image.FORMAT_RGBA8)
+				if remove_alpha:
+					tile_image = Image.create(tile_width, tile_height, false, Image.FORMAT_RGB8)
 				
 
 				# Process the pixels for the tile
@@ -521,7 +528,10 @@ func process_pic2ps2_image(data: PackedByteArray) -> Image:
 						var g: int = palette[palette_index * 4 + 1]
 						var b: int = palette[palette_index * 4 + 2]
 						var a: int = palette[palette_index * 4 + 3]
-						tile_image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+						if remove_alpha:
+							tile_image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+						else:
+							tile_image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 				
 				# Test tile
 				#tile_image.save_png(folder_path + "/%02d" % i + ".PNG")
@@ -556,9 +566,9 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 	palette = ComFuncs.unswizzle_palette(palette, 32)
 
 	# If alpha needs to be removed, set it to 255
-	if remove_alpha_bup:
-		for i in range(0, 0x400, 4):
-			palette.encode_u8(i + 3, 255)
+	#if remove_alpha_bup:
+		#for i in range(0, 0x400, 4):
+			#palette.encode_u8(i + 3, 255)
 
 	# Extract raw pixel data
 	var image_data_offset: int = palette_offset + 0x400
@@ -566,6 +576,8 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 
 	# Create the image object
 	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+	if remove_alpha_bup:
+		image = Image.create(image_width, image_height, false, Image.FORMAT_RGB8)
 
 	# Process the pixel data and apply the palette
 	for y in range(image_height):
@@ -575,7 +587,10 @@ func process_bup2ps2_image(data: PackedByteArray) -> Image:
 			var g: int = palette[pixel_index * 4 + 1]
 			var b: int = palette[pixel_index * 4 + 2]
 			var a: int = palette[pixel_index * 4 + 3]
-			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			if remove_alpha_bup:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+			else:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 
 	return image
 	
@@ -603,9 +618,9 @@ func process_img(data: PackedByteArray) -> Array:
 	palette = ComFuncs.unswizzle_palette(palette, 32)
 
 	# If alpha needs to be removed, set it to 255
-	if remove_alpha:
-		for i in range(0, 0x400, 4):
-			palette.encode_u8(i + 3, 255)
+	#if remove_alpha:
+		#for i in range(0, 0x400, 4):
+			#palette.encode_u8(i + 3, 255)
 
 	# Extract raw pixel data
 	var image_data_offset: int = palette_offset + 0x400
@@ -614,6 +629,8 @@ func process_img(data: PackedByteArray) -> Array:
 
 	# Create the image object
 	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+	if remove_alpha:
+		image = Image.create(image_width, image_height, false, Image.FORMAT_RGB8)
 
 	# Process the pixel data and apply the palette
 	for y in range(image_height):
@@ -623,7 +640,10 @@ func process_img(data: PackedByteArray) -> Array:
 			var g: int = palette[pixel_index * 4 + 1]
 			var b: int = palette[pixel_index * 4 + 2]
 			var a: int = palette[pixel_index * 4 + 3]
-			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			if remove_alpha:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+			else:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 			
 	var dat_arr: Array
 	dat_arr.append(pixel_data)
@@ -696,14 +716,16 @@ func process_vpf_images(data: PackedByteArray) -> Array[Image]:
 		var palette: PackedByteArray = data.slice(palette_offset, palette_offset + 0x400)
 		palette = ComFuncs.unswizzle_palette(palette, 32)
 
-		if remove_alpha:
-			for i in range(0, 0x400, 4):
-				palette.encode_u8(i + 3, 255)
+		#if remove_alpha:
+			#for i in range(0, 0x400, 4):
+				#palette.encode_u8(i + 3, 255)
 
 		# **Extract raw pixel data**
 		var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
 		var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
-
+		if remove_alpha:
+			image = Image.create(image_width, image_height, false, Image.FORMAT_RGB8)
+			
 		for y in range(image_height):
 			for x in range(image_width):
 				var pixel_index: int = pixel_data[x + y * image_width]
@@ -711,7 +733,10 @@ func process_vpf_images(data: PackedByteArray) -> Array[Image]:
 				var g: int = palette[pixel_index * 4 + 1]
 				var b: int = palette[pixel_index * 4 + 2]
 				var a: int = palette[pixel_index * 4 + 3]
-				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+				if remove_alpha:
+					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+				else:
+					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 
 		images.append(image)
 
@@ -731,12 +756,14 @@ func process_vpf_single_image(data: PackedByteArray) -> Image:
 	var palette: PackedByteArray = data.slice(palette_offset, palette_offset + 0x400)
 	palette = ComFuncs.unswizzle_palette(palette, 32)
 
-	if remove_alpha:
-		for i in range(0, 0x400, 4):
-			palette.encode_u8(i + 3, 255)
+	#if remove_alpha:
+		#for i in range(0, 0x400, 4):
+			#palette.encode_u8(i + 3, 255)
 
 	var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
 	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
+	if remove_alpha:
+		image = Image.create(image_width, image_height, false, Image.FORMAT_RGB8)
 
 	for y in range(image_height):
 		for x in range(image_width):
@@ -745,7 +772,10 @@ func process_vpf_single_image(data: PackedByteArray) -> Image:
 			var g: int = palette[pixel_index * 4 + 1]
 			var b: int = palette[pixel_index * 4 + 2]
 			var a: int = palette[pixel_index * 4 + 3]
-			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+			if remove_alpha:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+			else:
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 
 	return image
 	

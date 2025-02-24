@@ -197,6 +197,7 @@ enum {
 	TENHIRO,
 	TENTAMA1ST,
 	TENTAMA2,
+	TOGAINU,
 	TOHEART,
 	TOHEART2,
 	TROUBLEFORTUNE,
@@ -1295,6 +1296,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = CHANTER
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == TOGAINU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
+		game_type_selector.select(TOGAINU)
+		game_type = TOGAINU
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
@@ -1704,6 +1711,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
+	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
 	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("To Heart 2", TOHEART2)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
