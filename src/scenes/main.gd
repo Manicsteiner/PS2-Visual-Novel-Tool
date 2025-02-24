@@ -96,6 +96,7 @@ enum {
 	KAZEIROSURF,
 	KIMISUTA,
 	KIRAKIRA, 
+	KOISURU,
 	KOKORONOTOBIRA, 
 	KONOAOZORA,
 	LITTLEBUSTERS,
@@ -1216,6 +1217,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PRINCESSHOLIDAY
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == KOISURU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(KOISURU)
+		game_type = KOISURU
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -1596,6 +1603,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
+	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)

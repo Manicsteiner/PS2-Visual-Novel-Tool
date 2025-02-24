@@ -51,26 +51,16 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DecompressFiles" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-button_pressed = true
-text = "Decompress Compressed Files"
-
-[node name="ConvertTGA" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-button_pressed = true
-text = "Convert Images to PNG Files"
-
 [node name="DebugOutput" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 text = "Output Decompressed Images (Debug)"
 
 [node name="LoadBIN" type="FileDialog" parent="."]
-title = "Open File(s)"
+title = "Open a File"
 initial_position = 2
 size = Vector2i(452, 400)
 ok_button_text = "Open"
-file_mode = 1
+file_mode = 0
 access = 2
 filters = PackedStringArray("CD.BIN")
 use_native_dialog = true
@@ -83,7 +73,6 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray("SLPM_657.17, SLPM_655.85")
 use_native_dialog = true
 
 [node name="LoadFOLDER" type="FileDialog" parent="."]
@@ -97,9 +86,7 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadExe" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadCdBinFile" to="." method="_on_load_cd_bin_file_pressed"]
-[connection signal="pressed" from="VBoxContainer/DecompressFiles" to="." method="_on_decompress_files_pressed"]
-[connection signal="pressed" from="VBoxContainer/ConvertTGA" to="." method="_on_convert_tga_pressed"]
 [connection signal="pressed" from="VBoxContainer/DebugOutput" to="." method="_on_debug_output_pressed"]
-[connection signal="files_selected" from="LoadBIN" to="." method="_on_load_bin_files_selected"]
+[connection signal="file_selected" from="LoadBIN" to="." method="_on_load_bin_file_selected"]
 [connection signal="file_selected" from="LoadExe" to="." method="_on_load_exe_file_selected"]
 [connection signal="dir_selected" from="LoadFOLDER" to="." method="_on_load_folder_dir_selected"]
