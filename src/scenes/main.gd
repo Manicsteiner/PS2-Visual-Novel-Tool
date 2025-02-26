@@ -96,6 +96,7 @@ enum {
 	KANON,
 	KATAKAMUNA,
 	KAZEIROSURF,
+	KIMIGAARUJI,
 	KIMISUTA,
 	KIRAKIRA, 
 	KOISURU,
@@ -553,6 +554,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Colorful Aquarium: My Little Mermaid'."
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == KIMIGAARUJI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(KIMIGAARUJI)
+		game_type = KIMIGAARUJI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == DIGI:
@@ -1631,6 +1638,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
+	game_type_selector.add_item("Kimi ga Aruji de Shitsuji ga Ore de: Otsukae Nikki", KIMIGAARUJI)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)

@@ -12,6 +12,12 @@ var chose_folder: bool = false
 var out_decomp: bool = false
 
 
+func _ready() -> void:
+	file_load_exe.filters = [
+		"SLPM_668.05, SLPM_552.41, SLPM_551.95, SLPM_669.34"
+	]
+
+
 func _process(_delta: float) -> void:
 	if chose_bin and chose_folder:
 		extractBin()
@@ -65,6 +71,10 @@ func extractBin() -> void:
 	elif exe_path.get_file() == "SLPM_551.95": # Princess Lover! Eternal Love for My Lady
 		exe_start = 0xA0A00
 		exe_end = 0xA0B20
+		exe_file = FileAccess.open(exe_path, FileAccess.READ)
+	elif exe_path.get_file() == "SLPM_669.34": # Kimi ga Aruji de Shitsuji ga Ore de - Otsukae Nikki 
+		exe_start = 0x85498
+		exe_end = 0x855B8
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
 	print_rich("[color=yellow]Extracting files. Please wait...[/color]")
