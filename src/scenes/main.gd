@@ -64,6 +64,7 @@ enum {
 	GETSUMENTO,
 	GIFTPRISIM,
 	GINNOECLIPSE, 
+	GIRLSBRAVO,
 	GUISARD,
 	HAKARENA,
 	HAKUSHAKU,
@@ -135,6 +136,7 @@ enum {
 	NATSUIROKOMACHI,
 	NATSUIROSUNADOKEI,
 	NATSUZORA,
+	NATURAL2,
 	NETTAITEIKIATSU,
 	NIGHTWIZARD,
 	NOGIZAKA,
@@ -292,6 +294,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(CANVAS2)
 		game_type = CANVAS2
+		var next_scene: PackedScene = load("res://src/scenes/Tose.tscn")
+		sceneChanger(next_scene)
+	elif index == NATURAL2:
+		game_type_sub_text.text = "Supports:\nExtraction, unsupported tiled images."
+		game_type_selector.select(NATURAL2)
+		game_type = NATURAL2
 		var next_scene: PackedScene = load("res://src/scenes/Tose.tscn")
 		sceneChanger(next_scene)
 	elif index == ROSARIO:
@@ -1416,6 +1424,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = NOGIZAKA
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
+	elif index == GIRLSBRAVO:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports BK images only."
+		game_type_selector.select(GIRLSBRAVO)
+		game_type = GIRLSBRAVO
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
 	elif index == SUZUMIYA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (Custom TM2?)"
 		game_type_selector.select(SUZUMIYA)
@@ -1578,6 +1592,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Getsumento Heiki Mina: Futatsu no Project M", GETSUMENTO)
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
+	game_type_selector.add_item("Girls Bravo: Romance 15's", GIRLSBRAVO)
 	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
@@ -1649,6 +1664,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Natsuiro Komachi", NATSUIROKOMACHI)
 	game_type_selector.add_item("Natsuiro no Sunadokei", NATSUIROSUNADOKEI)
 	game_type_selector.add_item("Natsuzora no Monologue", NATSUZORA)
+	game_type_selector.add_item("Natural 2: Duo - Sakurairo no Kisetsu", NATURAL2)
 	game_type_selector.add_item("Nettai Teikiatsu Shoujo", NETTAITEIKIATSU)
 	game_type_selector.add_item("Night Wizard the Video Game - Denial of the World", NIGHTWIZARD)
 	game_type_selector.add_item("Nogizaka Haruka no Himitsu: Cosplay, Hajimemashita", NOGIZAKA)

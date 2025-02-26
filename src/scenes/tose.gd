@@ -3,15 +3,23 @@ extends Control
 @onready var load_exe: FileDialog = $LoadEXE
 @onready var load_pig: FileDialog = $LoadPIG
 @onready var load_folder: FileDialog = $LoadFOLDER
+@onready var load_pig_scan: FileDialog = $LoadPIGScan
+@onready var load_exe_b: Button = $HBoxContainer/LoadEXE
+
 
 var exe_path: String
 var folder_path: String
 var selected_files: PackedStringArray
+var selected_scan_file: String
 var chose_file: bool = false
 var chose_folder: bool = false
 var remove_alpha: bool = true
 var combine_images: bool = false
 var debug_out: bool = false
+
+func _ready() -> void:
+	if Main.game_type == Main.NATURAL2:
+		load_exe_b.hide()
 
 
 func _process(_delta: float) -> void:
@@ -20,6 +28,9 @@ func _process(_delta: float) -> void:
 		chose_folder = false
 		chose_file = false
 		selected_files.clear()
+	elif selected_scan_file:
+		p2ig_scan(FileAccess.open(selected_scan_file, FileAccess.READ))
+		selected_scan_file = ""
 
 
 func extract_pig() -> void:
@@ -149,13 +160,88 @@ func extract_pig() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
+func p2ig_scan(in_file: FileAccess) -> void:
+	print_rich("[color=yellow]Scanning... please wait[/color]")
+	
+	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
+	
+	var search_results: PackedInt32Array
+	var arc_file: FileAccess = in_file
+	var in_file_path: String = arc_file.get_path_absolute()
+	
+	var pos: int = 0
+	var last_pos: int = 0
+	var f_id: int = 0
+	var entry_count: int = 0
+	arc_file.seek(pos)
+	
+	while arc_file.get_position() < arc_file.get_length():
+		arc_file.seek(pos)
+		if arc_file.eof_reached():
+			break
+			
+		var p2ig_bytes: int = arc_file.get_32()
+		last_pos = arc_file.get_position()
+		if p2ig_bytes == 0x47493250:
+			search_results.append(last_pos - 4)
+			arc_file.seek(last_pos + 0xC)
+			var p2ig_name: String = ComFuncs.convert_jis_packed_byte_array(in_file.get_buffer(0x8), shift_jis_dic).get_string_from_utf8()
+			
+			arc_file.seek(last_pos + 0x44)
+			var img_dat_off: int = arc_file.get_32()
+			var p2ig_size: int = arc_file.get_32()
+			
+			print("PIG found at: %08X, with size: %08X" % [last_pos - 4, p2ig_size + img_dat_off])
+			
+			arc_file.seek(search_results[entry_count])
+			var p2ig_buff: PackedByteArray = arc_file.get_buffer(p2ig_size + img_dat_off)
+			
+			last_pos = arc_file.get_position()
+			if !last_pos % 16 == 0:
+				last_pos = (last_pos + 15) & ~15
+				
+			if debug_out:
+				var out_file: FileAccess = FileAccess.open(in_file_path + "_%04d_" % entry_count + "%s" % p2ig_name + ".P2I", FileAccess.WRITE)
+				out_file.store_buffer(p2ig_buff)
+				out_file.close()
+				
+			var png: Image = process_p2ig(p2ig_buff)
+			png.save_png(in_file_path + "_%04d_" % entry_count + "%s" % p2ig_name + ".PNG")
+			
+			p2ig_buff.clear()
+			
+			entry_count += 1
+		else:
+			if !last_pos % 16 == 0:
+				last_pos = (last_pos + 15) & ~15
+				
+		pos = last_pos
+		f_id += 1
+	
+	var color: String
+	if entry_count > 0:
+		color = "green"
+	else:
+		color = "red"
+		
+	print_rich("[color=%s]Found %d P2IG entries[/color]" % [color, search_results.size()])
+	return
+	
 func process_p2ig(data: PackedByteArray) -> Image:
 	var image_width: int = 1 << data.decode_u16(0x20)
 	var image_height: int = 1 << data.decode_u16(0x22)
 	var img_type: int = data.decode_u8(0x24)
-
 	var palette_offset: int = data.decode_u32(0x40)
 	var palette_size: int = data.decode_u32(0x44)
+	var image_data_offset: int = data.decode_u32(0x48)
+	var img_size: int = data.decode_u32(0x4C)
+	
+	if img_type == 0:
+		var image: Image = Image.create_from_data(image_width, image_height, false, Image.FORMAT_RGBA8, data.slice(image_data_offset))
+		if remove_alpha:
+			image.convert(Image.FORMAT_RGB8)
+		return image
+		
 	var palette: PackedByteArray = PackedByteArray()
 	
 	for i in range(0, palette_size):
@@ -180,7 +266,6 @@ func process_p2ig(data: PackedByteArray) -> Image:
 		for i in range(0, 0x400, 4):
 			palette.encode_u8(i + 3, 255)
 
-	var image_data_offset: int = data.decode_u32(0x48)
 	var pixel_data: PackedByteArray = data.slice(image_data_offset)
 
 	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
@@ -248,3 +333,11 @@ func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
 
 func _on_output_debug_toggled(_toggled_on: bool) -> void:
 	debug_out = !debug_out
+
+
+func _on_load_scan_pig_pressed() -> void:
+	load_pig_scan.show()
+
+
+func _on_load_pig_scan_file_selected(path: String) -> void:
+	selected_scan_file = path
