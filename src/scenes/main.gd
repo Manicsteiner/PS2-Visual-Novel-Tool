@@ -68,6 +68,7 @@ enum {
 	GUISARD,
 	HAKARENA,
 	HAKUSHAKU,
+	HAMETSU,
 	HAPPYBREED,
 	HAPPYDELUCKS,
 	HARUKAZEPS,
@@ -1388,6 +1389,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = NATSUZORA
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == HAMETSU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(HAMETSU)
+		game_type = HAMETSU
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == SHUFFLE:
 		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(SHUFFLE)
@@ -1596,6 +1603,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
+	game_type_selector.add_item("Hametsu no Mars", HAMETSU)
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
