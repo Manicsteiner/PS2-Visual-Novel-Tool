@@ -9,19 +9,26 @@ extends Control
 var exe_path: String
 var folder_path: String
 var selected_files: PackedStringArray
-var chose_file: bool = false
-var chose_folder: bool = false
+
+func _ready() -> void:
+	load_tmz.filters = [
+		"*.TMZ, 7213.Y, 8414.M, 7316.M, 7215.C
+		7714.I, 8016.Y, 8316.H, 9017.T"
+		]
+	load_exe.filters = [
+		"SLPM_669.20, SLPM_551.54"
+		]
 
 
 func _process(_delta: float) -> void:
-	if chose_file and chose_folder:
+	if selected_files and folder_path:
 		extract_tmz()
-		chose_folder = false
-		chose_file = false
+		folder_path = ""
 		selected_files.clear()
 
+
 func extract_tmz() -> void:
-	var entry_point: int = 0x1FFF00
+	var entry_point: int
 	var in_file: FileAccess
 	var out_file: FileAccess
 	var exe_file: FileAccess
@@ -32,64 +39,107 @@ func extract_tmz() -> void:
 	var f_dec_size: int
 	var tmz_tbl_start: int
 	var tmz_tbl_end: int
+	var step_mod: int
 	
 	for file in range(selected_files.size()):
 		if exe_path == "":
-			OS.alert("Please load SLPM_669.20 first.")
+			OS.alert("Please load SLPM_669.20 or SLPM_551.54 first.")
 			return
 			
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 		in_file = FileAccess.open(selected_files[file], FileAccess.READ)
 		var arc_name: String = selected_files[file].get_file().get_basename()
 		
+		if Main.game_type == Main.HOSHIFURU:
+			entry_point = 0x1FFF00
+		elif Main.game_type == Main.TSUYOKISS2:
+			entry_point = 0xFFF80
+		
+		step_mod = 0x10
+		
 		if selected_files[file].get_file() == "BG.TMZ":
 			tmz_tbl_start = 0x00257320 - entry_point
 			tmz_tbl_end = 0x00259190 - entry_point
 		elif selected_files[file].get_file() == "BU_S0.TMZ":
 			tmz_tbl_start = 0x002a2c20 - entry_point
-			tmz_tbl_end = 0x002A46F0  - entry_point
+			tmz_tbl_end = 0x002A46F0 - entry_point
 		elif selected_files[file].get_file() == "BU_S1.TMZ":
 			tmz_tbl_start = 0x002A46F0 - entry_point
-			tmz_tbl_end = 0x002A61B0  - entry_point
+			tmz_tbl_end = 0x002A61B0 - entry_point
 		elif selected_files[file].get_file() == "BU_S2.TMZ":
 			tmz_tbl_start = 0x002A61B0 - entry_point
-			tmz_tbl_end = 0x002A7C70  - entry_point
+			tmz_tbl_end = 0x002A7C70 - entry_point
 		elif selected_files[file].get_file() == "BU_M0.TMZ":
 			tmz_tbl_start = 0x002A7C70 - entry_point
-			tmz_tbl_end = 0x002A9790  - entry_point
+			tmz_tbl_end = 0x002A9790 - entry_point
 		elif selected_files[file].get_file() == "BU_M1.TMZ":
 			tmz_tbl_start = 0x002A9790 - entry_point
-			tmz_tbl_end = 0x002AB250  - entry_point
+			tmz_tbl_end = 0x002AB250 - entry_point
 		elif selected_files[file].get_file() == "BU_M2.TMZ":
 			tmz_tbl_start = 0x002AB250 - entry_point
-			tmz_tbl_end = 0x002ACD10  - entry_point
+			tmz_tbl_end = 0x002ACD10 - entry_point
 		elif selected_files[file].get_file() == "BU_L0.TMZ":
 			tmz_tbl_start = 0x002ACD10 - entry_point
-			tmz_tbl_end = 0x002AE7D0  - entry_point
+			tmz_tbl_end = 0x002AE7D0 - entry_point
 		elif selected_files[file].get_file() == "BU_L1.TMZ":
 			tmz_tbl_start = 0x002AE7D0 - entry_point
-			tmz_tbl_end = 0x002B0290  - entry_point
+			tmz_tbl_end = 0x002B0290 - entry_point
 		elif selected_files[file].get_file() == "BU_L2.TMZ":
 			tmz_tbl_start = 0x002B0290 - entry_point
-			tmz_tbl_end = 0x002B1D50  - entry_point
+			tmz_tbl_end = 0x002B1D50 - entry_point
 		elif selected_files[file].get_file() == "DAT.TMZ":
 			tmz_tbl_start = 0x002B3750 - entry_point
-			tmz_tbl_end = 0x002B4140  - entry_point
+			tmz_tbl_end = 0x002B4140 - entry_point
+		elif selected_files[file].get_file() == "7213.Y":
+			tmz_tbl_start = 0x001c0910 - entry_point
+			tmz_tbl_end = 0x001c0e20 - entry_point
+			step_mod = 0x18
+		elif selected_files[file].get_file() == "9017.T":
+			tmz_tbl_start = 0x001ad8c0 - entry_point
+			tmz_tbl_end = 0x001adc90 - entry_point
+		elif selected_files[file].get_file() == "8414.M":
+			tmz_tbl_start = 0x001adc90 - entry_point
+			tmz_tbl_end = 0x001bfe28 - entry_point
+			step_mod = 0x18
+		elif selected_files[file].get_file() == "7316.M":
+			tmz_tbl_start = 0x001bfe30 - entry_point
+			tmz_tbl_end = 0x001c0910 - entry_point
+		elif selected_files[file].get_file() == "7215.C":
+			tmz_tbl_start = 0x001c0e20 - entry_point
+			tmz_tbl_end = 0x001c1000 - entry_point
+		elif selected_files[file].get_file() == "7714.I":
+			tmz_tbl_start = 0x001c1000 - entry_point
+			tmz_tbl_end = 0x001c5450 - entry_point
+		elif selected_files[file].get_file() == "8016.Y":
+			tmz_tbl_start = 0x001c5450 - entry_point
+			tmz_tbl_end = 0x001d3b38 - entry_point
+			step_mod = 0x18
+		elif selected_files[file].get_file() == "8316.H":
+			tmz_tbl_start = 0x001a8720 - entry_point
+			tmz_tbl_end = 0x001ad8c0 - entry_point
 		
-		for pos in range(tmz_tbl_start, tmz_tbl_end, 0x10):
+		for pos in range(tmz_tbl_start, tmz_tbl_end, step_mod):
 			exe_file.seek(pos)
 			var f_name_off: int = exe_file.get_32()
 			f_offset = exe_file.get_32()
 			f_size = exe_file.get_32()
 			f_dec_size = exe_file.get_32()
+			if step_mod == 0x18:
+				var unk_32_1: int = exe_file.get_32()
+				var unk_32_2: int = exe_file.get_32()
 			if f_dec_size < 0x00040440:
 				f_dec_size = 0x00040440
 			
 			exe_file.seek(f_name_off - entry_point)
-			f_name = exe_file.get_line() + ".TM2"
-			
 			in_file.seek(f_offset)
-			buff = decompress_lz77(in_file.get_buffer(f_size), f_dec_size)
+			if arc_name == "9017":
+				f_name = exe_file.get_line() + ".PSS"
+				buff = in_file.get_buffer(f_size)
+			else:
+				f_name = exe_file.get_line() + ".TM2"
+				buff = decompress_lz77(in_file.get_buffer(f_size), f_dec_size)
+			
+			print("%08X %08X %s/%s/%s" % [f_offset, f_size, folder_path, arc_name, f_name])
 			
 			var dir: DirAccess = DirAccess.open(folder_path)
 			dir.make_dir_recursive(folder_path + "/" + arc_name)
@@ -97,12 +147,12 @@ func extract_tmz() -> void:
 			out_file = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
 			out_file.close()
-			
-			print("%08X %08X %s/%s/%s" % [f_offset, f_size, folder_path, arc_name, f_name])
+				
 	
 	print_rich("[color=green]Finished![/color]")
 	
 	
+
 func decompress_lz77(compressed: PackedByteArray, dec_size: int) -> PackedByteArray:
 	var out: PackedByteArray
 	var v0: int
@@ -203,10 +253,8 @@ func _on_load_exe_file_selected(path: String) -> void:
 
 func _on_load_tmz_files_selected(paths: PackedStringArray) -> void:
 	selected_files = paths
-	chose_file = true
 	load_folder.show()
 
 
 func _on_load_folder_dir_selected(dir: String) -> void:
 	folder_path = dir
-	chose_folder = true

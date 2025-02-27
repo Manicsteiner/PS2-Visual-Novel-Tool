@@ -208,6 +208,7 @@ enum {
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
 	TSUYOKISS,
+	TSUYOKISS2,
 	UMISHO,
 	UNDERTHEMOON,
 	WEARE,
@@ -1229,6 +1230,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HOSHIFURU
 		var next_scene: PackedScene = load("res://src/scenes/Piacci.tscn")
 		sceneChanger(next_scene)
+	elif index == TSUYOKISS2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TSUYOKISS2)
+		game_type = TSUYOKISS2
+		var next_scene: PackedScene = load("res://src/scenes/Piacci.tscn")
+		sceneChanger(next_scene)
 	elif index == TSUKIWAHIGASHI:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(TSUKIWAHIGASHI)
@@ -1757,6 +1764,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("Tsuyo Kiss: Mighty Heart", TSUYOKISS)
+	game_type_selector.add_item("Tsuyo Kiss 2 Gakki: Swift Love", TSUYOKISS2)
 	game_type_selector.add_item("Umisho", UMISHO)
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("WeAre*", WEARE)
