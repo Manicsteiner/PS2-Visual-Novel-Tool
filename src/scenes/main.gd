@@ -207,6 +207,7 @@ enum {
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
+	TSUYOKISS,
 	UMISHO,
 	UNDERTHEMOON,
 	WEARE,
@@ -551,15 +552,21 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/Marvelous.tscn")
 		sceneChanger(next_scene)
 	elif index == COLORFULAQUA:
-		game_type_sub_text.text = "Supports 'Colorful Aquarium: My Little Mermaid'."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == KIMIGAARUJI:
-		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(KIMIGAARUJI)
 		game_type = KIMIGAARUJI
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == TSUYOKISS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TSUYOKISS)
+		game_type = TSUYOKISS
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == DIGI:
@@ -1749,6 +1756,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
+	game_type_selector.add_item("Tsuyo Kiss: Mighty Heart", TSUYOKISS)
 	game_type_selector.add_item("Umisho", UMISHO)
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("WeAre*", WEARE)

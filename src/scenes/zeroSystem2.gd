@@ -11,11 +11,13 @@ var chose_bin: bool = false
 var chose_folder: bool = false
 var out_decomp: bool = false
 
+const BUFFER_SIZE = 8 * 1024 * 1024
+
 
 func _ready() -> void:
 	file_load_exe.filters = [
-		"SLPM_668.05, SLPM_552.41, SLPM_551.95, SLPM_669.34"
-	]
+		"SLPM_668.05, SLPM_552.41, SLPM_551.95, SLPM_669.34, SLPM_664.08"
+		]
 
 
 func _process(_delta: float) -> void:
@@ -76,6 +78,10 @@ func extractBin() -> void:
 		exe_start = 0x85498
 		exe_end = 0x855B8
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
+	elif exe_path.get_file() == "SLPM_664.08": # Tsuyo Kiss: Mighty Heart
+		exe_start = 0x70BA8
+		exe_end = 0x70CC8
+		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
 	print_rich("[color=yellow]Extracting files. Please wait...[/color]")
 	
@@ -112,8 +118,9 @@ func extractBin() -> void:
 		
 		in_file.seek(exe_offset)
 		while in_file.get_position() < exe_offset + exe_size:
-			bytes = in_file.get_64()
-			out_file.store_64(bytes)
+			var read_size: int = min(BUFFER_SIZE, (exe_offset + exe_size) - in_file.get_position())
+			var buffer: PackedByteArray = in_file.get_buffer(read_size)
+			out_file.store_buffer(buffer)
 		
 		out_file.close()
 		i += 1
@@ -135,8 +142,9 @@ func extractBin() -> void:
 		
 		in_file.seek(exe_offset)
 		while in_file.get_position() < exe_offset + exe_size:
-			bytes = in_file.get_64()
-			out_file.store_64(bytes)
+			var read_size: int = min(BUFFER_SIZE, (exe_offset + exe_size) - in_file.get_position())
+			var buffer: PackedByteArray = in_file.get_buffer(read_size)
+			out_file.store_buffer(buffer)
 			
 		out_file.close()
 		i += 1
@@ -147,7 +155,7 @@ func extractBin() -> void:
 		
 	# Open extracted files and split them based on offsets in their respective table.
 	while i < 7:
-		#if i == 2 or i == 3:
+		#if i != 3:
 			#i += 1
 			#continue
 		if i == 5:
@@ -275,16 +283,18 @@ func extractBin() -> void:
 			bytes = in_file.get_32()
 			if bytes == scr_bytes:
 				ext = ".SCR"
-			elif bytes == 0x03504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
+			elif bytes == 0x01504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
 				ext = ".TM2"
 				
 				out_file = FileAccess.open(folder_path + "/%02d" % i + "_%08d" % f_id + ext, FileAccess.WRITE)
 				
 				in_file.seek(f_offset)
 				if bytes == 0x04504D43 or bytes == 0x05504D43:
-					buff = decompressRLE_ef(in_file.get_buffer(f_offset + f_size))
+					buff = decompress_rle_ef(in_file.get_buffer(f_offset + f_size))
+				elif bytes == 0x01504D43:
+					buff = decompress_rle_tsuyo(in_file.get_buffer(f_offset + f_size))
 				else:
-					buff = decompressRLE(in_file.get_buffer(f_offset + f_size))
+					buff = decompress_rle(in_file.get_buffer(f_offset + f_size))
 			
 				out_file.store_buffer(buff)
 				print("%08X %08X %02d %s/%02d_%08d%s" % [f_offset, buff.size(), i, folder_path, i, f_id, ext])
@@ -307,13 +317,13 @@ func extractBin() -> void:
 			else:
 				ext = ".BIN"
 				
-				
 			out_file = FileAccess.open(folder_path + "/%02d" % i + "_%08d" % f_id + ext, FileAccess.WRITE)
 			
 			in_file.seek(f_offset)
 			while in_file.get_position() < f_offset + f_size:
-				bytes = in_file.get_64()
-				out_file.store_64(bytes)
+				var read_size: int = min(BUFFER_SIZE, (f_offset + f_size) - in_file.get_position())
+				var buffer: PackedByteArray = in_file.get_buffer(read_size)
+				out_file.store_buffer(buffer)
 				
 			print("%08X %08X %02d %s/%02d_%08d%s" % [f_offset, f_size, i, folder_path, i, f_id, ext])
 			out_file.close()
@@ -324,7 +334,7 @@ func extractBin() -> void:
 		
 	print_rich("[color=green]Finished![/color]")
 	
-func decompressRLE(input: PackedByteArray) -> PackedByteArray:
+func decompress_rle(input: PackedByteArray) -> PackedByteArray:
 	var control_byte: int
 	var repeat_byte: int
 	var output = PackedByteArray()
@@ -406,7 +416,7 @@ func decompressRLE(input: PackedByteArray) -> PackedByteArray:
 	return output
 	
 	
-func decompressRLE_ef(input: PackedByteArray) -> PackedByteArray:
+func decompress_rle_ef(input: PackedByteArray) -> PackedByteArray:
 	var output = PackedByteArray()
 	var input_index: int = 0
 	#var block_size: int = 0
@@ -492,7 +502,88 @@ func decompressRLE_ef(input: PackedByteArray) -> PackedByteArray:
 	output.encode_u32(0, tim2_hex)
 	return output
 
+func decompress_rle_tsuyo(input: PackedByteArray) -> PackedByteArray:
+	# Output buffer for decompressed data.
+	var output = PackedByteArray()
+	# The control stream starts at offset 0x14.
+	var ctrl_index = 0x14
 
+	while true:
+		# Read the next control byte.
+		var cb = input[ctrl_index]
+		ctrl_index += 1
+		
+		# 0xF8 is the end marker.
+		if cb == 0xF8:
+			break
+
+		match cb:
+			0xFD:
+				# For 0xFD: read a 32-bit count then copy that many bytes from the input.
+				var count = input.decode_u32(ctrl_index)
+				ctrl_index += 4
+				if count <= 0:
+					continue
+				# For efficiency one could process blocks of 8 bytes,
+				# but here we simply loop.
+				for i in range(count):
+					output.append(input[ctrl_index])
+					ctrl_index += 1
+
+			0xFE:
+				# For 0xFE: read a 16-bit count then copy that many bytes.
+				var count = input.decode_u16(ctrl_index)
+				ctrl_index += 2
+				if count <= 0:
+					continue
+				for i in range(count):
+					output.append(input[ctrl_index])
+					ctrl_index += 1
+
+			0xFF:
+				# For 0xFF: read an 8-bit count then copy that many bytes.
+				var count = input[ctrl_index]
+				ctrl_index += 1
+				if count <= 0:
+					continue
+				for i in range(count):
+					output.append(input[ctrl_index])
+					ctrl_index += 1
+
+			0xF2:
+				# For 0xF2: read a 32-bit count then a byte to be repeated.
+				var count = input.decode_u32(ctrl_index)
+				ctrl_index += 4
+				var repeat_byte = input[ctrl_index]
+				ctrl_index += 1
+				for i in range(count):
+					output.append(repeat_byte)
+
+			0xF1:
+				# For 0xF1: read a 16-bit count then a repeated byte.
+				var count = input.decode_u16(ctrl_index)
+				ctrl_index += 2
+				var repeat_byte = input[ctrl_index]
+				ctrl_index += 1
+				for i in range(count):
+					output.append(repeat_byte)
+
+			0xF0:
+				# For 0xF0: read an 8-bit count then a repeated byte.
+				var count = input[ctrl_index]
+				ctrl_index += 1
+				var repeat_byte = input[ctrl_index]
+				ctrl_index += 1
+				for i in range(count):
+					output.append(repeat_byte)
+
+			_:
+				push_error("Unknown control byte encountered: 0x%02X" % cb)
+				return output
+
+	return output
+	
+	
 func _on_file_load_exe_file_selected(path: String) -> void:
 	exe_path = path
 
