@@ -204,6 +204,7 @@ enum {
 	TOGAINU,
 	TOHEART,
 	TOHEART2,
+	TRIGGERHEART,
 	TROUBLEFORTUNE,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
@@ -251,6 +252,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(THREELDK)
 		game_type = THREELDK
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == TRIGGERHEART:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TRIGGERHEART)
+		game_type = TRIGGERHEART
+		var next_scene: PackedScene = load("res://src/scenes/Gulti.tscn")
 		sceneChanger(next_scene)
 	elif index == PRINCESSCONCERTO:
 		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
@@ -1760,6 +1767,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
 	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("To Heart 2", TOHEART2)
+	game_type_selector.add_item("Triggerheart Exelica Enhanced", TRIGGERHEART)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
