@@ -114,6 +114,16 @@ func extractIso() -> void:
 		else:
 			OS.alert("ISO doesn't appear to be Sugar + Spice.")
 			return
+	elif Main.game_type == Main.CHOCOLAT:
+		in_file.seek(0x73F78000)
+		hdr_bytes = in_file.get_buffer(3)
+		dvd_str = hdr_bytes.get_string_from_ascii()
+		if dvd_str == "ROM":
+			rom_off = 0xE7EF0
+			encryption_selected = enc_type.PARFAIT
+		else:
+			OS.alert("ISO doesn't appear to be Sugar + Spice.")
+			return
 	else:
 		# Check if DVD name matches
 		in_file.seek(0x83071)
@@ -228,8 +238,9 @@ func extractIso() -> void:
 			last_tbl_pos = rom_file.get_position()
 			if f_name_off > 0x7FFFFFFF:
 				rom_file.seek(file_tbl + f_name_off & 0x7FFFFFFF)
-				var temp_folder: String = rom_file.get_line().lstrip(".")
-				last_name_pos = rom_file.get_position()
+				var result: Array = ComFuncs.find_end_bytes_file(rom_file, 0)
+				last_name_pos = result[0]
+				var temp_folder: String = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8().lstrip(".")
 				if !last_name_pos % 16 == 0:
 					last_name_pos = (last_name_pos + 15) & ~15
 					
@@ -269,7 +280,7 @@ func extractIso() -> void:
 			f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
 			
 			# Use for debugging certain file(s)
-			#if f_name.get_extension() != "vpp":
+			#if f_name.get_extension() != "pic":
 				#if !last_name_pos % 16 == 0:
 					#last_name_pos = (last_name_pos + 15) & ~15
 				#continue

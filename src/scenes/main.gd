@@ -26,6 +26,7 @@ enum {
 	CARTAGRA,
 	CASTLEFANTASIA,
 	CHANTER,
+	CHOCOLAT,
 	CLOVERNOKUNI,
 	COLORFULAQUA,
 	DABLACK,
@@ -1339,6 +1340,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = TOGAINU
 		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
 		sceneChanger(next_scene)
+	elif index == CHOCOLAT:
+		game_type_sub_text.text = "Supports extraction only.\nDecompression routines not implemented yet."
+		game_type_selector.select(CHOCOLAT)
+		game_type = CHOCOLAT
+		var next_scene: PackedScene = load("res://src/scenes/S_neo.tscn")
+		sceneChanger(next_scene)
 	elif index == SWEETSEASON:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(SWEETSEASON)
@@ -1589,6 +1596,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cartagra: Tamashii no Kunou", CARTAGRA)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
+	game_type_selector.add_item("Chocolat: Maid Cafe Curio", CHOCOLAT)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
