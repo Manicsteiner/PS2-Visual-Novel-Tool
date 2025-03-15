@@ -166,7 +166,7 @@ enum {
 	PUREPURE,
 	PUREXCURE,
 	QUILT,
-	REGISTA, # temp value
+	#REGISTA, # temp value
 	ROSARIO,
 	ROUTESPE,
 	ROZENDUEL,
@@ -1142,12 +1142,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = PRISMARK
 		var next_scene: PackedScene = load("res://src/scenes/PrismArk.tscn")
 		sceneChanger(next_scene)
-	elif index == REGISTA:
-		game_type_sub_text.text = "Basic support for Regista games."
-		game_type_selector.select(REGISTA)
-		game_type = REGISTA
-		var next_scene: PackedScene = load("res://src/scenes/Regista.tscn")
-		sceneChanger(next_scene)
+	#elif index == REGISTA:
+		#game_type_sub_text.text = "Basic support for Regista games."
+		#game_type_selector.select(REGISTA)
+		#game_type = REGISTA
+		#var next_scene: PackedScene = load("res://src/scenes/Regista.tscn")
+		#sceneChanger(next_scene)
 	elif index == SCHOOLLOVE:
 		game_type_sub_text.text = "Supports 'School Love! Koi to Kibou no Metronome'."
 		game_type_selector.select(SCHOOLLOVE)
@@ -1736,7 +1736,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pure Pure: Mimi to Shippo no Monogatari", PUREPURE)
 	game_type_selector.add_item("Pure x Cure Recovery", PUREXCURE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
-	game_type_selector.add_item("Regista Games", REGISTA)
+	#game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
 	game_type_selector.add_item("Routes PE", ROUTESPE)
 	game_type_selector.add_item("Rozen Maiden: duellwalzer", ROZENDUEL)

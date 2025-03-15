@@ -66,6 +66,9 @@ func extract_bin() -> void:
 			in_file.seek(f_offset)
 			if dec_flag == 2:
 				buff = ComFuncs.decompLZSS(in_file.get_buffer(f_size), f_size, f_dec_size)
+			elif dec_flag == 1:
+				print_rich("[color=red]%s uses BPE decompression. Currently not supported.[/color]" % f_name)
+				buff = in_file.get_buffer(f_size)
 			elif dec_flag == 0:
 				print_rich("[color=red]%s is encrypted. Decryption currently not supported.[/color]" % f_name)
 				buff = in_file.get_buffer(f_size)
@@ -81,8 +84,8 @@ func extract_bin() -> void:
 			
 	
 	print_rich("[color=green]Finished![/color]")
-
-
+	
+	
 func _on_load_bin_pressed() -> void:
 	file_load_bin.show()
 
