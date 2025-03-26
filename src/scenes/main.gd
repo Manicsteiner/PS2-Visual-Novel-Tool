@@ -144,9 +144,11 @@ enum {
 	NIGHTWIZARD,
 	NOGIZAKA,
 	NORTHWIND,
+	NUGA,
 	NURSEWITCH,
 	OJOUSAMAKUMI,
 	ORANGEPOCKET,
+	OSOUJI,
 	OTOMENOJIJOU,
 	OUKA,
 	PARFAIT,
@@ -1430,6 +1432,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HAMETSU
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == NUGA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(NUGA)
+		game_type = NUGA
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == OSOUJI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(OSOUJI)
+		game_type = OSOUJI
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == SHUFFLE:
 		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(SHUFFLE)
@@ -1714,9 +1728,11 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Night Wizard the Video Game - Denial of the World", NIGHTWIZARD)
 	game_type_selector.add_item("Nogizaka Haruka no Himitsu: Cosplay, Hajimemashita", NOGIZAKA)
 	game_type_selector.add_item("North Wind: Eien no Yakusoku", NORTHWIND)
+	game_type_selector.add_item("NUGA-CEL!: Nurture Garment Celebration", NUGA)
 	game_type_selector.add_item("Nurse Witch Komugi-chan Maji-Karte", NURSEWITCH)
 	game_type_selector.add_item("Ojousama Kumikyoku: Sweet Concert", OJOUSAMAKUMI)
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
+	game_type_selector.add_item("Osouji Sentai Clean Keeper H", OSOUJI)
 	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Parfait: Chocolat Second Style", PARFAIT)
