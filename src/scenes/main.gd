@@ -98,6 +98,7 @@ enum {
 	KATAKAMUNA,
 	KAZEIROSURF,
 	KIMIGAARUJI,
+	KIMIKISS,
 	KIMISUTA,
 	KIRAKIRA, 
 	KOISURU,
@@ -209,6 +210,7 @@ enum {
 	TOHEART2,
 	TRIGGERHEART,
 	TROUBLEFORTUNE,
+	TRUELOVESTORY3,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
 	TSUYOKISS,
@@ -285,6 +287,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SUISUISWEET)
 		game_type = SUISUISWEET
 		var next_scene: PackedScene = load("res://src/scenes/BillikenSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == KIMIKISS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(KIMIKISS)
+		game_type = KIMIKISS
+		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
+		sceneChanger(next_scene)
+	elif index == TRUELOVESTORY3:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TRUELOVESTORY3)
+		game_type = TRUELOVESTORY3
+		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
 		sceneChanger(next_scene)
 	elif index == ROUTESPE:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
@@ -1682,6 +1696,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("Kimi ga Aruji de Shitsuji ga Ore de: Otsukae Nikki", KIMIGAARUJI)
+	game_type_selector.add_item("KimiKiss", KIMIKISS)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
@@ -1793,6 +1808,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("To Heart 2", TOHEART2)
 	game_type_selector.add_item("Triggerheart Exelica Enhanced", TRIGGERHEART)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
+	game_type_selector.add_item("True Love Story 3", TRUELOVESTORY3)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("Tsuyo Kiss: Mighty Heart", TSUYOKISS)
