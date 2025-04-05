@@ -13,6 +13,7 @@ enum {
 	AIR,
 	AIYORIAOSHI,
 	AFTER,
+	AMAGAMI,
 	ANGELSFEATHER,
 	ANGELWISH,
 	AONOMAMA,
@@ -211,6 +212,7 @@ enum {
 	TRIGGERHEART,
 	TROUBLEFORTUNE,
 	TRUELOVESTORY3,
+	TRUELOVESTORYSUMMER,
 	TRUETEARS,
 	TSUKIWAHIGASHI, 
 	TSUYOKISS,
@@ -299,6 +301,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(TRUELOVESTORY3)
 		game_type = TRUELOVESTORY3
 		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
+		sceneChanger(next_scene)
+	elif index == AMAGAMI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(AMAGAMI)
+		game_type = AMAGAMI
+		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
+		sceneChanger(next_scene)
+	elif index == TRUELOVESTORYSUMMER:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TRUELOVESTORYSUMMER)
+		game_type = TRUELOVESTORYSUMMER
+		var next_scene: PackedScene = load("res://src/scenes/GameCrab.tscn")
 		sceneChanger(next_scene)
 	elif index == ROUTESPE:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported."
@@ -1611,6 +1625,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Air", AIR)
 	game_type_selector.add_item("Ai Yori Aoshi", AIYORIAOSHI)
 	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
+	game_type_selector.add_item("Amagami", AMAGAMI)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
@@ -1809,6 +1824,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Triggerheart Exelica Enhanced", TRIGGERHEART)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Love Story 3", TRUELOVESTORY3)
+	game_type_selector.add_item("True Love Story: Summer Days, and Yet...", TRUELOVESTORYSUMMER)
 	game_type_selector.add_item("True Tears", TRUETEARS)
 	game_type_selector.add_item("Tsuki wa Higashi ni Hi wa Nishi ni: Operation Sanctuary", TSUKIWAHIGASHI)
 	game_type_selector.add_item("Tsuyo Kiss: Mighty Heart", TSUYOKISS)

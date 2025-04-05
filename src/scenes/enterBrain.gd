@@ -68,8 +68,8 @@ func extract_arc() -> void:
 			else:
 				f_name += ".BIN"
 			
-			var dir: DirAccess = DirAccess.open(folder_path)
-			dir.make_dir_recursive(folder_path + "/" + f_name.get_base_dir())
+			#var dir: DirAccess = DirAccess.open(folder_path)
+			#dir.make_dir_recursive(folder_path + "/" + f_name.get_base_dir())
 			
 			out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 			out_file.store_buffer(buff)
