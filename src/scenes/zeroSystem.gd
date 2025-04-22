@@ -170,8 +170,16 @@ func extractBin() -> void:
 				elif type == 0x08:
 					f_name = "VCE%05d.HBD" % id
 				elif type == 0x10:
-					# todo
-					f_name = "SRE%05d.BIN" % id
+						var arr: Array = upac_parse(buff)
+						if arr[0]:
+							f_name = "SRE%05d.TM2" % id
+							f_size = arr[1]
+							buff = arr[2]
+						else:
+							f_name = "SRE%05d.BIN" % id
+							if arr[1] != 0:
+								f_size = arr[1]
+								buff = arr[2]
 				elif type == 0xFF:
 					f_name = "DMY%05d.BIN" % id
 				elif type == 0x67:
@@ -263,6 +271,30 @@ func extractBin() -> void:
 					print("%08X %08X %s/%s" % [offset, f_size, folder_path, f_name])
 				
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func upac_parse(buff: PackedByteArray) -> Array:
+	var f_name: String
+	var f_size: int = 0
+	var is_tm2: bool = false
+	
+	if buff.slice(0, 4).get_string_from_ascii() == "UPAC":
+		var start_off: int = buff.decode_u32(8)
+		var unk_flag: int = buff.decode_u32(0xC)
+		if buff.slice(start_off + 8, start_off + 11).get_string_from_ascii() == "LZS":
+			f_size = buff.decode_u32(start_off + 0xC)
+			buff = ComFuncs.decompLZSS(buff.slice(start_off + 0x10), buff.size() - start_off - 0x10, f_size)
+			if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+				is_tm2 = true
+		else:
+			if buff.slice(start_off + 8, start_off + 12).get_string_from_ascii() == "TIM2":
+				is_tm2 = true
+				
+	var buffer: Array
+	buffer.append(is_tm2)
+	buffer.append(f_size)
+	buffer.append(buff)
+	return buffer
 	
 	
 func _on_load_exe_pressed() -> void:
