@@ -86,6 +86,7 @@ enum {
 	HURRAH,
 	HYAKKO,
 	ICHIGOHUNDRED,
+	IDOLJANSHIR,
 	IINAZUKE,
 	INTERLUDE,
 	INUYASHATHESECRET,
@@ -265,6 +266,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(TRIGGERHEART)
 		game_type = TRIGGERHEART
 		var next_scene: PackedScene = load("res://src/scenes/Gulti.tscn")
+		sceneChanger(next_scene)
+	elif index == IDOLJANSHIR:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(IDOLJANSHIR)
+		game_type = IDOLJANSHIR
+		var next_scene: PackedScene = load("res://src/scenes/PccwJapan.tscn")
 		sceneChanger(next_scene)
 	elif index == PRINCESSCONCERTO:
 		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
@@ -1698,6 +1705,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Hurrah! Sailor", HURRAH)
 	game_type_selector.add_item("Hyakko: Yorozuya Jikenbo!", HYAKKO)
 	game_type_selector.add_item("Ichigo 100% Strawberry Diary", ICHIGOHUNDRED)
+	game_type_selector.add_item("Idol Janshi R: Janguru Project", IDOLJANSHIR)
 	game_type_selector.add_item("Iinazuke", IINAZUKE)
 	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Inuyasha: The Secret of the Cursed Mask", INUYASHATHESECRET)
