@@ -133,6 +133,7 @@ enum {
 	MIZUNOSENRITSU,
 	MIZUNOSENRITSU2,
 	MOEKAN,
+	MOEMOE2JI2,
 	MOEMOE2JIDEL,
 	MONOCHROME,
 	MONOCHROMEFACTOR,
@@ -281,6 +282,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(SHOUJOMAHOU)
 		game_type = SHOUJOMAHOU
+		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == MOEMOE2JI2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(MOEMOE2JI2)
+		game_type = MOEMOE2JI2
 		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
 		sceneChanger(next_scene)
 	elif index == MOEMOE2JIDEL:
@@ -1780,6 +1787,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mizu no Senritsu", MIZUNOSENRITSU)
 	game_type_selector.add_item("Mizu no Senritsu 2: Hi no Kioku", MIZUNOSENRITSU2)
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
+	game_type_selector.add_item("Moe Moe 2-Ji Taisen 2 (Ryaku)", MOEMOE2JI2)
 	game_type_selector.add_item("Moe Moe 2-Ji Taisen (Ryaku) Deluxe", MOEMOE2JIDEL)
 	game_type_selector.add_item("Monochrome", MONOCHROME)
 	game_type_selector.add_item("Monochrome Factor: Cross Road", MONOCHROMEFACTOR)

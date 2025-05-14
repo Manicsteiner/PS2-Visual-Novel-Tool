@@ -34,7 +34,7 @@ func extract_arc() -> void:
 	var buff: PackedByteArray
 	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	
-	if Main.game_type == Main.MOEMOE2JIDEL:
+	if Main.game_type == Main.MOEMOE2JIDEL or Main.game_type == Main.MOEMOE2JI2:
 		step_mod = 12
 	else:
 		step_mod = 8
@@ -136,7 +136,7 @@ func extract_arc() -> void:
 				out_file.store_buffer(buff)
 				out_file.close()
 		else:
-			print("%s is an unknown BIN file. Skipping" % arc_name)
+			print_rich("[color=red]%s is an unknown BIN file. Skipping.[/color]" % arc_name)
 			continue
 			
 	print_rich("[color=green]Finished![/color]")
