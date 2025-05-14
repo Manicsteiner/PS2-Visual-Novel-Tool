@@ -15,7 +15,7 @@ var debug_output: bool = false
 
 func _ready() -> void:
 	load_exe.filters = [
-		"SLPM_657.17, SLPM_655.85, SLPM_550.98, MAIN.ELF"
+		"SLPM_657.17, SLPM_655.85, SLPM_550.98, SLPM_661.65, MAIN.ELF"
 		]
 		
 		
@@ -51,6 +51,9 @@ func extract_cd_bin() -> void:
 	elif exe_path.get_file() == "SLPM_657.17": # Tsuki wa Higashi ni Hi wa Nishi ni - Operation Sanctuary
 		tbl_start = 0x4A780
 		tbl_end = 0x76188
+	elif exe_path.get_file() == "SLPM_661.65": # Otome wa Boku ni Koishiteru
+		tbl_start = 0x4B800
+		tbl_end = 0x6C768
 	elif exe_path.get_file() == "MAIN.ELF": # Tsuki wa Higashi ni Hi wa Nishi ni - Operation Sanctuary (Dengeki D73 demo)
 		tbl_start = 0x60810
 		tbl_end = 0x61378

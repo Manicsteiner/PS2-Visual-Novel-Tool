@@ -155,6 +155,7 @@ enum {
 	ORANGEPOCKET,
 	OSOUJI,
 	OTOMENOJIJOU,
+	OTOMEWABOKU,
 	OUKA,
 	PARFAIT,
 	PATISSERIE,
@@ -1320,6 +1321,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = KOISURU
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == OTOMEWABOKU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(OTOMEWABOKU)
+		game_type = OTOMEWABOKU
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -1795,6 +1802,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Orange Pocket:  Root", ORANGEPOCKET)
 	game_type_selector.add_item("Osouji Sentai Clean Keeper H", OSOUJI)
 	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
+	game_type_selector.add_item("Otome wa Boku ni Koishiteru", OTOMEWABOKU)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Parfait: Chocolat Second Style", PARFAIT)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
