@@ -91,6 +91,7 @@ enum {
 	INTERLUDE,
 	INUYASHATHESECRET,
 	ITSUKA,
+	IZUMOZERO,
 	JEWELSOCEAN,
 	JIGOKUSHOUJO,
 	JUUJIGEN,
@@ -132,6 +133,7 @@ enum {
 	MIZUNOSENRITSU,
 	MIZUNOSENRITSU2,
 	MOEKAN,
+	MOEMOE2JIDEL,
 	MONOCHROME,
 	MONOCHROMEFACTOR,
 	MUTSUBOSHI,
@@ -187,6 +189,7 @@ enum {
 	SHAKUGAN,
 	SHINE,
 	SHINSEIKIEVABATTLE,
+	SHOUJOMAHOU,
 	SHIROGANE,
 	SHUFFLE,
 	SHUUMATSUSHOUJO,
@@ -266,6 +269,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(TRIGGERHEART)
 		game_type = TRIGGERHEART
 		var next_scene: PackedScene = load("res://src/scenes/Gulti.tscn")
+		sceneChanger(next_scene)
+	elif index == IZUMOZERO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(IZUMOZERO)
+		game_type = IZUMOZERO
+		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == SHOUJOMAHOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(SHOUJOMAHOU)
+		game_type = SHOUJOMAHOU
+		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == MOEMOE2JIDEL:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(MOEMOE2JIDEL)
+		game_type = MOEMOE2JIDEL
+		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1710,6 +1731,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Inuyasha: The Secret of the Cursed Mask", INUYASHATHESECRET)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
+	game_type_selector.add_item("Izumo Zero: Yokohama Ayakashi Emaki", IZUMOZERO)
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)
 	game_type_selector.add_item("Juujigen Rippoutai Cipher: Game of Survival", JUUJIGEN)
@@ -1751,6 +1773,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mizu no Senritsu", MIZUNOSENRITSU)
 	game_type_selector.add_item("Mizu no Senritsu 2: Hi no Kioku", MIZUNOSENRITSU2)
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
+	game_type_selector.add_item("Moe Moe 2-Ji Taisen (Ryaku) Deluxe", MOEMOE2JIDEL)
 	game_type_selector.add_item("Monochrome", MONOCHROME)
 	game_type_selector.add_item("Monochrome Factor: Cross Road", MONOCHROMEFACTOR)
 	game_type_selector.add_item("Mutsuboshi Kirari: Hoshi Furu Miyako", MUTSUBOSHI)
@@ -1806,6 +1829,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)
 	game_type_selector.add_item("Shine: Kotoba wo Tsumui de", SHINE)
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
+	game_type_selector.add_item("Shoujo Mahou Gaku Littlewitch Romanesque: Aria to Kaya to Kuro no Tou", SHOUJOMAHOU)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
 	game_type_selector.add_item("Shuffle! On the Stage", SHUFFLE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
