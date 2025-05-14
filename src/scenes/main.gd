@@ -197,6 +197,7 @@ enum {
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
 	SORAIROFUUKIN,
+	SOULLINK,
 	STARTRAIN,
 	STEADYXSTUDY,
 	STRAWBERRYPANIC,
@@ -1334,6 +1335,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = OTOMEWABOKU
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == SOULLINK:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(SOULLINK)
+		game_type = SOULLINK
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -1851,6 +1858,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
+	game_type_selector.add_item("Soul Link Extension", SOULLINK)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Steady x Study", STEADYXSTUDY)
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
