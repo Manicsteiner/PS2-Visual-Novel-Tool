@@ -186,6 +186,7 @@ enum {
 	SANGOKURENSEKI,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SENGOKUHIME2,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
 	SHAKUGAN,
@@ -296,6 +297,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(MOEMOE2JIDEL)
 		game_type = MOEMOE2JIDEL
 		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == SENGOKUHIME2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(SENGOKUHIME2)
+		game_type = SENGOKUHIME2
+		var next_scene: PackedScene = load("res://src/scenes/MileStone.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1847,6 +1854,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Sengoku-hime 2: En - Hyakka, Senran Tatsukaze no Gotoku")
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
 	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)
