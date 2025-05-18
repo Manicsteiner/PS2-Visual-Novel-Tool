@@ -31,9 +31,7 @@ func extract_arc() -> void:
 			OS.alert("Could not find %s for %s!" % [selected_files[file].get_basename() + ".TAG", selected_files[file].get_file()])
 			continue
 			
-		tbl_file.seek(0x14)
-		var f_tbl: int = tbl_file.get_32()
-		tbl_file.seek(0)
+		var f_tbl: int = 0x810
 		var tbl_size: int = tbl_file.get_length()
 		var i: int = 0
 		while true:

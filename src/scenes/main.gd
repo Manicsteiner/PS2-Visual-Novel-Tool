@@ -105,6 +105,7 @@ enum {
 	KIMIKISS,
 	KIMISUTA,
 	KIRAKIRA, 
+	KOIHIMEMUSOU,
 	KOISURU,
 	KOKORONOTOBIRA, 
 	KONOAOZORA,
@@ -317,6 +318,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(PRINCESSNIGHTMARE)
 		game_type = PRINCESSNIGHTMARE
+		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
+		sceneChanger(next_scene)
+	elif index == KOIHIMEMUSOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(KOIHIMEMUSOU)
+		game_type = KOIHIMEMUSOU
 		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
@@ -1794,6 +1801,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("KimiKiss", KIMIKISS)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
+	game_type_selector.add_item("Koi-hime Musou: Doki Otome Darake no Sangokushi Engi", KOIHIMEMUSOU)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
