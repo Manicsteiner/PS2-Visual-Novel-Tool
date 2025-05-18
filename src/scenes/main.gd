@@ -169,6 +169,7 @@ enum {
 	PRINCESSCONCERTO,
 	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
+	PRINCESSNIGHTMARE,
 	PRINCESSPRINCESS,
 	PRISAGA,
 	PRISMARK,
@@ -311,6 +312,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(CODEGEASS)
 		game_type = CODEGEASS
 		var next_scene: PackedScene = load("res://src/scenes/Crafts&Meister.tscn")
+		sceneChanger(next_scene)
+	elif index == PRINCESSNIGHTMARE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(PRINCESSNIGHTMARE)
+		game_type = PRINCESSNIGHTMARE
+		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1851,6 +1858,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Princess Concerto", PRINCESSCONCERTO)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
+	game_type_selector.add_item("Princess Nightmare", PRINCESSNIGHTMARE)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
 	game_type_selector.add_item("Pri-Saga! Princess wo Sagase!", PRISAGA)
 	game_type_selector.add_item("Prism Ark: Awake", PRISMARK)
