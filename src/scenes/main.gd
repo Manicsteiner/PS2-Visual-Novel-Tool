@@ -212,6 +212,7 @@ enum {
 	SWEETLEGACY, 
 	SWEETSEASON,
 	TENHIRO,
+	TENKUU,
 	TENTAMA1ST,
 	TENTAMA2,
 	TOGAINU,
@@ -299,7 +300,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
 		sceneChanger(next_scene)
 	elif index == SENGOKUHIME2:
-		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(SENGOKUHIME2)
 		game_type = SENGOKUHIME2
 		var next_scene: PackedScene = load("res://src/scenes/MileStone.tscn")
@@ -1528,6 +1529,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = OSOUJI
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == TENKUU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(TENKUU)
+		game_type = TENKUU
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == SHUFFLE:
 		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(SHUFFLE)
@@ -1880,6 +1887,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Sweet Season", SWEETSEASON)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
+	game_type_selector.add_item("Tenkuu Danzai: Skelter Heaven", TENKUU)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
 	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
