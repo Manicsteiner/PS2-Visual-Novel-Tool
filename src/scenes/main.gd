@@ -29,6 +29,7 @@ enum {
 	CHANTER,
 	CHOCOLAT,
 	CLOVERNOKUNI,
+	CODEGEASS,
 	COLORFULAQUA,
 	DABLACK,
 	DAWHITE,
@@ -304,6 +305,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SENGOKUHIME2)
 		game_type = SENGOKUHIME2
 		var next_scene: PackedScene = load("res://src/scenes/MileStone.tscn")
+		sceneChanger(next_scene)
+	elif index == CODEGEASS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(CODEGEASS)
+		game_type = CODEGEASS
+		var next_scene: PackedScene = load("res://src/scenes/Crafts&Meister.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1704,6 +1711,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
 	game_type_selector.add_item("Chocolat: Maid Cafe Curio", CHOCOLAT)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
+	game_type_selector.add_item("Code Geass: Hangyaku no Lelouch - Lost Colors", CODEGEASS)
 	game_type_selector.add_item("Colorful Aquarium: My Little Mermaid", COLORFULAQUA)
 	game_type_selector.add_item("D-A:  Black", DABLACK)
 	game_type_selector.add_item("D-A:  White", DAWHITE)
