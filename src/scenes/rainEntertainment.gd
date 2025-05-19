@@ -31,61 +31,118 @@ func extract_arc() -> void:
 			OS.alert("Could not find %s for %s!" % [selected_files[file].get_basename() + ".TAG", selected_files[file].get_file()])
 			continue
 			
-		var f_tbl: int = 0x810
-		var tbl_size: int = tbl_file.get_length()
-		var i: int = 0
-		while true:
-			tbl_file.seek(f_tbl + i * 0x20)
-			if tbl_file.get_position() >= tbl_size:
-				break
-			
-			f_name = tbl_file.get_buffer(0x10).get_string_from_ascii()
-			var unk_32: int = tbl_file.get_32()
-			f_offset = tbl_file.get_32()
-			f_size = tbl_file.get_32()
-			
-			in_file.seek(f_offset)
-			buff = in_file.get_buffer(f_size)
-			if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
-				f_name += ".TM2"
-			
-			if f_name.get_extension().to_lower() == "prs":
-				f_size = buff.decode_u32(0)
-				buff = ComFuncs.decompLZSS(buff.slice(4), buff.size() - 4, f_size)
+		if Main.game_type == Main.SHINKOIHIME:
+			var tbl_size: int = tbl_file.get_length()
+			var pos: int = 0x810
+			while true:
+				tbl_file.seek(pos)
+				if tbl_file.get_position() >= tbl_size:
+					break
+				tbl_file.seek(pos + 0x14)
+				var name_size: int = tbl_file.get_32()
+				f_offset = tbl_file.get_32()
+				f_size = tbl_file.get_32()
+				var sector_size: int = tbl_file.get_32()
+				
+				tbl_file.seek(pos)
+				f_name = tbl_file.get_buffer(name_size).get_string_from_ascii()
+				
+				in_file.seek(f_offset)
+				buff = in_file.get_buffer(f_size)
 				if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
 					f_name += ".TM2"
-				elif buff.slice(0, 16).get_string_from_ascii() == tex_hdr:
-					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					
-					var buff_i: int = 0
-					while true:
-						var pos: int = 0x20 + buff_i * 0x20
-						var temp_name: String = buff.slice(pos, pos + 0x10).get_string_from_ascii()
-						if temp_name == "":
-							break
-						temp_name
-						f_offset = buff.decode_u32(pos + 0x14)
-						f_size = buff.decode_u32(pos + 0x34)
-						if f_size == 0: f_size = buff.size()
-						
-						print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, temp_name])
-						
-						var n_buff: PackedByteArray = buff.slice(f_offset, f_size)
-						
-						out_file = FileAccess.open(folder_path + "/%s" % temp_name, FileAccess.WRITE)
-						out_file.store_buffer(n_buff)
-						out_file.close()
-						buff_i += 1
 				
-			print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
-			
-			out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-			out_file.store_buffer(buff)
-			out_file.close()
-			
-			i += 1
+				if f_name.get_extension().to_lower() == "prs":
+					f_size = buff.decode_u32(0)
+					buff = ComFuncs.decompLZSS(buff.slice(4), buff.size() - 4, f_size)
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						f_name += ".TM2"
+					elif buff.slice(0, 16).get_string_from_ascii() == tex_hdr:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						
+						var buff_i: int = 0
+						while true:
+							var _pos: int = 0x20 + buff_i * 0x20
+							var temp_name: String = buff.slice(_pos, _pos + 0x10).get_string_from_ascii()
+							if temp_name == "":
+								break
+							f_offset = buff.decode_u32(_pos + 0x14)
+							f_size = buff.decode_u32(_pos + 0x34)
+							if f_size == 0: f_size = buff.size()
+							
+							print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, temp_name])
+							
+							var n_buff: PackedByteArray = buff.slice(f_offset, f_size)
+							
+							out_file = FileAccess.open(folder_path + "/%s" % temp_name, FileAccess.WRITE)
+							out_file.store_buffer(n_buff)
+							out_file.close()
+							buff_i += 1
+					
+				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
+				
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				pos += 0x24
+		else:
+			var f_tbl: int = 0x810
+			var tbl_size: int = tbl_file.get_length()
+			var i: int = 0
+			while true:
+				tbl_file.seek(f_tbl + i * 0x20)
+				if tbl_file.get_position() >= tbl_size:
+					break
+				
+				f_name = tbl_file.get_buffer(0x10).get_string_from_ascii()
+				var unk_32: int = tbl_file.get_32()
+				f_offset = tbl_file.get_32()
+				f_size = tbl_file.get_32()
+				
+				in_file.seek(f_offset)
+				buff = in_file.get_buffer(f_size)
+				if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+					f_name += ".TM2"
+				
+				if f_name.get_extension().to_lower() == "prs":
+					f_size = buff.decode_u32(0)
+					buff = ComFuncs.decompLZSS(buff.slice(4), buff.size() - 4, f_size)
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						f_name += ".TM2"
+					elif buff.slice(0, 16).get_string_from_ascii() == tex_hdr:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						
+						var buff_i: int = 0
+						while true:
+							var pos: int = 0x20 + buff_i * 0x20
+							var temp_name: String = buff.slice(pos, pos + 0x10).get_string_from_ascii()
+							if temp_name == "":
+								break
+							f_offset = buff.decode_u32(pos + 0x14)
+							f_size = buff.decode_u32(pos + 0x34)
+							if f_size == 0: f_size = buff.size()
+							
+							print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, temp_name])
+							
+							var n_buff: PackedByteArray = buff.slice(f_offset, f_size)
+							
+							out_file = FileAccess.open(folder_path + "/%s" % temp_name, FileAccess.WRITE)
+							out_file.store_buffer(n_buff)
+							out_file.close()
+							buff_i += 1
+					
+				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
+				
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				i += 1
 	print_rich("[color=green]Finished![/color]")
 
 

@@ -194,6 +194,7 @@ enum {
 	SEPARATEHEARTS,
 	SHAKUGAN,
 	SHINE,
+	SHINKOIHIME,
 	SHINSEIKIEVABATTLE,
 	SHOUJOMAHOU,
 	SHIROGANE,
@@ -324,6 +325,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(KOIHIMEMUSOU)
 		game_type = KOIHIMEMUSOU
+		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
+		sceneChanger(next_scene)
+	elif index == SHINKOIHIME:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(SHINKOIHIME)
+		game_type = SHINKOIHIME
 		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
@@ -1890,6 +1897,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
 	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)
 	game_type_selector.add_item("Shine: Kotoba wo Tsumui de", SHINE)
+	game_type_selector.add_item("Shin Koihime Musou: Otome Ryouran Sangokushi Engi", SHINKOIHIME)
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shoujo Mahou Gaku Littlewitch Romanesque: Aria to Kaya to Kuro no Tou", SHOUJOMAHOU)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
