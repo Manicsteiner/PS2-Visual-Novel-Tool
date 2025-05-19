@@ -202,6 +202,7 @@ enum {
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
 	SORAIROFUUKIN,
+	SOTSUGYOU,
 	SOULLINK,
 	STARTRAIN,
 	STEADYXSTUDY,
@@ -1605,6 +1606,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = GIRLSBRAVO
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
+	elif index == SOTSUGYOU:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports most images."
+		game_type_selector.select(SOTSUGYOU)
+		game_type = SOTSUGYOU
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
 	elif index == SUZUMIYA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (Custom TM2?)"
 		game_type_selector.select(SUZUMIYA)
@@ -1905,6 +1912,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
+	game_type_selector.add_item("Sotsugyou 2nd Generation", SOTSUGYOU)
 	game_type_selector.add_item("Soul Link Extension", SOULLINK)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)
 	game_type_selector.add_item("Steady x Study", STEADYXSTUDY)
