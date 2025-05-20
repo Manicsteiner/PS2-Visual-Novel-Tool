@@ -29,7 +29,7 @@ theme_override_constants/separation = 28
 
 [node name="LoadARC" type="Button" parent="HBoxContainer"]
 layout_mode = 2
-text = "Extract .ARC"
+text = "Extract .ARC / .HB"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 visible = false
@@ -58,7 +58,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 1
 access = 2
-filters = PackedStringArray("*.ARC")
+filters = PackedStringArray("*.ARC,*.HB")
 use_native_dialog = true
 
 [node name="FILELoadFOLDER" type="FileDialog" parent="."]

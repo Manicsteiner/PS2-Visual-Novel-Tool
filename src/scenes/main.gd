@@ -220,6 +220,7 @@ enum {
 	TENKUU,
 	TENTAMA1ST,
 	TENTAMA2,
+	THEMAGICIAN,
 	TOGAINU,
 	TOHEART,
 	TOHEART2,
@@ -380,6 +381,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(AMAGAMI)
 		game_type = AMAGAMI
+		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
+		sceneChanger(next_scene)
+	elif index == THEMAGICIAN:
+		game_type_sub_text.text = "Supports:\nExtraction only.\nUnknown image format, scripts encrypted?"
+		game_type_selector.select(THEMAGICIAN)
+		game_type = THEMAGICIAN
 		var next_scene: PackedScene = load("res://src/scenes/EnterBrain.tscn")
 		sceneChanger(next_scene)
 	elif index == TRUELOVESTORYSUMMER:
@@ -1930,6 +1937,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tenkuu Danzai: Skelter Heaven", TENKUU)
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
+	game_type_selector.add_item("The Magician's Academy", THEMAGICIAN)
 	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
 	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("To Heart 2", TOHEART2)
