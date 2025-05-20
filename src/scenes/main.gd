@@ -101,6 +101,7 @@ enum {
 	KANON,
 	KATAKAMUNA,
 	KAZEIROSURF,
+	KIDOUSHINSENGUMI,
 	KIMIGAARUJI,
 	KIMIKISS,
 	KIMISUTA,
@@ -304,6 +305,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(MOEMOE2JIDEL)
 		game_type = MOEMOE2JIDEL
 		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == KIDOUSHINSENGUMI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nSupports most images."
+		game_type_selector.select(KIDOUSHINSENGUMI)
+		game_type = KIDOUSHINSENGUMI
+		var next_scene: PackedScene = load("res://src/scenes/Quintet.tscn")
 		sceneChanger(next_scene)
 	elif index == SENGOKUHIME2:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
@@ -1818,6 +1825,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kanon", KANON)
 	game_type_selector.add_item("Katakamuna: Ushinawareta Ingaritsu", KATAKAMUNA)
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
+	game_type_selector.add_item("Kidou Shinsengumi: Moe yo Ken", KIDOUSHINSENGUMI)
 	game_type_selector.add_item("Kimi ga Aruji de Shitsuji ga Ore de: Otsukae Nikki", KIMIGAARUJI)
 	game_type_selector.add_item("KimiKiss", KIMIKISS)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
