@@ -20,26 +20,33 @@ func _process(_delta: float) -> void:
 		
 		
 func extractPak() -> void:
-	
 	for i in range(0, selected_files.size()):
 		var in_file: FileAccess = FileAccess.open(selected_files[i], FileAccess.READ)
-		var header_buff: PackedByteArray = in_file.get_buffer(8)
-		var header_str: String = header_buff.get_string_from_ascii()
+		var header_str: String = in_file.get_buffer(8).get_string_from_ascii()
 		var num_files: int = ComFuncs.swap32(in_file.get_32())
 		
 		if header_str == "PAKFILE":
 			for file in range(0, num_files):
 				in_file.seek((file * 0x40) + 0x10)
-				var name_buff: PackedByteArray = in_file.get_buffer(0x38)
-				var f_name: String = name_buff.get_string_from_ascii()
+				var f_name: String = in_file.get_buffer(0x38).get_string_from_ascii()
+				#if f_name != "panoll09.dat":
+					#continue
 				var f_offset: int = ComFuncs.swap32(in_file.get_32()) * 0x800
 				var f_size: int = ComFuncs.swap32(in_file.get_32())
 				
-				in_file.seek(f_offset)
-				var bytes: int = ComFuncs.swap32(in_file.get_32())
-				var fl_bytes: int = 0x464C0000 #FL
+				if debug_out:
+					in_file.seek(f_offset)
+					var buff: PackedByteArray = in_file.get_buffer(f_size)
+					
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					buff.clear()
+					
+				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
 				
-				if bytes == fl_bytes:
+				in_file.seek(f_offset)
+				if in_file.get_buffer(4).get_string_from_ascii() == "FL":
 					var png_arr: Array[Image]
 					var final_png: Image
 					var img_type: int
@@ -54,19 +61,18 @@ func extractPak() -> void:
 					# 0x0A img type
 					# 0x0C unk16_2 x order?
 					# 0x0E unk16_3 y order?
-					var dat_buff: PackedByteArray = in_file.get_buffer(num_parts * 0x10)
-					var h_v_sort: int = dat_buff.decode_u16(0x8)
-						
-					var img_pos: int = in_file.get_position()
+					#var dat_buff: PackedByteArray = in_file.get_buffer(num_parts * 0x10)
+					in_file.seek(f_offset + 0x18)
+					#var h_v_sort: int = dat_buff.decode_u16(0x8)
+					var h_v_sort: int = in_file.get_16()
+					var img_pos: int = (num_parts * 0x10) + f_offset + 0x10
 					for part in range(0, num_parts):
 						in_file.seek(img_pos)
-						var hdr_bytes: PackedByteArray = in_file.get_buffer(4)
-						var hdr_str: String = hdr_bytes.get_string_from_ascii()
+						var hdr_str: String = in_file.get_buffer(4).get_string_from_ascii()
 						if hdr_str == "GBIX":
 							# Skip GBIX header
 							in_file.seek(img_pos + 0x10)
-							hdr_bytes = in_file.get_buffer(4)
-							hdr_str = hdr_bytes.get_string_from_ascii()
+							hdr_str = in_file.get_buffer(4).get_string_from_ascii()
 						if hdr_str == "PVRT":
 							var unk16_1: int = in_file.get_16() # Number of bits?
 							img_type = in_file.get_16() # ex: 3 = RGB
@@ -79,8 +85,13 @@ func extractPak() -> void:
 							
 							if num_parts > 1 and part == num_parts - 1 and h_v_sort == 0x10:
 								# Probably a better way at doing this, but I didn't see where this is happening in the header.
-								buff = in_file.get_buffer((t_w * t_h) * 3)
-								png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+								if img_type == 2:
+									buff = in_file.get_buffer((t_w * t_h) * 2)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+								else:
+									buff = in_file.get_buffer((t_w * t_h) * 3)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+									
 								if tiled_output:
 									png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
 									
@@ -89,27 +100,38 @@ func extractPak() -> void:
 								png_arr.append(split_png[1])
 								break
 							elif num_parts > 1 and part in range(num_parts - 2, num_parts) and h_v_sort == 0x20:
-								# This is silly and doesn't work yet, very likely a better way at doing this.
-								buff = in_file.get_buffer((t_w * t_h) * 3)
-								png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+								if img_type == 2:
+									buff = in_file.get_buffer((t_w * t_h) * 2)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+								else:
+									buff = in_file.get_buffer((t_w * t_h) * 3)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+									
 								if tiled_output:
 									png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
 									
 								if part == num_parts - 2:
-									var split_png: Array[Image] = split_image_horizontal(png)
-									png_arr.append(split_png[0])
-									png = split_png[1]
-									#png_arr.append(split_png[1])
+									# Split a two part image. Stacks the right image under the left.
+									var split_png: Image = split_image_stack_vertical(png)
+									png_arr.append(split_png)
+									img_pos = in_file.get_position()
+									continue
 								elif part == num_parts - 1:
-									var split_png: Array[Image] = split_image_horizontal(png)
-									png_arr.append(split_png[0])
-									png_arr.append(split_png[1])
+									var split_png: Image = split_image_stack_vertical(png)
+									png_arr.append(split_png)
 									break
 							else:
-								buff = in_file.get_buffer((t_w * t_h) * 3)
-								png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+								if img_type == 2:
+									buff = in_file.get_buffer((t_w * t_h) * 2)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+								else:
+									buff = in_file.get_buffer((t_w * t_h) * 3)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
 								
-							png_arr.append(png)
+							if part < 8 and f_name == "panoep04.dat":
+								png_arr.append(png)
+							else:
+								png_arr.append(png)
 							img_pos = in_file.get_position()
 							if tiled_output:
 								png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
@@ -122,24 +144,13 @@ func extractPak() -> void:
 						final_png = tile_images_by_pair(png_arr)
 					elif h_v_sort == 0x20:
 						# Tile columns of 2 horizontally
-						final_png = tile_images_by_pair_horizontal(png_arr)
+						final_png = tile_images_by_pair_hor_vert_right(png_arr)
 					else:
 						push_error("Image h_v sort is unknown in %s! Image output may be wrong." % f_name)
 						final_png = tile_images_by_pair(png_arr)
 						
 					if final_png != null:
 						final_png.save_png(folder_path + "/%s" % f_name + ".png")
-					
-				if debug_out:
-					in_file.seek(f_offset)
-					var buff: PackedByteArray = in_file.get_buffer(f_size)
-					
-					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					buff.clear()
-				
-				print("0x%08X 0x%08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
 		else:
 			OS.alert("Invalid pak file in %s!" % selected_files[i])
 			continue
@@ -196,7 +207,139 @@ func tile_images_by_pair(images: Array[Image]) -> Image:
 
 	return combined_image
 	
+func tile_images_by_pair_hor_vert_left(images: Array[Image]) -> Image:
+	# Places the last two images vertically to the left, while the rest are horizontal
+	 # Ensure an even number of images
+	if images.size() % 2 != 0:
+		push_error("The images array must contain an even number of images.")
+		return null
+
+	var count = images.size()
+	var last_idx = count - 2
+	# Prepare main pairs (all except last two)
+	var main_pairs = []
+	for i in range(0, last_idx, 2):
+		main_pairs.append([images[i], images[i+1]])
+
+	# Final column pair
+	var col1_img1 = images[last_idx]
+	var col1_img2 = images[last_idx + 1]
+
+	# Calculate dimensions
+	var col_width = max(col1_img1.get_width(), col1_img2.get_width())
+	var col_height = col1_img1.get_height() + col1_img2.get_height()
+
+	var main_width = 0
+	var main_height = 0
+	var main_dims = []
+	for pair in main_pairs:
+		var w = pair[0].get_width() + pair[1].get_width()
+		var h = max(pair[0].get_height(), pair[1].get_height())
+		main_width = max(main_width, w)
+		main_height += h
+		main_dims.append(Vector2(w, h))
+
+	# Final canvas dimensions
+	var final_width = col_width + main_width
+	var final_height = max(col_height, main_height)
+
+	var final_image = Image.create_empty(final_width, final_height, false, images[0].get_format())
+
+	# Draw left column images vertically
+	var y_off_col = 0
+	for img in [col1_img1, col1_img2]:
+		for y in range(img.get_height()):
+			for x in range(img.get_width()):
+				final_image.set_pixel(x, y_off_col + y, img.get_pixel(x, y))
+		y_off_col += img.get_height()
+
+	# Draw main pairs to the right of the column
+	var y_off_main = 0
+	for idx in range(main_pairs.size()):
+		var pair = main_pairs[idx]
+		var dims = main_dims[idx]
+		var img1 = pair[0]
+		var img2 = pair[1]
+		# img1
+		for y in range(img1.get_height()):
+			for x in range(img1.get_width()):
+				final_image.set_pixel(col_width + x, y_off_main + y, img1.get_pixel(x, y))
+		# img2
+		for y in range(img2.get_height()):
+			for x in range(img2.get_width()):
+				final_image.set_pixel(col_width + img1.get_width() + x, y_off_main + y, img2.get_pixel(x, y))
+		y_off_main += dims.y
+
+	return final_image
 	
+	
+func tile_images_by_pair_hor_vert_right(images: Array[Image]) -> Image:
+	# Places the last two images vertically to the right, while the rest are horizontal
+	# Ensure an even number of images
+	if images.size() % 2 != 0:
+		push_error("The images array must contain an even number of images.")
+		return null
+
+	var count = images.size()
+	var last_idx = count - 2
+
+	# Prepare main pairs (all except last two)
+	var main_pairs = []
+	for i in range(0, last_idx, 2):
+		main_pairs.append([images[i], images[i+1]])
+
+	# Final column pair for the right side
+	var col_img1 = images[last_idx]
+	var col_img2 = images[last_idx + 1]
+
+	# Calculate dimensions
+	var col_width = max(col_img1.get_width(), col_img2.get_width())
+	var col_height = col_img1.get_height() + col_img2.get_height()
+
+	var main_width = 0
+	var main_height = 0
+	var main_dims = []
+	for pair in main_pairs:
+		var w = pair[0].get_width() + pair[1].get_width()
+		var h = max(pair[0].get_height(), pair[1].get_height())
+		main_width = max(main_width, w)
+		main_height += h
+		main_dims.append(Vector2(w, h))
+
+	# Final canvas dimensions: main section first, then column on the right
+	var final_width = main_width + col_width
+	var final_height = max(main_height, col_height)
+
+	var final_image = Image.create_empty(final_width, final_height, false, images[0].get_format())
+
+	# Draw main pairs on the left
+	var y_off_main = 0
+	for idx in range(main_pairs.size()):
+		var pair = main_pairs[idx]
+		var dims = main_dims[idx]
+		var img1 = pair[0]
+		var img2 = pair[1]
+		# Left image of pair
+		for y in range(img1.get_height()):
+			for x in range(img1.get_width()):
+				final_image.set_pixel(x, y_off_main + y, img1.get_pixel(x, y))
+		# Right image of pair
+		for y in range(img2.get_height()):
+			for x in range(img2.get_width()):
+				final_image.set_pixel(img1.get_width() + x, y_off_main + y, img2.get_pixel(x, y))
+		y_off_main += dims.y
+
+	# Draw column images on the right
+	var y_off_col = 0
+	for img in [col_img1, col_img2]:
+		for y in range(img.get_height()):
+			for x in range(img.get_width()):
+				final_image.set_pixel(main_width + x, y_off_col + y, img.get_pixel(x, y))
+		y_off_col += img.get_height()
+
+	return final_image
+
+
 func tile_images_by_pair_horizontal(images: Array[Image]) -> Image:
 	# Ensure the images array has an even number of elements
 	if images.size() % 2 != 0:
@@ -263,6 +406,27 @@ func split_image(png: Image) -> Array[Image]:
 	png_arr.append(png_cut)
 
 	return png_arr
+	
+	
+func split_image_stack_vertical(png: Image) -> Image:
+	# original dimensions
+	var w: int = png.get_width()      # e.g. 256
+	var h: int = png.get_height()     # e.g. 256
+	var half_w: int = w / 2           # 128
+
+	# extract the two halves
+	var left_half: Image = png.get_region(Rect2i(0, 0, half_w, h))
+	var right_half: Image = png.get_region(Rect2i(half_w, 0, half_w, h))
+
+	# create output image twice as tall
+	var out: Image = Image.create_empty(half_w, h * 2, false, png.get_format())
+
+	# blit left into top (dest at 0,0)
+	out.blit_rect(left_half,  Rect2i(0, 0, half_w, h), Vector2i(0, 0))
+	# blit right into bottom (dest at 0,h)
+	out.blit_rect(right_half, Rect2i(0, 0, half_w, h), Vector2i(0, h))
+
+	return out
 	
 	
 func split_image_horizontal(png: Image) -> Array[Image]:
