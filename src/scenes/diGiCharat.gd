@@ -10,6 +10,7 @@ var chose_folder: bool = false
 var debug_out: bool = false
 var tiled_output: bool = false
 
+#TODO: FACE.PAK images still suck
 
 func _process(_delta: float) -> void:
 	if chose_file and chose_folder:
@@ -22,6 +23,7 @@ func _process(_delta: float) -> void:
 func extractPak() -> void:
 	for i in range(0, selected_files.size()):
 		var in_file: FileAccess = FileAccess.open(selected_files[i], FileAccess.READ)
+		var arc_name: String = selected_files[i].get_file().get_basename()
 		var header_str: String = in_file.get_buffer(8).get_string_from_ascii()
 		var num_files: int = ComFuncs.swap32(in_file.get_32())
 		
@@ -29,68 +31,83 @@ func extractPak() -> void:
 			for file in range(0, num_files):
 				in_file.seek((file * 0x40) + 0x10)
 				var f_name: String = in_file.get_buffer(0x38).get_string_from_ascii()
-				#if f_name != "panoll09.dat":
+				#if f_name != "dg002.dat":
 					#continue
 				var f_offset: int = ComFuncs.swap32(in_file.get_32()) * 0x800
 				var f_size: int = ComFuncs.swap32(in_file.get_32())
 				
-				if debug_out:
-					in_file.seek(f_offset)
-					var buff: PackedByteArray = in_file.get_buffer(f_size)
-					
-					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					buff.clear()
-					
 				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
 				
 				in_file.seek(f_offset)
-				if in_file.get_buffer(4).get_string_from_ascii() == "FL":
-					var png_arr: Array[Image]
-					var final_png: Image
-					var img_type: int
+				var buff: PackedByteArray = in_file.get_buffer(f_size)
+				if buff.slice(0, 4).get_string_from_ascii() == "Lzs3":
+					f_size = buff.decode_u32(4)
+					buff = ComFuncs.decompLZSS(buff.slice(12), buff.size() - 12, f_size)
+				elif buff.slice(0, 4).get_string_from_ascii() == "Lzs1":
+					push_error("%s uses Lzs1 compression TODO" % f_name)
 					
-					var num_parts: int = in_file.get_32()
-					var img_size: int = in_file.get_32() # Same as file size
-					var unk32: int = in_file.get_32()
+				if debug_out:
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+				if buff.slice(0, 4).get_string_from_ascii() == "FL":
 					# DAT information for num_files * 0x10, currently unknown what they relate to.
 					# 0x00 "DAT/00"
 					# 0x04 unk32
 					# 0x08 unk16_1 0x10 for vertical sort, 0x20 for horizontal sort
 					# 0x0A img type
-					# 0x0C unk16_2 x order?
-					# 0x0E unk16_3 y order?
-					#var dat_buff: PackedByteArray = in_file.get_buffer(num_parts * 0x10)
-					in_file.seek(f_offset + 0x18)
-					#var h_v_sort: int = dat_buff.decode_u16(0x8)
-					var h_v_sort: int = in_file.get_16()
-					var img_pos: int = (num_parts * 0x10) + f_offset + 0x10
+					# 0x0C image part start 32
+					
+					var png_arr: Array[Image]
+					var final_png: Image
+					var img_type: int
+					
+					
+					var num_parts: int = buff.decode_u32(4)
+					var img_size: int = buff.decode_u32(8) # Same as file size
+					var unk32: int = buff.decode_u32(12)
+						
+					var h_v_sort: int = buff.decode_u16(0x18)
+					var img_pos: int = buff.decode_u32(0x1C)
+					var hdr_str: String = buff.slice(img_pos, img_pos + 4).get_string_from_ascii()
+					if hdr_str != "PVRT" and hdr_str != "GBIX": # if first part of image is blank or 1?
+						img_pos = buff.decode_u32(0x2C)
+						h_v_sort = buff.decode_u16(0x28)
+						num_parts -= 1
 					for part in range(0, num_parts):
-						in_file.seek(img_pos)
-						var hdr_str: String = in_file.get_buffer(4).get_string_from_ascii()
+						hdr_str = buff.slice(img_pos, img_pos + 4).get_string_from_ascii()
 						if hdr_str == "GBIX":
 							# Skip GBIX header
-							in_file.seek(img_pos + 0x10)
-							hdr_str = in_file.get_buffer(4).get_string_from_ascii()
+							img_pos += 0x10
+							hdr_str = buff.slice(img_pos, img_pos + 4).get_string_from_ascii()
 						if hdr_str == "PVRT":
-							var unk16_1: int = in_file.get_16() # Number of bits?
-							img_type = in_file.get_16() # ex: 3 = RGB
-							var unk32_1: int = in_file.get_32()
-							var t_w: int = in_file.get_16()
-							var t_h: int = in_file.get_16()
+							var unk16_1: int = buff.decode_u16(img_pos + 4) # Number of bits?
+							img_type = buff.decode_u16(img_pos + 6) # ex: 3 = RGB
+							var unk32_1: int = buff.decode_u32(img_pos + 8)
+							var t_w: int = buff.decode_u16(img_pos + 12)
+							var t_h: int = buff.decode_u16(img_pos + 14)
+							img_pos += 0x10
 							
-							var buff: PackedByteArray
+							var tile_buff: PackedByteArray
+							var size_mod: int
 							var png: Image
 							
 							if num_parts > 1 and part == num_parts - 1 and h_v_sort == 0x10:
 								# Probably a better way at doing this, but I didn't see where this is happening in the header.
 								if img_type == 2:
-									buff = in_file.get_buffer((t_w * t_h) * 2)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+									size_mod = (t_w * t_h) * 2
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, tile_buff)
+								elif img_type == 4:
+									size_mod = (t_w * t_h) * 4
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGBA8, tile_buff)
+									png.convert(Image.FORMAT_RGB8)
 								else:
-									buff = in_file.get_buffer((t_w * t_h) * 3)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+									size_mod = (t_w * t_h) * 3
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, tile_buff)
 									
 								if tiled_output:
 									png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
@@ -99,13 +116,20 @@ func extractPak() -> void:
 								png_arr.append(split_png[0])
 								png_arr.append(split_png[1])
 								break
-							elif num_parts > 1 and part in range(num_parts - 2, num_parts) and h_v_sort == 0x20:
+							elif !arc_name == "FACE" and num_parts > 1 and part in range(num_parts - 2, num_parts) and h_v_sort == 0x20:
 								if img_type == 2:
-									buff = in_file.get_buffer((t_w * t_h) * 2)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+									size_mod = (t_w * t_h) * 2
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, tile_buff)
+								elif img_type == 4:
+									size_mod = (t_w * t_h) * 4
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGBA8, tile_buff)
+									png.convert(Image.FORMAT_RGB8)
 								else:
-									buff = in_file.get_buffer((t_w * t_h) * 3)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+									size_mod = (t_w * t_h) * 3
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, tile_buff)
 									
 								if tiled_output:
 									png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
@@ -114,7 +138,7 @@ func extractPak() -> void:
 									# Split a two part image. Stacks the right image under the left.
 									var split_png: Image = split_image_stack_vertical(png)
 									png_arr.append(split_png)
-									img_pos = in_file.get_position()
+									img_pos += size_mod
 									continue
 								elif part == num_parts - 1:
 									var split_png: Image = split_image_stack_vertical(png)
@@ -122,29 +146,40 @@ func extractPak() -> void:
 									break
 							else:
 								if img_type == 2:
-									buff = in_file.get_buffer((t_w * t_h) * 2)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, buff)
+									size_mod = (t_w * t_h) * 2
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_LA8, tile_buff)
+								elif img_type == 4:
+									size_mod = (t_w * t_h) * 4
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGBA8, tile_buff)
+									png.convert(Image.FORMAT_RGB8)
 								else:
-									buff = in_file.get_buffer((t_w * t_h) * 3)
-									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, buff)
+									size_mod = (t_w * t_h) * 3
+									tile_buff = buff.slice(img_pos, img_pos + size_mod)
+									png = Image.create_from_data(t_w, t_h, false, Image.FORMAT_RGB8, tile_buff)
 								
 							if part < 8 and f_name == "panoep04.dat":
 								png_arr.append(png)
 							else:
 								png_arr.append(png)
-							img_pos = in_file.get_position()
+								
+							img_pos += size_mod
 							if tiled_output:
 								png.save_png(folder_path + "/%s" % f_name + "_%04d" % part + ".png")
 						else:
 							push_error("Image doesn't have a 'PVRT' or 'GBIX' header in file %s part %04d! Skipping." % [f_name, part])
-							break
+							continue
 							
 					if h_v_sort == 0x10:
 						# Tile columns of 2 vertically
 						final_png = tile_images_by_pair(png_arr)
 					elif h_v_sort == 0x20:
 						# Tile columns of 2 horizontally
-						final_png = tile_images_by_pair_hor_vert_right(png_arr)
+						if arc_name == "FACE": # not correct
+							final_png = tile_images_by_pair(png_arr)
+						else:
+							final_png = tile_images_by_pair_hor_vert_right(png_arr)
 					else:
 						push_error("Image h_v sort is unknown in %s! Image output may be wrong." % f_name)
 						final_png = tile_images_by_pair(png_arr)
