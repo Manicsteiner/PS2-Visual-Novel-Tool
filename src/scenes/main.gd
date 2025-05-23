@@ -106,6 +106,7 @@ enum {
 	KIMIKISS,
 	KIMISUTA,
 	KIRAKIRA, 
+	KISHINHOUKOU,
 	KOIHIMEMUSOU,
 	KOISURU,
 	KOKORONOTOBIRA, 
@@ -371,6 +372,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SUISUISWEET)
 		game_type = SUISUISWEET
 		var next_scene: PackedScene = load("res://src/scenes/BillikenSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == KISHINHOUKOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(KISHINHOUKOU)
+		game_type = KISHINHOUKOU
+		var next_scene: PackedScene = load("res://src/scenes/Digiturbo.tscn")
 		sceneChanger(next_scene)
 	elif index == KIMIKISS:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1830,6 +1837,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("KimiKiss", KIMIKISS)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
+	game_type_selector.add_item("Kishin Houkou Demonbane", KISHINHOUKOU)
 	game_type_selector.add_item("Koi-hime Musou: Doki Otome Darake no Sangokushi Engi", KOIHIMEMUSOU)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
