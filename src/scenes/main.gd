@@ -239,6 +239,7 @@ enum {
 	TSUYOKISS2,
 	UMISHO,
 	UNDERTHEMOON,
+	UTAU,
 	WEARE,
 	WHITEBREATH,
 	WHITEPRINCESS,
@@ -363,6 +364,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SHINKOIHIME)
 		game_type = SHINKOIHIME
 		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
+		sceneChanger(next_scene)
+	elif index == UTAU:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(UTAU)
+		game_type = UTAU
+		var next_scene: PackedScene = load("res://src/scenes/Ecole.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -1991,6 +1998,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tsuyo Kiss 2 Gakki: Swift Love", TSUYOKISS2)
 	game_type_selector.add_item("Umisho", UMISHO)
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
+	game_type_selector.add_item("Utau * Tumbling Dice", UTAU)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
 	game_type_selector.add_item("White Princess the Second", WHITEPRINCESS)
