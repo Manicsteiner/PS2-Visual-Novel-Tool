@@ -54,6 +54,8 @@ enum {
 	FRAGMENTSBLUE,
 	FRIENDS,
 	FUKAKUTEI,
+	FUSHIGINOUMI,
+	FUSHIGINOUMIDENNOU,
 	FUTAKOI,
 	FUTAKOIALT,
 	FUTAKOIJIMA,
@@ -191,6 +193,7 @@ enum {
 	SANGOKURENSEKI,
 	SCHOOLLOVE,
 	SCHOOLNI,
+	SEIKAINOSENKI,
 	SENGOKUHIME2,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
@@ -306,6 +309,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(MOEMOE2JIDEL)
 		game_type = MOEMOE2JIDEL
 		var next_scene: PackedScene = load("res://src/scenes/BlackJack.tscn")
+		sceneChanger(next_scene)
+	elif index == FUSHIGINOUMI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP)."
+		game_type_selector.select(FUSHIGINOUMI)
+		game_type = FUSHIGINOUMI
+		var next_scene: PackedScene = load("res://src/scenes/ThunderstoneJapan.tscn")
+		sceneChanger(next_scene)
+	elif index == FUSHIGINOUMIDENNOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP)."
+		game_type_selector.select(FUSHIGINOUMIDENNOU)
+		game_type = FUSHIGINOUMIDENNOU
+		var next_scene: PackedScene = load("res://src/scenes/ThunderstoneJapan.tscn")
+		sceneChanger(next_scene)
+	elif index == SEIKAINOSENKI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP)."
+		game_type_selector.select(SEIKAINOSENKI)
+		game_type = SEIKAINOSENKI
+		var next_scene: PackedScene = load("res://src/scenes/ThunderstoneJapan.tscn")
 		sceneChanger(next_scene)
 	elif index == KIDOUSHINSENGUMI:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nSupports most images."
@@ -1785,6 +1806,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Fragments Blue", FRAGMENTSBLUE)
 	game_type_selector.add_item("Friends: Seishun no Kagayaki", FRIENDS)
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
+	game_type_selector.add_item("Fushigi no Umi no Nadia: Inherit the Blue Water", FUSHIGINOUMI)
+	game_type_selector.add_item("Fushigi no Umi no Nadia: Dennou Battle - Miss Nautilus Contest", FUSHIGINOUMIDENNOU)
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoi Alternative: Koi to Shoujo to Machine Gun", FUTAKOIALT)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
@@ -1922,6 +1945,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("Seikai no Senki", SEIKAINOSENKI)
 	game_type_selector.add_item("Sengoku-hime 2: En - Hyakka, Senran Tatsukaze no Gotoku")
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
