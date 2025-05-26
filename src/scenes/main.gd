@@ -18,6 +18,7 @@ enum {
 	ANGELWISH,
 	AONOMAMA,
 	ARABIANS,
+	ARCANAHEART,
 	BINCHOUTAN,
 	CAFELINDBERGHSUMMER,
 	CAFELITTLEWISH,
@@ -214,6 +215,7 @@ enum {
 	STRAWBERRYPANIC,
 	STRIKEWITCHES,
 	SUGARSPICE,
+	SUGGOIARCANAHEART2,
 	SUIGETSUMAYOI,
 	SUIKA,
 	SUISUISWEET,
@@ -366,9 +368,21 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == UTAU:
-		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(UTAU)
 		game_type = UTAU
+		var next_scene: PackedScene = load("res://src/scenes/Ecole.tscn")
+		sceneChanger(next_scene)
+	elif index == ARCANAHEART:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(ARCANAHEART)
+		game_type = ARCANAHEART
+		var next_scene: PackedScene = load("res://src/scenes/Ecole.tscn")
+		sceneChanger(next_scene)
+	elif index == SUGGOIARCANAHEART2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMultiple palettes not supported for some images."
+		game_type_selector.select(SUGGOIARCANAHEART2)
+		game_type = SUGGOIARCANAHEART2
 		var next_scene: PackedScene = load("res://src/scenes/Ecole.tscn")
 		sceneChanger(next_scene)
 	elif index == IDOLJANSHIR:
@@ -1777,6 +1791,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
 	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
+	game_type_selector.add_item("Arcana Heart", ARCANAHEART)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
@@ -1973,6 +1988,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Strawberry Panic!", STRAWBERRYPANIC)
 	game_type_selector.add_item("Strike Witches: Anata to Dekiru Koto - A Little Peaceful Days", STRIKEWITCHES)
 	game_type_selector.add_item("Sugar + Spice! Ano Ko no Suteki na Nani mo Kamo", SUGARSPICE)
+	game_type_selector.add_item("Suggoi! Arcana Heart 2", SUGGOIARCANAHEART2)
 	game_type_selector.add_item("Suigetsu: Mayoi Gokoro", SUIGETSUMAYOI)
 	game_type_selector.add_item("Suika A.S+: Eternal Name", SUIKA)
 	game_type_selector.add_item("SuiSui Sweet: ~Amai Koi No Mitsukekata~")
