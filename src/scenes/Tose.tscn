@@ -12,6 +12,14 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_oliu3")
 
+[node name="CVMtext" type="RichTextLabel" parent="."]
+offset_left = 464.0
+offset_top = 8.0
+offset_right = 820.0
+offset_bottom = 104.0
+bbcode_enabled = true
+text = "[center]To convert a CVM, download [color=#00FF00][b][url=https://app.box.com/v/cvmtool/file/12787128460]cvm_tool.exe[/url][/b][/color] and place it in a folder where your CVM is. The converted CVM will be named OUT.ISO in your selected folder.[/center]"
+
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -27,6 +35,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 28
 
+[node name="LoadCVM" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Convert CVM to ISO"
+
 [node name="LoadEXE" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 tooltip_text = "Extract from PFW3 archive."
@@ -36,7 +48,7 @@ text = "Load EXE
 [node name="LoadPIG" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 tooltip_text = "Extract from PFW3 archive."
-text = "Load PIG.BIN / .BIN
+text = "Load PIG.BIN / .BIN / .PIG
 "
 
 [node name="LoadScanPIG" type="Button" parent="HBoxContainer"]
@@ -88,7 +100,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 1
 access = 2
-filters = PackedStringArray("PIG.BIN, PIG2.BIN, *.BIN")
+filters = PackedStringArray("PIG.BIN, PIG2.BIN, *.BIN, *.PIG")
 use_native_dialog = true
 
 [node name="LoadPIGScan" type="FileDialog" parent="."]
@@ -111,6 +123,17 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
+[node name="FILELoadCVM" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[connection signal="pressed" from="HBoxContainer/LoadCVM" to="." method="_on_load_cvm_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadPIG" to="." method="_on_load_pig_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadScanPIG" to="." method="_on_load_scan_pig_pressed"]
@@ -120,3 +143,4 @@ use_native_dialog = true
 [connection signal="files_selected" from="LoadPIG" to="." method="_on_load_pig_files_selected"]
 [connection signal="file_selected" from="LoadPIGScan" to="." method="_on_load_pig_scan_file_selected"]
 [connection signal="dir_selected" from="LoadFOLDER" to="." method="_on_load_folder_dir_selected"]
+[connection signal="dir_selected" from="FILELoadCVM" to="." method="_on_file_load_cvm_dir_selected"]
