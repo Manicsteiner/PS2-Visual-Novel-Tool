@@ -13,6 +13,7 @@ mouse_filter = 2
 script = ExtResource("1_oliu3")
 
 [node name="CVMtext" type="RichTextLabel" parent="."]
+layout_mode = 0
 offset_left = 464.0
 offset_top = 8.0
 offset_right = 820.0
@@ -133,6 +134,7 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
+[connection signal="meta_clicked" from="CVMtext" to="." method="_on_cv_mtext_meta_clicked"]
 [connection signal="pressed" from="HBoxContainer/LoadCVM" to="." method="_on_load_cvm_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadPIG" to="." method="_on_load_pig_pressed"]

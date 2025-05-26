@@ -432,3 +432,7 @@ func _on_file_load_cvm_dir_selected(dir: String) -> void:
 	print("Exit code: %d" % exit_code)
 	print(output)
 	print_rich("[color=green]Finished![/color]")
+
+
+func _on_cv_mtext_meta_clicked(meta: Variant) -> void:
+	OS.shell_open(meta)
