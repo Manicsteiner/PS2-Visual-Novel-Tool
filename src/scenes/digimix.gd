@@ -93,7 +93,6 @@ func extract_arc() -> void:
 				f_id += 1
 			print_rich("[color=green]Extracted from %s[/color]" % arc_full_name)
 		else:
-			print(selected_files[file].get_base_dir() + "/SLPM_624.00")
 			var exe_file: FileAccess = FileAccess.open(selected_files[file].get_base_dir() + "/SLPM_624.00", FileAccess.READ)
 			if exe_file == null:
 				OS.alert("Could not find %s!" % selected_files[file].get_base_dir() + "SLPM_624.00")
