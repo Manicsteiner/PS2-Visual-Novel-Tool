@@ -19,6 +19,7 @@ enum {
 	AONOMAMA,
 	ARABIANS,
 	ARCANAHEART,
+	ASOBINIIKUYO,
 	BINCHOUTAN,
 	CAFELINDBERGHSUMMER,
 	CAFELITTLEWISH,
@@ -1563,6 +1564,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HIMEHIBINEW
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
+	elif index == ASOBINIIKUYO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(ASOBINIIKUYO)
+		game_type = ASOBINIIKUYO
+		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
+		sceneChanger(next_scene)
 	elif index == LOSTAYA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(LOSTAYA)
@@ -1806,6 +1813,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
 	game_type_selector.add_item("Arcana Heart", ARCANAHEART)
+	game_type_selector.add_item("Asobi ni Iku yo! Chikyuu Pinch no Kon'yaku Sengen", ASOBINIIKUYO)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
