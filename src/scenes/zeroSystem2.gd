@@ -7,8 +7,6 @@ extends Control
 var folder_path:String
 var exe_path: String
 var selected_bin: String
-var chose_bin: bool = false
-var chose_folder: bool = false
 var out_decomp: bool = false
 
 const BUFFER_SIZE = 8 * 1024 * 1024
@@ -16,17 +14,16 @@ const BUFFER_SIZE = 8 * 1024 * 1024
 
 func _ready() -> void:
 	file_load_exe.filters = [
-		"SLPM_668.05, SLPM_552.41, SLPM_551.95, SLPM_669.34, SLPM_664.08"
+		"SLPM_668.05, SLPM_552.41, SLPM_551.95, SLPM_669.34, SLPM_664.08, SLPM_667.57"
 		]
 
 
 func _process(_delta: float) -> void:
-	if chose_bin and chose_folder:
+	if selected_bin and folder_path:
 		extractBin()
 		exe_path = ""
 		selected_bin = ""
-		chose_bin = false
-		chose_folder = false
+		folder_path = ""
 
 
 func extractBin() -> void:
@@ -49,14 +46,10 @@ func extractBin() -> void:
 	var f_unk: int
 	var f_freq: int
 	var bytes: int
-	var buff: PackedByteArray # Used for decompressing
+	var buff: PackedByteArray
 	var scr_bytes: int = 0x02524353
 	var ext: String
 	
-	# This table format is kinda wacky in these games, so we load the exe and get offsets to DATA.BIN,
-	# which in turn point to another table for the first 6 entries, then we extract the actual files.
-	# Since these files can be rather large (1GB or so in some cases), we don't load them into a buffer,
-	# instead we do 64 bit stores to the disk and loop until the end of the current file.
 	
 	if exe_path == "":
 		OS.alert("Load an EXE (SLPM_XXX.XX) first.")
@@ -82,6 +75,10 @@ func extractBin() -> void:
 		exe_start = 0x70BA8
 		exe_end = 0x70CC8
 		exe_file = FileAccess.open(exe_path, FileAccess.READ)
+	elif exe_path.get_file() == "SLPM_667.57": # Que - Ancient Leaf no Yousei
+		exe_start = 0x7FA08
+		exe_end = 0x7FB28
+		exe_file = FileAccess.open(exe_path, FileAccess.READ)
 	
 	print_rich("[color=yellow]Extracting files. Please wait...[/color]")
 	
@@ -89,6 +86,7 @@ func extractBin() -> void:
 	
 	exe_file.seek(exe_start)
 	i = 0
+	
 	# Grab and extract first 6 files.
 	
 	while i < 7:
@@ -283,7 +281,7 @@ func extractBin() -> void:
 			bytes = in_file.get_32()
 			if bytes == scr_bytes:
 				ext = ".SCR"
-			elif bytes == 0x01504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
+			elif bytes == 0x01504D43 or bytes == 0x02504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
 				ext = ".TM2"
 				
 				out_file = FileAccess.open(folder_path + "/%02d" % i + "_%08d" % f_id + ext, FileAccess.WRITE)
@@ -291,7 +289,7 @@ func extractBin() -> void:
 				in_file.seek(f_offset)
 				if bytes == 0x04504D43 or bytes == 0x05504D43:
 					buff = decompress_rle_ef(in_file.get_buffer(f_offset + f_size))
-				elif bytes == 0x01504D43:
+				elif bytes == 0x01504D43 or bytes == 0x02504D43:
 					buff = decompress_rle_tsuyo(in_file.get_buffer(f_offset + f_size))
 				else:
 					buff = decompress_rle(in_file.get_buffer(f_offset + f_size))
@@ -333,6 +331,7 @@ func extractBin() -> void:
 		i += 1
 		
 	print_rich("[color=green]Finished![/color]")
+	
 	
 func decompress_rle(input: PackedByteArray) -> PackedByteArray:
 	var control_byte: int
@@ -580,7 +579,11 @@ func decompress_rle_tsuyo(input: PackedByteArray) -> PackedByteArray:
 			_:
 				push_error("Unknown control byte encountered: 0x%02X" % cb)
 				return output
-
+				
+	if Main.game_type == Main.QUE:
+		# Add TIM2 header
+		var tim2_hex: int = 0x324D4954
+		output.encode_u32(0, tim2_hex)
 	return output
 	
 	
@@ -589,20 +592,17 @@ func _on_file_load_exe_file_selected(path: String) -> void:
 
 
 func _on_load_exe_pressed() -> void:
-	file_load_exe.visible = true
+	file_load_exe.show()
 
 
 func _on_load_bin_pressed() -> void:
-	file_load_bin.visible = true
+	file_load_bin.show()
 
 
 func _on_file_load_bin_file_selected(path: String) -> void:
-	file_load_bin.visible = false
-	file_load_folder.visible = true
-	chose_bin = true
+	file_load_folder.show()
 	selected_bin = path
 
 
 func _on_file_load_folder_dir_selected(dir: String) -> void:
-	chose_folder = true
 	folder_path = dir

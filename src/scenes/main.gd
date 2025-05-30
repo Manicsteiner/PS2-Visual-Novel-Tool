@@ -184,6 +184,7 @@ enum {
 	PRIVATENURSE,
 	PUREPURE,
 	PUREXCURE,
+	QUE,
 	QUILT,
 	#REGISTA, # temp value
 	ROSARIO,
@@ -746,6 +747,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(COLORFULAQUA)
 		game_type = COLORFULAQUA
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
+		sceneChanger(next_scene)
+	elif index == QUE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(QUE)
+		game_type = QUE
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem2.tscn")
 		sceneChanger(next_scene)
 	elif index == KIMIGAARUJI:
@@ -1978,6 +1985,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Private Nurse: Maria", PRIVATENURSE)
 	game_type_selector.add_item("Pure Pure: Mimi to Shippo no Monogatari", PUREPURE)
 	game_type_selector.add_item("Pure x Cure Recovery", PUREXCURE)
+	game_type_selector.add_item("Que: Ancient Leaf no Yousei", QUE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	#game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
