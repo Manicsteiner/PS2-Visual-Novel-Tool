@@ -45,6 +45,10 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Compressed Files (Debug)"
+
 [node name="FILELoadARC" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open File(s)"
@@ -67,5 +71,6 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadARC" to="." method="_on_load_arc_pressed"]
+[connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="files_selected" from="FILELoadARC" to="." method="_on_file_load_arc_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

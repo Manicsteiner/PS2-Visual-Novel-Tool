@@ -29,6 +29,7 @@ enum {
 	CARTAGRA,
 	CASTLEFANTASIA,
 	CHANTER,
+	CHERRYBLOSSOM,
 	CHOCOLAT,
 	CLOVERNOKUNI,
 	CODEGEASS,
@@ -48,11 +49,13 @@ enum {
 	EF,
 	ELYSION,
 	ERDE,
+	ETUDE,
 	FANATIC,
 	FESTAHYPER,
 	FINALA,
 	FINALA2,
 	FINALIST,
+	FORSYMPHONY,
 	FRAGMENTSBLUE,
 	FRIENDS,
 	FUKAKUTEI,
@@ -129,6 +132,7 @@ enum {
 	MAHOUSENSEINEGIMA1,
 	MAHOUSENSEINEGIMA2,
 	MAIHIME,
+	MEDICAL91,
 	MEITANTEIEVA,
 	MEMORIESOFF5EN,
 	MEMORIESOFF5TO,
@@ -1566,10 +1570,34 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = YUKIGATARI
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
+	elif index == CHERRYBLOSSOM:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(CHERRYBLOSSOM)
+		game_type = CHERRYBLOSSOM
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == FORSYMPHONY:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(FORSYMPHONY)
+		game_type = FORSYMPHONY
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == MEDICAL91:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(MEDICAL91)
+		game_type = MEDICAL91
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
 	elif index == HIMEHIBINEW:
-		game_type_sub_text.text = "Supports:\nExtraction\nLSD decompression not implemented yet."
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)\nSome image support."
 		game_type_selector.select(HIMEHIBINEW)
 		game_type = HIMEHIBINEW
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == ETUDE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)\nMost images supported."
+		game_type_selector.select(ETUDE)
+		game_type = ETUDE
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
 	elif index == ASOBINIIKUYO:
@@ -1837,6 +1865,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cartagra: Tamashii no Kunou", CARTAGRA)
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
+	game_type_selector.add_item("Cherry Blossom", CHERRYBLOSSOM)
 	game_type_selector.add_item("Chocolat: Maid Cafe Curio", CHOCOLAT)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
 	game_type_selector.add_item("Code Geass: Hangyaku no Lelouch - Lost Colors", CODEGEASS)
@@ -1856,11 +1885,13 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
 	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)
 	game_type_selector.add_item("Erde: Nezu no Ki no Shita de", ERDE)
+	game_type_selector.add_item("E'tude Prologue: Yureugoku Kokoro no Katachi", ETUDE)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
 	game_type_selector.add_item("Festa!! Hyper Girls Party", FESTAHYPER)
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
 	game_type_selector.add_item("Finalist", FINALIST) #make a AFS file reader
+	game_type_selector.add_item("For Symphony: With All One's Heart", FORSYMPHONY)
 	game_type_selector.add_item("Fragments Blue", FRAGMENTSBLUE)
 	game_type_selector.add_item("Friends: Seishun no Kagayaki", FRIENDS)
 	game_type_selector.add_item("Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File", FUKAKUTEI)
@@ -1937,6 +1968,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mahou Sensei Negima! 1-Jikanme ~Okochama Sensei wa Mahoutsukai!~", MAHOUSENSEINEGIMA1)
 	game_type_selector.add_item("Mahou Sensei Negima! 2-jikanme Tatakau Otome-tachi! Mahora Daiundoukai Special!", MAHOUSENSEINEGIMA2)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Medical 91", MEDICAL91)
 	game_type_selector.add_item("Meitantei Evangelion", MEITANTEIEVA)
 	game_type_selector.add_item("Memories Off 5: Encore", MEMORIESOFF5EN)
 	game_type_selector.add_item("Memories Off 5: Togireta Film", MEMORIESOFF5TO)

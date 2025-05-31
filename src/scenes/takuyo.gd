@@ -5,19 +5,17 @@ extends Control
 
 var folder_path: String
 var selected_files: PackedStringArray
-var chose_file: bool = false
-var chose_folder: bool = false
-
-
+var out_comp: bool = false
+	
+	
 func _process(_delta: float) -> void:
-	if chose_file and chose_folder:
-		extractArc()
+	if selected_files and folder_path:
+		extract_arc()
 		selected_files.clear()
-		chose_file = false
-		chose_folder = false
+		folder_path = ""
 	
 	
-func extractArc() -> void:
+func extract_arc() -> void:
 	var in_file: FileAccess
 	var out_file: FileAccess
 	var buff: PackedByteArray
@@ -31,7 +29,6 @@ func extractArc() -> void:
 	var f_ext: String
 	var ext: String
 	
-	# TODO: .LSD decompression
 	
 	var shift_jis_dic: Dictionary = ComFuncs.make_shift_jis_dic()
 	for file in range(selected_files.size()):
@@ -103,13 +100,22 @@ func extractArc() -> void:
 				in_file.seek(f_offset)
 				buff = in_file.get_buffer(f_size)
 				
-				var bytes: int = buff.decode_u32(0)
-				if bytes == 0x324D4954: # TIM2
+				var buff_str: String = buff.slice(0, 3).get_string_from_ascii()
+				if buff_str == "TIM": # TIM2
 					f_name += ".TM2"
-				elif bytes == 0x20524353: # SCRx20
+				elif buff_str == "SCR": # SCRx20
 					f_name += ".SCR"
-				elif bytes == 0x1A44534C: # LSDx1A
+				elif buff_str == "LSD": # LSDx1A
 					f_name += ".LSD"
+					if out_comp:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+					buff = decompress_lsd(buff)
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						f_name += ".TM2"
+					else:
+						f_name += ".BIN"
 				else:
 					f_name += ".BIN"
 					
@@ -125,16 +131,204 @@ func extractArc() -> void:
 	print_rich("[color=green]Finished![/color]")
 
 
+func decompress_lsd(data: PackedByteArray) -> PackedByteArray:
+	var input_len: int = data.size()
+	if input_len < 8:
+		push_error("Input buffer too small to contain header.")
+		return PackedByteArray()
+
+	var uncompressed_size: int = data.decode_u32(6)
+	
+	var code = data[5]  # one of 0x57('W'), 0x48('H'), 0x52('R'), 0x44('D')
+	var decompressed: PackedByteArray = []
+	match code:
+		0x57:  # 'W'
+			# MIPS did: jal 0x0016aad0 with (a0=input+8, a1=output, a2=s0)
+			push_error("TODO: 0x57. What game uses this?")
+			return PackedByteArray()
+
+		0x48:  # 'H'
+			# MIPS did: jal 0x00169eb0 with (a0=input+8, a1=output, a2=s0)
+			push_error("TODO: 0x48")
+			return PackedByteArray()
+
+		0x52:  # 'R'
+			# MIPS did: jal 0x0016a520 with (a0=input+8, a1=output)
+			decompressed = _decompress_R(data, PackedByteArray(), uncompressed_size)
+
+		0x44:  # 'D'
+			# MIPS did: jal 0x0016a840 with (a0=input+8, a1=output, a2=s0)
+			push_error("TODO: 0x44. What game uses this?")
+			return PackedByteArray()
+
+		_:  # anything else → fail
+			push_error("Unknown compression code: 0x%02X" % code)
+			return PackedByteArray()
+			
+	return decompressed
+	
+	
+func _decompress_R(input_buf: PackedByteArray, output_buf: PackedByteArray, required_size) -> PackedByteArray:
+	var in_len = input_buf.size()
+	var in_i = 12
+	var out_i = 0
+	
+	output_buf.resize(required_size)
+	
+	while true:
+		if in_i >= in_len:
+			push_error("R‐decompress ran past end of input.")
+			return PackedByteArray()
+
+		var ctrl_byte = input_buf[in_i]
+		
+		var top_two = ctrl_byte & 0xC0
+		var key = 0
+		if top_two == 0xC0:
+			key = ctrl_byte & 0xF0
+		else:
+			key = top_two
+		
+		match key:
+			0xF0:
+				return output_buf
+			0xC0:
+				if in_i + 1 >= in_len:
+					push_error("R‐decompress: truncated extended‐copy length.")
+					return PackedByteArray()
+				var length_high = (ctrl_byte & 0x0F) << 8
+				var length_low = input_buf[in_i + 1]
+				var length = length_high + length_low
+				
+				var src_start = in_i + 2
+				var src_end = src_start + length
+				if src_end > in_len:
+					push_error("R‐decompress: extended‐copy runs past input buffer.")
+					return PackedByteArray()
+				var dst_start = out_i
+				var dst_end = dst_start + length
+				if dst_end > required_size:
+					push_error("R‐decompress: 0xC0 runs past output")
+					break
+				
+				#for k in range(length):
+					#output_buf[dst_start + k] = input_buf[src_start + k]
+				for k in range(length):
+					output_buf[dst_start + k] = 0
+				
+				out_i += length
+				in_i += 2
+				continue
+			0x00:
+				var run_len = ctrl_byte & 0x3F
+				if run_len > 0:
+					var dst_start0 = out_i
+					var dst_end0 = out_i + run_len
+					if dst_end0 > required_size:
+						push_error("R‐decompress: 0x00 runs past output")
+						break
+					for k in range(run_len):
+						output_buf[dst_start0 + k] = 0
+					out_i += run_len
+				in_i += 1
+				continue
+			0xE0:
+				if in_i + 2 >= in_len:
+					push_error("R‐decompress: truncated 0xE0 length_low.")
+					return PackedByteArray()
+
+				var high_nibble = (ctrl_byte & 0x0F) << 8
+				var length_low  = input_buf[in_i + 1]
+				var length      = high_nibble + length_low
+
+				var fill_value  = input_buf[in_i + 2]
+
+				if out_i + length > required_size:
+					push_error("R‐decompress: 0xE0 runs past output")
+					break
+				for k in range(length):
+					output_buf[out_i + k] = fill_value
+
+				out_i += length
+				in_i  +=  3
+				continue
+			0x80:
+				var run_len = ctrl_byte & 0x3F
+				if run_len > 0:
+					if in_i + 1 >= in_len:
+						push_error("R‐decompress: truncated 0x80 fill‐value.")
+						return PackedByteArray()
+
+					var fill_value = input_buf[in_i + 1]
+					if out_i + run_len > required_size:
+						push_error("R‐decompress: 0x80 runs past output")
+						break
+					for k in range(run_len):
+						output_buf[out_i + k] = fill_value
+
+					out_i += run_len
+					in_i  += 2 
+				else:
+					in_i += 2
+				continue
+			0x40:
+				var long_len = ctrl_byte & 0x3F
+				var src4 = in_i + 1
+				var src4_end = src4 + long_len
+				if src4_end > in_len:
+					push_error("R‐decompress: truncated long copy.")
+					return PackedByteArray()
+				var dst4 = out_i
+				var dst4_end = dst4 + long_len
+				if dst4_end > required_size:
+					push_error("R‐decompress: 0x40 runs past output")
+					break
+				
+				for k in range(long_len):
+					output_buf[dst4 + k] = input_buf[src4 + k]
+				
+				out_i += long_len
+				in_i = in_i + long_len + 1
+				continue
+			0xD0:
+				if in_i + 2 >= in_len:
+					push_error("R‐decompress: truncated 0xD0 parameters.") 
+					return PackedByteArray()
+				var length_high2 = (ctrl_byte & 0x0F) << 8
+				var length_low2  = input_buf[in_i + 1]
+				var length2      = length_high2 + length_low2
+
+				var dst_start: int = in_i + 2
+
+				if dst_start + length2 >= in_len:
+					push_error("R-decompress: 0xD0 copy runs past input.")
+					break
+				for k in range(length2):
+					output_buf[out_i + k] = input_buf[dst_start + k]
+
+				out_i += length2
+				in_i += length2 + 2
+				continue
+			_:
+				push_error("R‐decompress: invalid control code 0x%02X at input[%d]" % [ctrl_byte, in_i])
+				return PackedByteArray()
+				
+	push_error("Prematurely broke loop in _decompress_R")
+	return output_buf
+	
+	
 func _on_load_arc_pressed() -> void:
 	file_load_arc.show()
 
 
 func _on_file_load_arc_files_selected(paths: PackedStringArray) -> void:
 	selected_files = paths
-	chose_file = true
 	file_load_folder.show()
 
 
 func _on_file_load_folder_dir_selected(dir: String) -> void:
 	folder_path = dir
-	chose_folder = true
+
+
+func _on_output_debug_toggled(_toggled_on: bool) -> void:
+	out_comp = !out_comp
