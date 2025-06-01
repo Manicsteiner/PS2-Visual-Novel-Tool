@@ -76,6 +76,7 @@ enum {
 	GINNOECLIPSE, 
 	GIRLSBRAVO,
 	GUISARD,
+	GUARDIANANGEL,
 	HAKARENA,
 	HAKUSHAKU,
 	HAMETSU,
@@ -1735,6 +1736,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SHAKUGAN
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
+	elif index == GUARDIANANGEL:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports most images."
+		game_type_selector.select(GUARDIANANGEL)
+		game_type = GUARDIANANGEL
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
 	elif index == FUTAKOIALT:
 		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports most images."
 		game_type_selector.select(FUTAKOIALT)
@@ -1933,6 +1940,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Girls Bravo: Romance 15's", GIRLSBRAVO)
 	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
+	game_type_selector.add_item("Guardian Angel", GUARDIANANGEL)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
 	game_type_selector.add_item("Hametsu no Mars", HAMETSU)

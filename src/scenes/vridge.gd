@@ -50,8 +50,14 @@ func convert_obj() -> void:
 			palette = ComFuncs.unswizzle_palette(in_file.get_buffer(0x400), 32)
 		if Main.game_type == Main.SHAKUGAN or Main.game_type == Main.NOGIZAKA:
 			sections_off = 0x1800
-		elif Main.game_type == Main.SHINE:
+		elif Main.game_type == Main.SHINE or Main.game_type == Main.GUARDIANANGEL:
 			sections_off = 0
+			if Main.game_type == Main.GUARDIANANGEL and f_name.begins_with("BU_"):
+				sections_off = 0x400
+				in_file.seek(0)
+				palette = ComFuncs.unswizzle_palette(in_file.get_buffer(0x400), 32)
+			elif Main.game_type == Main.GUARDIANANGEL and !f_name.begins_with("BU_"):
+				palette.clear()
 		
 		in_file.seek(sections_off)
 		num_sections = in_file.get_32()
@@ -88,6 +94,9 @@ func convert_obj() -> void:
 		if Main.game_type == Main.SHUFFLE and f_name.begins_with("SG"):
 			w = 512
 			h = 448
+		elif Main.game_type == Main.GUARDIANANGEL and f_name.begins_with("BU_"):
+			w = 512
+			h = 512
 			
 		in_file.seek(0x400)
 		if in_file.get_buffer(3).get_string_from_ascii() == "MAP":
@@ -108,7 +117,7 @@ func convert_obj() -> void:
 					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
 			f_name += ".PNG"
 			image.save_png(folder_path + "/%s" % f_name)
-		elif Main.game_type == Main.SHINE:
+		elif Main.game_type == Main.SHINE or Main.game_type == Main.GUARDIANANGEL:
 			var image: Image = ComFuncs.convert_rgb555_to_image(img_dat, w, h, true)
 			f_name += ".PNG"
 			image.save_png(folder_path + "/%s" % f_name)
