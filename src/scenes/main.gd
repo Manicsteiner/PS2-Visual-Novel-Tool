@@ -118,6 +118,7 @@ enum {
 	KOISURU,
 	KOKORONOTOBIRA, 
 	KONOAOZORA,
+	LITTLEAID,
 	LITTLEBUSTERS,
 	LNOKISETSU,
 	LOSTAYA,
@@ -177,6 +178,7 @@ enum {
 	PIAGO,
 	PIZZICATOPOLKA,
 	PLANETARIAN,
+	PLUSPLUM2,
 	PPOI,
 	PRINCESSCONCERTO,
 	PRINCESSHOLIDAY,
@@ -240,6 +242,7 @@ enum {
 	TOGAINU,
 	TOHEART,
 	TOHEART2,
+	TORIKAGO,
 	TRIGGERHEART,
 	TROUBLEFORTUNE,
 	TRUELOVESTORY3,
@@ -1558,6 +1561,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SWEETSEASON
 		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
 		sceneChanger(next_scene)
+	elif index == TORIKAGO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(TORIKAGO)
+		game_type = TORIKAGO
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == LITTLEAID:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(LITTLEAID)
+		game_type = LITTLEAID
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
+	elif index == PLUSPLUM2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(PLUSPLUM2)
+		game_type = PLUSPLUM2
+		var next_scene: PackedScene = load("res://src/scenes/Takuyo.tscn")
+		sceneChanger(next_scene)
 	elif index == HOSHIGARI:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
 		game_type_selector.select(HOSHIGARI)
@@ -1954,6 +1975,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
+	game_type_selector.add_item("Little Aid", LITTLEAID)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
 	game_type_selector.add_item("Lost Aya Sophia", LOSTAYA)
@@ -2013,6 +2035,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pia Carrot he Youkoso!! G.O. Summer Fair", PIAGO)
 	game_type_selector.add_item("Pizzicato Polka: Suisei Genya", PIZZICATOPOLKA)
 	game_type_selector.add_item("Planetarian: Chiisana Hoshi no Yume", PLANETARIAN)
+	game_type_selector.add_item("Plus Plum 2 Again", PLUSPLUM2)
 	game_type_selector.add_item("Ppoi! Hito Natsu no Keiken!", PPOI)
 	game_type_selector.add_item("Princess Concerto", PRINCESSCONCERTO)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
@@ -2076,6 +2099,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
 	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("To Heart 2", TOHEART2)
+	game_type_selector.add_item("Torikago no Mukougawa", TORIKAGO)
 	game_type_selector.add_item("Triggerheart Exelica Enhanced", TRIGGERHEART)
 	game_type_selector.add_item("Trouble Fortune Company:  Happy Cure", TROUBLEFORTUNE)
 	game_type_selector.add_item("True Love Story 3", TRUELOVESTORY3)
