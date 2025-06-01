@@ -75,8 +75,8 @@ enum {
 	GIFTPRISIM,
 	GINNOECLIPSE, 
 	GIRLSBRAVO,
-	GUISARD,
 	GUARDIANANGEL,
+	GUISARD,
 	HAKARENA,
 	HAKUSHAKU,
 	HAMETSU,
@@ -220,6 +220,8 @@ enum {
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
 	SORAIROFUUKIN,
+	SOSHITEKONO,
+	SOSHITEKONOXXX,
 	SOTSUGYOU,
 	SOULLINK,
 	STARTRAIN,
@@ -1131,19 +1133,31 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == HURRAH:
-		game_type_sub_text.text = "Supports 'Hurrah! Sailor'."
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(HURRAH)
 		game_type = HURRAH
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
+	elif index == SOSHITEKONO:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(SOSHITEKONO)
+		game_type = SOSHITEKONO
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
+	elif index == SOSHITEKONOXXX:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(SOSHITEKONOXXX)
+		game_type = SOSHITEKONOXXX
+		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
+		sceneChanger(next_scene)
 	elif index == DOUBLEREACTION:
-		game_type_sub_text.text = "Supports 'Double Reaction! Plus'."
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(DOUBLEREACTION)
 		game_type = DOUBLEREACTION
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
 		sceneChanger(next_scene)
 	elif index == PRIVATENURSE:
-		game_type_sub_text.text = "Supports 'Private Nurse: Maria'."
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(PRIVATENURSE)
 		game_type = PRIVATENURSE
 		var next_scene: PackedScene = load("res://src/scenes/DatamPolystar.tscn")
@@ -1939,8 +1953,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Girls Bravo: Romance 15's", GIRLSBRAVO)
-	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Guardian Angel", GUARDIANANGEL)
+	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
 	game_type_selector.add_item("Hakushaku to Yousei: Yume to Kizuna ni Omoi Hasete", HAKUSHAKU)
 	game_type_selector.add_item("Hametsu no Mars", HAMETSU)
@@ -2084,6 +2098,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
 	game_type_selector.add_item("Sorairo no Fuukin Remix", SORAIROFUUKIN)
+	game_type_selector.add_item("Soshite Kono Sora ni Kirameku Kimi no Uta", SOSHITEKONO)
+	game_type_selector.add_item("Soshite Kono Sora ni Kirameku Kimi no Uta XXX", SOSHITEKONOXXX)
 	game_type_selector.add_item("Sotsugyou 2nd Generation", SOTSUGYOU)
 	game_type_selector.add_item("Soul Link Extension", SOULLINK)
 	game_type_selector.add_item("StarTRain: Your Past Makes Your Future", STARTRAIN)

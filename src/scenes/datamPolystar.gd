@@ -36,7 +36,11 @@ func convertImages() -> void:
 			height = buff.decode_u16(0x0C)
 			bpp = 32
 			
-			if (Main.game_type == Main.NORTHWIND or Main.game_type == Main.PUREPURE or Main.game_type == Main.DOUBLEREACTION) and f_ext == "ps2":
+			if (Main.game_type == Main.NORTHWIND or 
+			Main.game_type == Main.PUREPURE or 
+			Main.game_type == Main.DOUBLEREACTION or
+			Main.game_type == Main.SOSHITEKONO or 
+			Main.game_type == Main.SOSHITEKONOXXX) and f_ext == "ps2":
 				var file_type: int = buff.decode_u32(0x10)
 				buff = buff.slice(0x20)
 				
@@ -89,7 +93,8 @@ func make_img(buff: PackedByteArray, width: int, height: int, bpp: int) -> Image
 		buff = buff.slice(0, width * height * 4)
 		png = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
 	else:
-		print("Unsupported BPP %02d!" % bpp)
+		push_error("Unsupported BPP %02d!" % bpp)
+		return Image.create_empty(1, 1, false, Image.FORMAT_L8)
 		
 	if remove_alpha:
 		png.convert(Image.FORMAT_RGB8)
