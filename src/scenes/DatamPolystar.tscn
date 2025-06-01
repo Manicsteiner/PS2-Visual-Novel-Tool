@@ -48,6 +48,7 @@ grow_vertical = 2
 
 [node name="removeAlphaButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
+button_pressed = true
 text = "Remove Alpha Channel in Images"
 
 [node name="FILELoadIMAGE" type="FileDialog" parent="."]

@@ -3,19 +3,16 @@ extends Control
 @onready var file_load_image: FileDialog = $FILELoadIMAGE
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
 
-var folder_path:String
+var folder_path: String
 var selected_files: PackedStringArray
-var chose_files: bool = false
-var chose_folder: bool = false
-var remove_alpha: bool = false
+var remove_alpha: bool = true
 
 
 func _process(_delta: float) -> void:
-	if chose_files and chose_folder:
+	if selected_files and folder_path:
 		convertImages()
 		selected_files.clear()
-		chose_files = false
-		chose_folder = false
+		folder_path = ""
 		
 
 func convertImages() -> void:
@@ -23,9 +20,6 @@ func convertImages() -> void:
 	var out_file: FileAccess
 	var buff: PackedByteArray
 	var f_name: String
-	var tga_header: PackedByteArray
-	var swap: PackedByteArray
-	var f_size: int
 	var f_ext: String
 	var width: int
 	var height: int
@@ -37,128 +31,81 @@ func convertImages() -> void:
 		f_ext = selected_files[i].get_extension()
 		
 		buff = in_file.get_buffer(in_file.get_length())
-		var bytes: int = buff.decode_u64(0)
-		if bytes == 0x5D326567616D695B: # [image2]
+		if buff.slice(0, 8).get_string_from_ascii() == "[image2]":
 			width = buff.decode_u16(0x08)
-			height = buff.decode_u16(0x0C) - 1 #???
-			var has_pal: bool = false
-			var img_type: int = 2
-			var file_type: int 
-			var bits_per_color: int = 32
+			height = buff.decode_u16(0x0C)
 			bpp = 32
 			
 			if (Main.game_type == Main.NORTHWIND or Main.game_type == Main.PUREPURE or Main.game_type == Main.DOUBLEREACTION) and f_ext == "ps2":
-				file_type = buff.decode_u32(0x10)
+				var file_type: int = buff.decode_u32(0x10)
 				buff = buff.slice(0x20)
 				
 				if file_type == 3:
 					bpp = 16
-					buff = ComFuncs.convert_palette16_bgr_to_rgb(buff)
-					tga_header = ComFuncs.makeTGAHeader(has_pal, img_type, bits_per_color, bpp, width, height)
-					tga_header.append_array(buff)
-					
-					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-					out_file.store_buffer(tga_header)
-					out_file.close()
-					
-					print("0x%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
-					buff.clear()
-					tga_header.clear()
-					continue
 				elif file_type == 2:
 					bpp = 8
-					has_pal = true
-					img_type = 1
-					
-					var pal: PackedByteArray = buff.slice(0, 0x400)
-					buff = buff.slice(0x400)
-					
-					tga_header = ComFuncs.makeTGAHeader(has_pal, img_type, bits_per_color, bpp, width, height)
-					tga_header.append_array(pal)
-					tga_header.append_array(buff)
-					
-					out_file = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-					out_file.store_buffer(tga_header)
-					out_file.close()
-					
-					print("0x%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
-					buff.clear()
-					tga_header.clear()
-					continue
 			else:
 				buff = buff.slice(0x10)
 				
-			#buff = ComFuncs.rgba_to_bgra(buff)
-			if remove_alpha:
-				for a in range(0, buff.size(), 4):
-					buff.encode_u8(a + 3, 0xFF)
-					
-			var png: Image = Image.create_from_data(width, height + 1, false, Image.FORMAT_RGBA8, buff)
+			var png: Image = make_img(buff, width, height, bpp)
 			png.save_png(folder_path + "/%s" % f_name + ".PNG")
 			
-			print("0x%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
-			
-			buff.clear()
-			#tga_header = ComFuncs.makeTGAHeader(has_pal, img_type, bits_per_color, bpp, width, height)
-			#tga_header.append_array(buff)
-			#
-			#out_file = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-			#out_file.store_buffer(tga_header)
-			#out_file.close()
-			#
-			#print("0x%08X %s/%s" % [buff.size(), folder_path, f_name])
-			#buff.clear()
-			#tga_header.clear()
+			print("%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
 		elif f_ext == "psi" or f_ext == "p16":
 			width = buff.decode_u16(0)
 			height = buff.decode_u16(2)
 			bpp = buff.decode_u16(4)
 			
 			buff = buff.slice(0x800)
-			if bpp == 16:
-				buff = ComFuncs.convert_palette16_bgr_to_rgb(buff)
-			elif bpp == 32:
-				buff = ComFuncs.rgba_to_bgra(buff)
-				
-				if remove_alpha:
-					for a in range(0, buff.size(), 4):
-						buff.encode_u8(a + 3, 0xFF)
-			else:
-				print("Unsupported BPP %02d in %s!" % [bpp, f_name])
-				buff.clear()
-				continue
-				
-			tga_header = ComFuncs.makeTGAHeader(false, 2, bpp, bpp, width, height)
-			tga_header.append_array(buff)
+			var png: Image = make_img(buff, width, height, bpp)
+			png.save_png(folder_path + "/%s" % f_name + ".PNG")
 			
-			out_file = FileAccess.open(folder_path + "/%s" % f_name + ".TGA", FileAccess.WRITE)
-			out_file.store_buffer(tga_header)
-			out_file.close()
-			
-			print("0x%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
-			buff.clear()
-			tga_header.clear()
+			print("%08X %02d %s/%s" % [buff.size(), bpp, folder_path, f_name])
 		else:
 			print("Invalid header in %s. Expected '[image2]'" % f_name)
-			buff.clear()
 			continue
 		
 	print_rich("[color=green]Finished![/color]")
 
 
+func make_img(buff: PackedByteArray, width: int, height: int, bpp: int) -> Image:
+	var png: Image
+	if bpp == 8:
+		png = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+		var pal: PackedByteArray = buff.slice(0, 0x400)
+		var img_dat: PackedByteArray = buff.slice(0x400)
+		for y in range(height):
+			for x in range(width):
+				var pixel_index: int = img_dat[x + y * width]
+				var r: int = pal[pixel_index * 4 + 0]
+				var g: int = pal[pixel_index * 4 + 1]
+				var b: int = pal[pixel_index * 4 + 2]
+				var a: int = pal[pixel_index * 4 + 3]
+				png.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+	elif bpp == 16:
+		buff = buff.slice(0, width * height * 2)
+		png = ComFuncs.convert_rgb555_to_image(buff, width, height, true)
+	elif bpp == 32:
+		buff = buff.slice(0, width * height * 4)
+		png = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
+	else:
+		print("Unsupported BPP %02d!" % bpp)
+		
+	if remove_alpha:
+		png.convert(Image.FORMAT_RGB8)
+	return png
+	
+	
 func _on_load_image_pressed() -> void:
 	file_load_image.visible = true
 
 
 func _on_file_load_image_files_selected(paths: PackedStringArray) -> void:
-	file_load_image.visible = false
-	file_load_folder.visible = true
 	selected_files = paths
-	chose_files = true
+	file_load_folder.show()
 
 
 func _on_file_load_folder_dir_selected(dir: String) -> void:
-	chose_folder = true
 	folder_path = dir
 
 
