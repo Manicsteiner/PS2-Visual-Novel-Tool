@@ -234,16 +234,15 @@ func convert_imgs() -> void:
 			var is_std: bool = false
 			if hdr == "IMG" or hdr == "STD" or "1" or "2":
 				if hdr == "STD":
-					is_std = true # For character images
+					is_std = true # For character images, though likely not needed
 				in_file.seek(0)
 				var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
 				var num_files: int = buff.decode_u32(4)
-				if num_files > 2:
-					print_rich("[color=yellow]There is an extra file in image %s" % f_name)
+				#if num_files > 2:
+					#print_rich("[color=yellow]There are extra files in image %s" % f_name)
 					
 				var img_tex_off: int = buff.decode_u32(8)
 				var str_size: int = buff.decode_u32(0x10)
-				var tbl_start: int = buff.decode_u32(0x24)
 				var img_str: String = buff.slice(img_tex_off + 4, img_tex_off + 4 + str_size - 4).get_string_from_ascii()
 				if buff.decode_u8(img_tex_off + 3) == 0xD:
 					str_size -= 2
@@ -257,59 +256,71 @@ func convert_imgs() -> void:
 				var f_h: int = img_str.substr(width_end, height_end - width_end).to_int()
 				if height_end == -1:
 					f_h = img_str.substr(width_end).to_int()
-				var img_arr: Array[Image]
 				
-				buff = buff.slice(tbl_start)
-				var num_imgs: int = buff.decode_u32(4)
-				var pos: int = 0x1C
-				if num_imgs > 1:
-					var temp_w1: int = buff.decode_u32(pos + 4)
-					var temp_h1: int = buff.decode_u32(pos + 8)
-					var temp_w2: int = buff.decode_u32(pos + 0x24)
-					var temp_h2: int = buff.decode_u32(pos + 0x28)
-					if temp_h1 != temp_h2 or temp_w1 != temp_w2:
-						is_std = true
-				var img_format: int
-				for i in range(num_imgs):
-					img_format = buff.decode_u32(pos)
-					var w: int = buff.decode_u32(pos + 4)
-					var h: int = buff.decode_u32(pos + 8)
-					var pal_off: int =  buff.decode_u32(pos + 12)
-					var img_off: int =  buff.decode_u32(pos + 16)
-					var unk: int = buff.decode_u32(pos + 0x1C)
-					
-					var img_size: int = w * h
-					var pal_size: int = 0x400
-					var pal: PackedByteArray
-					if img_format == 0x13: # 8 bit
-						pal = ComFuncs.unswizzle_palette(buff.slice(pal_off, pal_off + pal_size), 32)
-					elif img_format == 0x14: # 4 bit
-						pal_size = 0x40
-						pal = buff.slice(pal_off, pal_off + pal_size)
-					
-					var img_buff: PackedByteArray = buff.slice(img_off, img_off + img_size)
-					var png: Image = make_img2(img_buff, pal, is_std, i, w, h, img_format)
-					if tile_output:
-						png.save_png(folder_path + "/%s" % f_name + "_%03d.PNG" % i)
-					if is_std and i == 0:
-						png.save_png(folder_path + "/%s" % f_name + "_mask.PNG")
-						pos += 0x20
+				var mf_pos: int = 0x20
+				for hdr_i in range(num_files - 1):
+					var tbl_start: int = buff.decode_u32(mf_pos + 4)
+					if tbl_start == 0:
+						mf_pos += 0x10
 						continue
-					img_arr.append(png)
-					pos += 0x20
-					
-				if is_std:
-					print("0x%02X %02d %d x %d %s" % [img_format, num_imgs - 1, f_w, f_h, folder_path + "/%s" % f_name + ".PNG"])
-				else:
-					print("0x%02X %02d %d x %d %s" % [img_format, num_imgs, f_w, f_h, folder_path + "/%s" % f_name + ".PNG"])
-					
-				var png: Image
-				if num_imgs > 2:
-					png = tile_images_by_batch(img_arr, f_w, f_h, is_std)
-				else:
-					png = img_arr[0]
-					
-				png.save_png(folder_path + "/%s" % f_name + ".PNG")
+						
+					var img_arr: Array[Image]
+					var pos: int = 0x1C
+					var hdr_buff: PackedByteArray = buff.slice(tbl_start)
+					var num_imgs: int = hdr_buff.decode_u32(4)
+					if num_imgs > 800:
+						print_rich("[color=yellow]Palette data(?) found in %s/%s_%03d with no image data, skipping." % [folder_path, f_name, hdr_i])
+						mf_pos += 0x10
+						continue
+					elif num_imgs > 1:
+						var temp_w1: int = hdr_buff.decode_u32(pos + 4)
+						var temp_h1: int = hdr_buff.decode_u32(pos + 8)
+						var temp_w2: int = hdr_buff.decode_u32(pos + 0x24)
+						var temp_h2: int = hdr_buff.decode_u32(pos + 0x28)
+						if temp_h1 != temp_h2 or temp_w1 != temp_w2:
+							is_std = true
+					var img_format: int
+					for img_i in range(num_imgs):
+						img_format = hdr_buff.decode_u32(pos)
+						var w: int = hdr_buff.decode_u32(pos + 4)
+						var h: int = hdr_buff.decode_u32(pos + 8)
+						var pal_off: int =  hdr_buff.decode_u32(pos + 12)
+						var img_off: int =  hdr_buff.decode_u32(pos + 16)
+						var unk: int = hdr_buff.decode_u32(pos + 0x1C)
+						
+						var img_size: int = w * h
+						var pal_size: int = 0x400
+						var pal: PackedByteArray
+						if img_format == 0x13: # 8 bit
+							pal = ComFuncs.unswizzle_palette(hdr_buff.slice(pal_off, pal_off + pal_size), 32)
+						elif img_format == 0x14: # 4 bit
+							pal_size = 0x40
+							pal = hdr_buff.slice(pal_off, pal_off + pal_size)
+						
+						var img_buff: PackedByteArray = hdr_buff.slice(img_off, img_off + img_size)
+						var png: Image = make_img2(img_buff, pal, is_std, img_i, w, h, img_format)
+						if tile_output:
+							png.save_png(folder_path + "/%s" % f_name + "_%03d_%03d.PNG" % [hdr_i, img_i])
+						if is_std and img_i == 0:
+							png.save_png(folder_path + "/%s" % f_name + "_%03d_mask.PNG" % hdr_i)
+							pos += 0x20
+							continue
+						img_arr.append(png)
+						pos += 0x20
+						
+					if is_std:
+						print("0x%02X %02d %d x %d %s" % [img_format, num_imgs - 1, f_w, f_h, folder_path + "/%s" % f_name + "_%03d.PNG" % hdr_i])
+					else:
+						print("0x%02X %02d %d x %d %s" % [img_format, num_imgs, f_w, f_h, folder_path + "/%s" % f_name + "_%03d.PNG" % hdr_i])
+						
+					var png: Image
+					if num_imgs > 2:
+						png = tile_images_by_batch(img_arr, f_w, f_h, is_std)
+					else:
+						png = img_arr[0]
+						
+					png.save_png(folder_path + "/%s" % f_name + "_%03d.PNG" % hdr_i)
+					mf_pos += 0x10
 			else:
 				print_rich("[color=red]%s is not a valid image!" % f_name)
 		else:
@@ -570,6 +581,44 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	if n >= 200: # I don't know what these games are doing
 		cols = final_width / tile_w
 		rows = final_height / tile_h
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 190:
+		cols = final_width / tile_w
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 180:
+		cols = grid.y
+		rows = grid.x
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 170:
+		cols = final_width / tile_w
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 168:
+		cols = final_width / tile_w + 1
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 160:
+		cols = final_width / tile_w
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 158:
+		cols = final_width / tile_w + 1
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 150:
+		cols = grid.x
+		rows = grid.y
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 140:
+		cols = grid.x
+		rows = grid.y
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 130:
+		cols = final_width / tile_w + 1
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 120:
+		cols = grid.x
+		rows = grid.y
+		#cols = final_width / tile_w
+		#rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 110:
+		cols = final_width / tile_w + 1
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n >= 90:
+		cols = grid.y
+		rows = grid.x
 	elif n >= 90:
 		cols = grid.x
 		rows = grid.y
@@ -582,8 +631,15 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	elif n == 36:
 		cols = final_width / tile_w + 1
 		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.HARUNOASHIOTO and n <= 18:
+		cols = grid.y
+		rows = grid.x
 	elif n in range(4, 9):
-		if cols - 1 != 0:
+		if Main.game_type == Main.HARUNOASHIOTO:
+			cols = grid.y
+			rows = grid.x
+			pass
+		elif cols - 1 != 0:
 			cols -= 1
 		rows = int(ceili(n / float(cols)))
 
