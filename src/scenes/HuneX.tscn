@@ -37,6 +37,15 @@ layout_mode = 2
 text = "Extract CD.BIN
 "
 
+[node name="LoadDatabin" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract DATA.BIN / .MF Files"
+
+[node name="LoadImage" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Convert Image From .MF File
+"
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -44,16 +53,30 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -145.5
-offset_top = 44.0
-offset_right = 160.5
-offset_bottom = 145.0
+offset_left = -156.0
+offset_top = 27.0
+offset_right = 171.0
+offset_bottom = 163.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 0
 
 [node name="DebugOutput" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 text = "Output Decompressed Images (Debug)"
+
+[node name="TiledOutput" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Export Tiled Images"
+
+[node name="RemoveAlpha1" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Remove Alpha Channel"
+
+[node name="RemoveAlpha2" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Keep Alpha in Character Images"
 
 [node name="LoadBIN" type="FileDialog" parent="."]
 title = "Open a File"
@@ -63,6 +86,28 @@ ok_button_text = "Open"
 file_mode = 0
 access = 2
 filters = PackedStringArray("CD.BIN")
+use_native_dialog = true
+
+[node name="LoadDATABIN" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.BIN, *.MF")
+use_native_dialog = true
+
+[node name="LoadIMAGE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.MF")
 use_native_dialog = true
 
 [node name="LoadExe" type="FileDialog" parent="."]
@@ -86,7 +131,14 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadExe" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadCdBinFile" to="." method="_on_load_cd_bin_file_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadDatabin" to="." method="_on_load_databin_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadImage" to="." method="_on_load_image_pressed"]
 [connection signal="pressed" from="VBoxContainer/DebugOutput" to="." method="_on_debug_output_pressed"]
+[connection signal="toggled" from="VBoxContainer/TiledOutput" to="." method="_on_tiled_output_toggled"]
+[connection signal="toggled" from="VBoxContainer/RemoveAlpha1" to="." method="_on_remove_alpha_1_toggled"]
+[connection signal="toggled" from="VBoxContainer/RemoveAlpha2" to="." method="_on_remove_alpha_2_toggled"]
 [connection signal="file_selected" from="LoadBIN" to="." method="_on_load_bin_file_selected"]
+[connection signal="file_selected" from="LoadDATABIN" to="." method="_on_load_bin_2_file_selected"]
+[connection signal="files_selected" from="LoadIMAGE" to="." method="_on_load_image_files_selected"]
 [connection signal="file_selected" from="LoadExe" to="." method="_on_load_exe_file_selected"]
 [connection signal="dir_selected" from="LoadFOLDER" to="." method="_on_load_folder_dir_selected"]

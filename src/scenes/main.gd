@@ -51,6 +51,7 @@ enum {
 	ERDE,
 	ETUDE,
 	FANATIC,
+	FATESTAY,
 	FESTAHYPER,
 	FINALA,
 	FINALA2,
@@ -83,6 +84,7 @@ enum {
 	HAPPYBREED,
 	HAPPYDELUCKS,
 	HARUKAZEPS,
+	HARUNOASHIOTO,
 	HEARTNOKUNI,
 	HIGURASHI,
 	HIGURASHIKAKERA,
@@ -194,6 +196,7 @@ enum {
 	PUREXCURE,
 	QUE,
 	QUILT,
+	RAMUNE,
 	#REGISTA, # temp value
 	ROSARIO,
 	ROUTESPE,
@@ -289,8 +292,8 @@ func _process(_delta: float) -> void:
 	var MEM: float = Performance.get_monitor(Performance.MEMORY_STATIC)
 	var MEM2: float = Performance.get_monitor(Performance.MEMORY_STATIC_MAX)
 	memory_usage.text = str("%.3f MB / %.3f MB" % [MEM * 0.000001, MEM2 * 0.000001])
-
-
+	
+	
 func _on_game_type_selector_item_selected(index: int) -> void:
 	if index == THREELDK:
 		game_type_sub_text.text = "Supports '3LDK - Shiawase ni Narouyo'."
@@ -1486,6 +1489,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SOULLINK
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == RAMUNE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(RAMUNE)
+		game_type = RAMUNE
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == FATESTAY:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(FATESTAY)
+		game_type = FATESTAY
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == HARUNOASHIOTO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(HARUNOASHIOTO)
+		game_type = HARUNOASHIOTO
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -1929,6 +1950,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Erde: Nezu no Ki no Shita de", ERDE)
 	game_type_selector.add_item("E'tude Prologue: Yureugoku Kokoro no Katachi", ETUDE)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
+	game_type_selector.add_item("Fate-stay night: Realta Nua", FATESTAY)
 	game_type_selector.add_item("Festa!! Hyper Girls Party", FESTAHYPER)
 	game_type_selector.add_item("Final Approach", FINALA)
 	game_type_selector.add_item("Final Approach 2: 1st Priority", FINALA2)
@@ -1961,6 +1983,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Happy Breeding: Cheerful Party", HAPPYBREED)
 	game_type_selector.add_item("Happiness! De-Lucks", HAPPYDELUCKS)
 	game_type_selector.add_item("Harukaze P.S: Plus Situation", HARUKAZEPS)
+	game_type_selector.add_item("Haru no Ashioto: Step of Spring", HARUNOASHIOTO)
 	game_type_selector.add_item("Heart no Kuni no Alice: Wonderful Wonder World", HEARTNOKUNI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri", HIGURASHI)
 	game_type_selector.add_item("Higurashi no Naku Koro ni Matsuri: Kakera Asobi", HIGURASHIKAKERA)
@@ -2072,6 +2095,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Pure x Cure Recovery", PUREXCURE)
 	game_type_selector.add_item("Que: Ancient Leaf no Yousei", QUE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
+	game_type_selector.add_item("Ramune: Garasu-bin ni Utsuru Umi", RAMUNE)
 	#game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
 	game_type_selector.add_item("Routes PE", ROUTESPE)
