@@ -8,8 +8,9 @@ extends Control
 # Game types must be in alphabetical order
 
 enum {
-	THREELDK = 0, # 3LDK - Shiawase ni Narouyo
+	ONETWENTYYEN = 0, # 120 Yen no Haru - 120 Yen Stories
 	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
+	THREELDK = 2, # 3LDK - Shiawase ni Narouyo
 	AIR,
 	AIYORIAOSHI,
 	AFTER,
@@ -206,6 +207,7 @@ enum {
 	SAISHUUSHIKEN,
 	SAKURASESTU,
 	SANGOKURENSEKI,
+	SCARLETNICHIJOU,
 	SCHOOLLOVE,
 	SCHOOLNI,
 	SEIKAINOSENKI,
@@ -1507,6 +1509,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HARUNOASHIOTO
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == ONETWENTYYEN:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(ONETWENTYYEN)
+		game_type = ONETWENTYYEN
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == SCARLETNICHIJOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(SCARLETNICHIJOU)
+		game_type = SCARLETNICHIJOU
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -1907,8 +1921,9 @@ func sceneChanger(scene: PackedScene) -> void:
 func initMenuItems() -> void:
 	# Menu items must be in alphabetical order based on their enum value.
 	
-	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
+	game_type_selector.add_item("120 Yen no Haru: 120 Yen Stories", ONETWENTYYEN)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
+	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
 	game_type_selector.add_item("Air", AIR)
 	game_type_selector.add_item("Ai Yori Aoshi", AIYORIAOSHI)
 	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
@@ -2105,6 +2120,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
+	game_type_selector.add_item("Scarlet: Nichijou no Kyoukaisen", SCARLETNICHIJOU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("Seikai no Senki", SEIKAINOSENKI)

@@ -25,7 +25,10 @@ var tile_output: bool = false
 var remove_alpha: bool = true
 var keep_alpha_char: bool = false
 
-var type2_game_types: PackedInt32Array = [Main.RAMUNE, Main.FATESTAY, Main.HARUNOASHIOTO]
+var type2_game_types: PackedInt32Array = [
+	Main.RAMUNE, Main.FATESTAY, 
+	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
+	Main.SCARLETNICHIJOU]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
 
@@ -229,17 +232,18 @@ func convert_imgs() -> void:
 		var f_name: String = selected_imgs[file].get_file()
 		var hdr: String = in_file.get_buffer(4).get_string_from_ascii()
 		if hdr == "MF":
-			in_file.seek(0x30)
+			in_file.seek(0x14)
+			var first_off: int = in_file.get_32()
+			
+			in_file.seek(first_off)
 			hdr = in_file.get_buffer(3).get_string_from_ascii().strip_escapes()
-			var is_std: bool = false
-			if hdr == "IMG" or hdr == "STD" or "1" or "2":
+			if hdr == "IMG" or hdr == "STD" or hdr == "1" or hdr == "2" or hdr == "0":
+				var is_std: bool = false
 				if hdr == "STD":
 					is_std = true # For character images, though likely not needed
 				in_file.seek(0)
 				var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
 				var num_files: int = buff.decode_u32(4)
-				#if num_files > 2:
-					#print_rich("[color=yellow]There are extra files in image %s" % f_name)
 					
 				var img_tex_off: int = buff.decode_u32(8)
 				var str_size: int = buff.decode_u32(0x10)
@@ -269,7 +273,7 @@ func convert_imgs() -> void:
 					var hdr_buff: PackedByteArray = buff.slice(tbl_start)
 					var num_imgs: int = hdr_buff.decode_u32(4)
 					if num_imgs > 800:
-						print_rich("[color=yellow]Palette data(?) found in %s/%s_%03d with no image data, skipping." % [folder_path, f_name, hdr_i])
+						print_rich("[color=yellow]Palette data(and only that?) found in %s/%s_%03d skipping." % [folder_path, f_name, hdr_i])
 						mf_pos += 0x10
 						continue
 					elif num_imgs > 1:
@@ -321,10 +325,12 @@ func convert_imgs() -> void:
 						
 					png.save_png(folder_path + "/%s" % f_name + "_%03d.PNG" % hdr_i)
 					mf_pos += 0x10
+			elif hdr == "MF":
+				print_rich("[color=yellow]%s has MF archive(s) in it. Please extract it first." % [folder_path + "/%s" % f_name])
 			else:
-				print_rich("[color=red]%s is not a valid image!" % f_name)
+				print_rich("[color=red]%s is not a valid image!" % [folder_path + "/%s" % f_name])
 		else:
-			print_rich("[color=red]%s does not have a valid header!" % f_name)
+			print_rich("[color=red]%s does not have a valid header!" % [folder_path + "/%s" % f_name])
 			
 	print_rich("[color=green]Finished![/color]")
 	
@@ -632,6 +638,9 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 		cols = final_width / tile_w + 1
 		rows = int(ceili(n / float(cols)))
 	elif Main.game_type == Main.HARUNOASHIOTO and n <= 18:
+		cols = grid.y
+		rows = grid.x
+	elif Main.game_type == Main.SCARLETNICHIJOU and n <= 12:
 		cols = grid.y
 		rows = grid.x
 	elif n in range(4, 9):
