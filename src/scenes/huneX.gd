@@ -277,6 +277,7 @@ func convert_imgs() -> void:
 						mf_pos += 0x10
 						continue
 					elif num_imgs > 1:
+						# Mainly for Fate Stay Night checks for multiple images that are different dims from the rest. Improve detection later.
 						var temp_w1: int = hdr_buff.decode_u32(pos + 4)
 						var temp_h1: int = hdr_buff.decode_u32(pos + 8)
 						var temp_w2: int = hdr_buff.decode_u32(pos + 0x24)
@@ -584,7 +585,10 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	var grid: Vector2i = get_best_divisor_grid(n)
 	var cols: int = grid.x
 	var rows: int = grid.y
-	if n >= 200: # I don't know what these games are doing
+	
+	# I don't know what these games are doing
+	
+	if n >= 200:
 		cols = final_width / tile_w
 		rows = final_height / tile_h
 	elif Main.game_type == Main.HARUNOASHIOTO and n >= 190:
@@ -628,6 +632,9 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	elif n >= 90:
 		cols = grid.x
 		rows = grid.y
+	elif Main.game_type == Main.SCARLETNICHIJOU and n == 70:
+		cols = grid.y
+		rows = grid.x
 	elif n == 70:
 		cols = grid.x
 		rows = grid.y
@@ -640,7 +647,19 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	elif Main.game_type == Main.HARUNOASHIOTO and n <= 18:
 		cols = grid.y
 		rows = grid.x
-	elif Main.game_type == Main.SCARLETNICHIJOU and n <= 12:
+	elif Main.game_type == Main.SCARLETNICHIJOU and n == 30:
+		cols = final_width / tile_w
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(42, 49):
+		cols = grid.x
+		rows = grid.y
+	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(9, 59):
+		cols = grid.y
+		rows = grid.x
+	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(8, 12):
+		cols = final_width / tile_w
+		rows = int(ceili(n / float(cols)))
+	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(2, 5):
 		cols = grid.y
 		rows = grid.x
 	elif n in range(4, 9):
