@@ -28,7 +28,7 @@ var keep_alpha_char: bool = false
 var type2_game_types: PackedInt32Array = [
 	Main.RAMUNE, Main.FATESTAY, 
 	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
-	Main.SCARLETNICHIJOU]
+	Main.SCARLETNICHIJOU, Main.MAPLECOLORS]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
 
@@ -36,6 +36,7 @@ func _ready() -> void:
 	load_exe.filters = [
 		"SLPM_657.17, SLPM_655.85, SLPM_550.98, SLPM_661.65, SLPM_664.37, MAIN.ELF"
 		]
+		
 	if Main.game_type in type2_game_types:
 		load_exe_button.hide()
 		load_cd_bin_file.hide()
@@ -47,6 +48,7 @@ func _ready() -> void:
 		load_image_button.hide()
 		load_databin_button.hide()
 		
+		
 func _process(_delta):
 	if selected_file and folder_path:
 		extract_cd_bin()
@@ -57,6 +59,7 @@ func _process(_delta):
 	elif selected_imgs and folder_path:
 		convert_imgs()
 		_clear_strings()
+
 
 func _clear_strings() -> void:
 	folder_path = ""
@@ -173,7 +176,7 @@ func extract_mf_uffa() -> void:
 			var is_comp: bool = in_file.get_32()
 			var f_size: int = in_file.get_32()
 			mf_pos += 0x10
-			if f_offset == 0:
+			if f_offset == 0 or f_size == 0:
 				continue
 			
 			if is_comp:
@@ -591,6 +594,21 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	if n >= 200:
 		cols = final_width / tile_w
 		rows = final_height / tile_h
+	elif Main.game_type == Main.MAPLECOLORS:
+		cols = grid.y
+		rows = grid.x
+		if n >= 120:
+			cols = grid.x
+			rows = grid.y
+		elif n in range(68, 73):
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
+		elif n in range(12, 19):
+			cols = grid.x
+			rows = grid.y
+		elif n <= 11:
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
 	elif Main.game_type == Main.HARUNOASHIOTO and n >= 190:
 		cols = final_width / tile_w
 		rows = int(ceili(n / float(cols)))
@@ -612,6 +630,9 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	elif Main.game_type == Main.HARUNOASHIOTO and n >= 150:
 		cols = grid.x
 		rows = grid.y
+	elif Main.game_type == Main.HARUNOASHIOTO and n == 144:
+		cols = final_width / tile_w + 1
+		rows = int(ceili(n / float(cols)))
 	elif Main.game_type == Main.HARUNOASHIOTO and n >= 140:
 		cols = grid.x
 		rows = grid.y

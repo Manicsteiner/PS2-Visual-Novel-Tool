@@ -137,6 +137,7 @@ enum {
 	MAHOUSENSEINEGIMA1,
 	MAHOUSENSEINEGIMA2,
 	MAIHIME,
+	MAPLECOLORS,
 	MEDICAL91,
 	MEITANTEIEVA,
 	MEMORIESOFF5EN,
@@ -1521,6 +1522,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SCARLETNICHIJOU
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == MAPLECOLORS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(MAPLECOLORS)
+		game_type = MAPLECOLORS
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -2050,6 +2057,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Mahou Sensei Negima! 1-Jikanme ~Okochama Sensei wa Mahoutsukai!~", MAHOUSENSEINEGIMA1)
 	game_type_selector.add_item("Mahou Sensei Negima! 2-jikanme Tatakau Otome-tachi! Mahora Daiundoukai Special!", MAHOUSENSEINEGIMA2)
 	game_type_selector.add_item("Mai-HiME: Unmei no Keitouju", MAIHIME)
+	game_type_selector.add_item("Maple Colors: Kessen wa Gakuensai!", MAPLECOLORS)
 	game_type_selector.add_item("Medical 91", MEDICAL91)
 	game_type_selector.add_item("Meitantei Evangelion", MEITANTEIEVA)
 	game_type_selector.add_item("Memories Off 5: Encore", MEMORIESOFF5EN)
