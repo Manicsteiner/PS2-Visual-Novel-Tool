@@ -28,7 +28,8 @@ var keep_alpha_char: bool = false
 var type2_game_types: PackedInt32Array = [
 	Main.RAMUNE, Main.FATESTAY, 
 	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
-	Main.SCARLETNICHIJOU, Main.MAPLECOLORS]
+	Main.SCARLETNICHIJOU, Main.MAPLECOLORS,
+	Main.SUZUNONE]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
 
@@ -594,6 +595,30 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	if n >= 200:
 		cols = final_width / tile_w
 		rows = final_height / tile_h
+	elif Main.game_type == Main.SUZUNONE:
+		cols = grid.y
+		rows = grid.x
+		if n >= 160:
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
+		elif n >= 150:
+			cols = grid.x
+			rows = grid.y
+		elif n in range(50, 60):
+			cols = grid.x
+			rows = grid.y
+		elif n in range(40, 50):
+			cols = grid.x
+			rows = grid.y
+		elif n == 32:
+			cols = grid.x
+			rows = grid.y
+		elif n in range(9, 11):
+			cols = grid.x
+			rows = grid.y
+		elif n <= 11:
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
 	elif Main.game_type == Main.MAPLECOLORS:
 		cols = grid.y
 		rows = grid.x

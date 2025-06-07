@@ -241,6 +241,7 @@ enum {
 	SUISUISWEET,
 	SUMOMOMO,
 	SUZUMIYA,
+	SUZUNONE,
 	SWEETLEGACY, 
 	SWEETSEASON,
 	TENHIRO,
@@ -1528,6 +1529,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = MAPLECOLORS
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == SUZUNONE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(SUZUNONE)
+		game_type = SUZUNONE
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -2161,6 +2168,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("SuiSui Sweet: ~Amai Koi No Mitsukekata~")
 	game_type_selector.add_item("Sumomomo Momomo - Chijou Saikyou no Yome", SUMOMOMO)
 	game_type_selector.add_item("Suzumiya Haruhi no Tomadoi", SUZUMIYA)
+	game_type_selector.add_item("Suzunone Seven! Rebirth Knot", SUZUNONE)
 	game_type_selector.add_item("Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi", SWEETLEGACY)
 	game_type_selector.add_item("Sweet Season", SWEETSEASON)
 	game_type_selector.add_item("Tenohira wo Taiyou ni: Eikyuu no Kizuna", TENHIRO)
