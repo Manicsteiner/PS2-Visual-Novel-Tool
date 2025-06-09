@@ -29,7 +29,7 @@ var type2_game_types: PackedInt32Array = [
 	Main.RAMUNE, Main.FATESTAY, 
 	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
 	Main.SCARLETNICHIJOU, Main.MAPLECOLORS,
-	Main.SUZUNONE]
+	Main.SUZUNONE, Main.SEKIREI]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
 
@@ -324,7 +324,8 @@ func convert_imgs() -> void:
 						
 					var png: Image
 					if num_imgs > 2:
-						png = tile_images_by_batch(img_arr, f_w, f_h, is_std)
+						var img_id: int = f_name.substr(f_name.length() - 7, f_name.length() - 7 + 5).to_int()
+						png = tile_images_by_batch(img_arr, f_w, f_h, img_id, is_std)
 					else:
 						png = img_arr[0]
 						
@@ -576,12 +577,26 @@ func make_img(data: PackedByteArray) -> Image:
 	#return final_image
 	
 	
-func tile_images_by_batch(images: Array[Image], final_width: int, final_height: int, is_std: bool) -> Image:
+func tile_images_by_batch(images: Array[Image], final_width: int, final_height: int, img_id: int, is_std: bool) -> Image:
 	var n: int = images.size()
 	if n == 0:
 		push_error("No images to tile!")
 		return Image.create_empty(1,1, false, Image.FORMAT_L8)
-
+		
+	var exceptions: PackedInt32Array = []
+	
+	if Main.game_type == Main.SEKIREI:
+		exceptions.append(20)
+		exceptions.append(30)
+		exceptions.append(148)
+		exceptions.append(169)
+		for i in range(150, 168):
+			exceptions.append(i)
+		for i in range(195, 201):
+			exceptions.append(i)
+		for i in range(212, 216):
+			exceptions.append(i)
+		
 	var tile_w: int = images[0].get_width()
 	var tile_h: int = images[0].get_height()
 
@@ -590,11 +605,49 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 	var cols: int = grid.x
 	var rows: int = grid.y
 	
-	# I don't know what these games are doing
+	# I don't know what these games are doing. Surely there's a better way...
 	
 	if n >= 200:
 		cols = final_width / tile_w
 		rows = final_height / tile_h
+	elif Main.game_type == Main.SEKIREI:
+		if n >= 64:
+			cols = grid.y
+			rows = grid.x
+		elif n >= 100:
+			cols = grid.x
+			rows = grid.y
+		elif n == 48:
+			cols = grid.y
+			rows = grid.x
+		elif n in range(40, 50):
+			cols = grid.y
+			rows = grid.x
+		elif n in range(20, 31):
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
+		elif n == 9:
+			cols = grid.y
+			rows = grid.x
+		elif n == 5:
+			cols = grid.x
+			rows = grid.y
+		elif n == 8:
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
+		elif n <= 11:
+			cols = final_width / tile_w
+			rows = int(ceili(n / float(cols)))
+		if img_id in exceptions:
+			if img_id == 148:
+				cols = grid.x
+				rows = grid.y
+			elif img_id in range(150, 168) or img_id in range(195, 201) or img_id in range(212, 216):
+				cols = grid.y
+				rows = grid.x
+			elif img_id == 30 or img_id == 20:
+				cols = grid.y
+				rows = grid.x
 	elif Main.game_type == Main.SUZUNONE:
 		cols = grid.y
 		rows = grid.x

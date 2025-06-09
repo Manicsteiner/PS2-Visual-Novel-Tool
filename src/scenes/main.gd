@@ -213,6 +213,7 @@ enum {
 	SCHOOLNI,
 	SEIKAINOSENKI,
 	SEGAAGESVOL12,
+	SEKIREI,
 	SENGOKUHIME2,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
@@ -1535,6 +1536,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SUZUNONE
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == SEKIREI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported"
+		game_type_selector.select(SEKIREI)
+		game_type = SEKIREI
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == KONOAOZORA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nMost images supported except .txa, .wip"
 		game_type_selector.select(KONOAOZORA)
@@ -2140,6 +2147,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
 	game_type_selector.add_item("Seikai no Senki", SEIKAINOSENKI)
 	game_type_selector.add_item("Sega Ages 2500 Series Vol. 12: Puyo Puyo Tsuu Perfect Set", SEGAAGESVOL12)
+	game_type_selector.add_item("Sekirei: Mirai kara no Okurimono", SEKIREI)
 	game_type_selector.add_item("Sengoku-hime 2: En - Hyakka, Senran Tatsukaze no Gotoku")
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
