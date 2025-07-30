@@ -61,9 +61,13 @@ func extract_dat() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
-				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
+				var png: Image
 				if remove_alpha:
-					png.convert(Image.FORMAT_RGB8)
+					for off: int in range(0, buff.size(), 4):
+						buff.encode_u8(off + 3, min(buff.decode_u8(off + 3) * 2, 0xFF))
+					png = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
+				else:
+					png = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
 				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 			else:
 				in_file.seek(f_offset)
@@ -373,3 +377,7 @@ func _on_circus_load_dat_files_selected(paths):
 	
 func _on_circus_load_folder_dir_selected(dir):
 	folder_path = dir
+
+
+func _on_decomp_button_toggled(_toggled_on: bool) -> void:
+	debug_out = !debug_out
