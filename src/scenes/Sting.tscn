@@ -53,11 +53,7 @@ theme_override_constants/separation = -4
 [node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha Channel in Images"
-
-[node name="Remove Alpha2" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-text = "Remove Alpha Channel Character Images"
+text = "Fix Alpha Channels"
 
 [node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -97,7 +93,6 @@ use_native_dialog = true
 [connection signal="pressed" from="HBoxContainer/LoadExe" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadSfs" to="." method="_on_load_sfs_pressed"]
 [connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
-[connection signal="toggled" from="VBoxContainer/Remove Alpha2" to="." method="_on_remove_alpha_2_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="file_selected" from="FILELoadEXE" to="." method="_on_file_load_exe_file_selected"]
 [connection signal="file_selected" from="FILELoadSFS" to="." method="_on_file_load_sfs_file_selected"]

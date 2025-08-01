@@ -10,7 +10,7 @@ var folder_path: String
 var selected_file: String
 var exe_path: String
 var remove_alpha: bool = true
-var remove_alpha2: bool = false
+var remove_alpha2: bool = true
 var debug_out: bool = false
 
 func _ready() -> void:
@@ -693,10 +693,10 @@ func make_tpp(data: PackedByteArray, base_dir: String) -> Image:
 			img_part = data.slice(part_start + 0x20, part_start + 0x20 + part_size)
 			if remove_alpha and not base_dir == "etc" and not base_dir == "char":
 				for i in range(0, part_size, 4):
-					img_part.encode_u8(i + 3, 255)
+					img_part.encode_u8(i + 3, int((img_part.decode_u8(i + 3) / 127.0) * 255.0))
 			elif remove_alpha2:
 				for i in range(0, part_size, 4):
-					img_part.encode_u8(i + 3, 255)
+					img_part.encode_u8(i + 3, int((img_part.decode_u8(i + 3) / 127.0) * 255.0))
 			img = Image.create_from_data(part_width, part_height, false, Image.FORMAT_RGBA8, img_part)
 			var x: int
 			var y: int
@@ -750,17 +750,17 @@ func make_tpp(data: PackedByteArray, base_dir: String) -> Image:
 			if remove_alpha and not base_dir == "etc" and not base_dir == "char":
 				if is_4bit:
 					for i in range(0, 0x40, 4):
-						palette.encode_u8(i + 3, 255)
+						palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 127.0) * 255.0))
 				else:
 					for i in range(0, 0x400, 4):
-						palette.encode_u8(i + 3, 255)
+						palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 127.0) * 255.0))
 			elif remove_alpha2:
 				if is_4bit:
 					for i in range(0, 0x40, 4):
-						palette.encode_u8(i + 3, 255)
+						palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 127.0) * 255.0))
 				else:
 					for i in range(0, 0x400, 4):
-						palette.encode_u8(i + 3, 255)
+						palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 127.0) * 255.0))
 			if not is_4bit:
 				# Character images seem to only need unswizzling, but not sure how it's determined.
 				palette = ComFuncs.unswizzle_palette(palette, 32)
@@ -1067,7 +1067,4 @@ func _on_output_debug_toggled(_toggled_on: bool) -> void:
 
 func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
 	remove_alpha = !remove_alpha
-
-
-func _on_remove_alpha_2_toggled(_toggled_on: bool) -> void:
 	remove_alpha2 = !remove_alpha2
