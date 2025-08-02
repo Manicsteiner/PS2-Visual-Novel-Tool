@@ -5,7 +5,7 @@ extends Control
 
 
 var folder_path: String
-var remove_alpha: bool = true
+var fix_alpha: bool = true
 var selected_files: PackedStringArray
 var debug_out: bool = false
 
@@ -62,7 +62,7 @@ func extract_dat() -> void:
 					out_file.close()
 					
 				var png: Image
-				if remove_alpha:
+				if fix_alpha:
 					for off: int in range(0, buff.size(), 4):
 						buff.encode_u8(off + 3, min(buff.decode_u8(off + 3) * 2, 0xFF))
 					png = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
@@ -366,8 +366,8 @@ func _on_load_dat_pressed():
 	circus_load_dat.visible = true
 	
 	
-func _on_remove_alpha_button_toggled(_toggled_on):
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_button_toggled(_toggled_on):
+	fix_alpha = !fix_alpha
 		
 		
 func _on_circus_load_dat_files_selected(paths):
