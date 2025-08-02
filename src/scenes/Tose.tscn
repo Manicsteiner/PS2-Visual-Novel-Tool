@@ -73,10 +73,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = -4
 
-[node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
+[node name="Fix Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha In PNGs"
+text = "Fix Alpha Channels"
 
 [node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -139,7 +139,7 @@ use_native_dialog = true
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadPIG" to="." method="_on_load_pig_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadScanPIG" to="." method="_on_load_scan_pig_pressed"]
-[connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
+[connection signal="toggled" from="VBoxContainer/Fix Alpha" to="." method="_on_fix_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="file_selected" from="LoadEXE" to="." method="_on_load_exe_file_selected"]
 [connection signal="files_selected" from="LoadPIG" to="." method="_on_load_pig_files_selected"]
