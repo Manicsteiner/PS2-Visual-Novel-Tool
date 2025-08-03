@@ -15,7 +15,7 @@ var exe_path: String
 var folder_path: String
 var selected_files: PackedStringArray
 var selected_scan_file: String
-var remove_alpha: bool = true
+var fix_alpha: bool = true
 var combine_images: bool = false
 var debug_out: bool = false
 
@@ -290,7 +290,7 @@ func process_pig(data: PackedByteArray) -> Image:
 	
 	if img_type == 0:
 		var image: Image = Image.create_from_data(image_width, image_height, false, Image.FORMAT_RGBA8, data.slice(image_data_offset))
-		if remove_alpha:
+		if fix_alpha:
 			image.convert(Image.FORMAT_RGB8)
 		return image
 		
@@ -302,21 +302,22 @@ func process_pig(data: PackedByteArray) -> Image:
 	if palette_size == 0x400:
 		palette = ComFuncs.unswizzle_palette(palette, 32)
 	elif palette_size == 0x40:
-		for i in range(0, palette_size, 2):
-			var color_16: int = data.decode_u16(palette_offset + i)
-			var r: int = (color_16 >> 10) & 0x1F  # Extract red (BGR555 format)
-			var g: int = (color_16 >> 5) & 0x1F   # Extract green
-			var b: int = (color_16 >> 0) & 0x1F   # Extract blue
-			
-			# Convert 5-bit color to 8-bit
-			palette.append((r << 3) | (r >> 2))
-			palette.append((g << 3) | (g >> 2))
-			palette.append((b << 3) | (b >> 2))
-			palette.append(255)  # Full alpha
+		for i in range(0, palette_size, 4):
+			var r: int = data[palette_offset + i + 0]
+			var g: int = data[palette_offset + i + 1]
+			var b: int = data[palette_offset + i + 2]
+			var a: int = data[palette_offset + i + 3]
+			if fix_alpha:
+				a = int((a / 128.0) * 255.0)
 
-	if remove_alpha and palette_size == 0x400:
+			palette.append(r)
+			palette.append(g)
+			palette.append(b)
+			palette.append(a)
+
+	if fix_alpha and palette_size == 0x400:
 		for i in range(0, 0x400, 4):
-			palette.encode_u8(i + 3, 255)
+			palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 128.0) * 255.0))
 
 	var pixel_data: PackedByteArray = data.slice(image_data_offset)
 
@@ -377,8 +378,8 @@ func _on_load_folder_dir_selected(dir: String) -> void:
 	folder_path = dir
 
 
-func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_toggled(_toggled_on: bool) -> void:
+	fix_alpha = !fix_alpha
 
 
 func _on_output_debug_toggled(_toggled_on: bool) -> void:

@@ -46,10 +46,10 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="removeAlphaButton" type="CheckBox" parent="VBoxContainer"]
+[node name="fixAlphaButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha Channel in PNGs"
+text = "Fix Alpha Channels"
 
 [node name="decompButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -75,7 +75,7 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadDAT" to="." method="_on_load_dat_pressed"]
-[connection signal="toggled" from="VBoxContainer/removeAlphaButton" to="." method="_on_remove_alpha_button_toggled"]
+[connection signal="toggled" from="VBoxContainer/fixAlphaButton" to="." method="_on_fix_alpha_button_toggled"]
 [connection signal="toggled" from="VBoxContainer/decompButton" to="." method="_on_decomp_button_toggled"]
 [connection signal="files_selected" from="CircusLoadDAT" to="." method="_on_circus_load_dat_files_selected"]
 [connection signal="dir_selected" from="CircusLoadFOLDER" to="." method="_on_circus_load_folder_dir_selected"]
