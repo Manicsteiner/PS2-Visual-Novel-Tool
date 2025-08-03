@@ -69,7 +69,7 @@ func extract_arc() -> void:
 					var pal_off: int = buff.decode_u32(12) + 0x14
 					var pal_size: int = buff.decode_u32(16)
 					
-					var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGB8)
+					var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
 					var img_dat: PackedByteArray = buff.slice(0x14, pal_off + 14)
 					var pal: PackedByteArray = buff.slice(pal_off, pal_off + pal_size)
 					if pal_size == 0x400:
