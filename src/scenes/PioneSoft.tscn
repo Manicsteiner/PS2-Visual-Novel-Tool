@@ -50,10 +50,10 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="removeAlpha" type="CheckBox" parent="VBoxContainer"]
+[node name="fixAlpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha in PNGs"
+text = "Fix Alpha Channels"
 
 [node name="decompButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -91,7 +91,7 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadSAF" to="." method="_on_load_saf_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
-[connection signal="toggled" from="VBoxContainer/removeAlpha" to="." method="_on_remove_alpha_toggled"]
+[connection signal="toggled" from="VBoxContainer/fixAlpha" to="." method="_on_fix_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/decompButton" to="." method="_on_decomp_button_toggled"]
 [connection signal="files_selected" from="PIONELoadSAF" to="." method="_on_pione_load_saf_files_selected"]
 [connection signal="file_selected" from="PIONELoadEXE" to="." method="_on_pione_load_exe_file_selected"]

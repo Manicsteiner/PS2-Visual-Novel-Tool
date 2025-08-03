@@ -11,7 +11,7 @@ var chose_folder: bool = false
 var folder_path: String
 var chose_saf: bool = false
 var usr_files: PackedStringArray
-var remove_alpha: bool = true
+var fix_alpha: bool = true
 var out_decomp: bool = false
 var exe_path: String = ""
 
@@ -178,9 +178,9 @@ func make_image(data: PackedByteArray) -> Image:
 		palette.append(data.decode_u8(palette_offset + i))
 
 	palette = ComFuncs.unswizzle_palette(palette, 32)
-	if remove_alpha:
+	if fix_alpha:
 		for i in range(0, palette_size, 4):
-			palette.encode_u8(i + 3, 255)
+			palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 128.0) * 255.0))
 
 	# Extract raw pixel data
 	var image_data_offset: int = palette_offset + 0x400
@@ -232,5 +232,5 @@ func _on_pione_load_exe_file_selected(path: String) -> void:
 	exe_path = path
 
 
-func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_toggled(_toggled_on: bool) -> void:
+	fix_alpha = !fix_alpha
