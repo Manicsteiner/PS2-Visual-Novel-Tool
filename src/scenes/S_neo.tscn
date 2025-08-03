@@ -46,14 +46,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = -4
 
-[node name="Remove Alpha" type="CheckBox" parent="VBoxContainer"]
+[node name="Fix Alpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha Channel in PNGs"
-
-[node name="Remove Bup Alpha" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-text = "Remove Alpha Channel in .bup Images"
+text = "Fix Alpha Channels"
 
 [node name="Output Debug" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -85,8 +81,7 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadISO" to="." method="_on_load_iso_pressed"]
-[connection signal="toggled" from="VBoxContainer/Remove Alpha" to="." method="_on_remove_alpha_toggled"]
-[connection signal="toggled" from="VBoxContainer/Remove Bup Alpha" to="." method="_on_remove_bup_alpha_toggled"]
+[connection signal="toggled" from="VBoxContainer/Fix Alpha" to="." method="_on_fix_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Debug" to="." method="_on_output_debug_toggled"]
 [connection signal="toggled" from="VBoxContainer/Output Decrypted" to="." method="_on_output_decrypted_toggled"]
 [connection signal="file_selected" from="FILELoadISO" to="." method="_on_file_load_iso_file_selected"]
