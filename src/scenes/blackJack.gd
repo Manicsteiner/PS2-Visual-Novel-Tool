@@ -54,7 +54,7 @@ func extract_arc() -> void:
 				
 				var result: Array = ComFuncs.find_end_bytes_file(in_file, 0)
 				f_name = ComFuncs.convert_jis_packed_byte_array(result[1], shift_jis_dic).get_string_from_utf8()
-				#if f_name != "TEXTURE/LOAD_CD_STR.HTD": continue
+				#if f_name != "TEXTURE/EV1/EV_KYOU_401A.HTD": continue
 				
 				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 				
@@ -79,8 +79,10 @@ func extract_arc() -> void:
 								var r: int = pal[pixel_index * 4 + 0]
 								var g: int = pal[pixel_index * 4 + 1]
 								var b: int = pal[pixel_index * 4 + 2]
-								#var a: int = palette[pixel_index * 4 + 3]
-								image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+								var a: int = pal[pixel_index * 4 + 3]
+								a = int((a / 128.0) * 255.0)
+								
+								image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 					elif pal_size == 0x40:
 						for y in range(h):
 							for x in range(0, w, 2):  # Two pixels per byte
@@ -96,6 +98,8 @@ func extract_arc() -> void:
 								var g1: int = pal[pixel_index_1 * 4 + 1]
 								var b1: int = pal[pixel_index_1 * 4 + 2]
 								var a1: int = pal[pixel_index_1 * 4 + 3]
+								a1 = int((a1 / 128.0) * 255.0)
+								
 								image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
 
 								# Set second pixel (only if within bounds)
@@ -104,19 +108,23 @@ func extract_arc() -> void:
 									var g2: int = pal[pixel_index_2 * 4 + 1]
 									var b2: int = pal[pixel_index_2 * 4 + 2]
 									var a2: int = pal[pixel_index_2 * 4 + 3]
+									a2 = int((a2 / 128.0) * 255.0)
+									
 									image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
-						image.convert(Image.FORMAT_RGB8)
 					elif pal_size == 0:
 						img_dat = buff.slice(0x14)
-						var image2: Image = Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, img_dat)
-						image2.convert(Image.FORMAT_RGB8)
 						var dir: DirAccess = DirAccess.open(folder_path)
 						dir.make_dir_recursive(f_name.get_base_dir())
-						image2.save_png(folder_path + "/%s" % f_name + ".PNG")
 						if out_org:
 							out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 							out_file.store_buffer(buff)
 							out_file.close()
+						
+						for i in range(0, img_dat.size(), 4):
+							img_dat.encode_u8(i + 3, int((img_dat.decode_u8(i + 3) / 128.0) * 255.0))
+							
+						var image2: Image = Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, img_dat)
+						image2.save_png(folder_path + "/%s" % f_name + ".PNG")
 						continue
 					else:
 						push_error("Unknown palette size %X in %s" % [pal_size, f_name])
