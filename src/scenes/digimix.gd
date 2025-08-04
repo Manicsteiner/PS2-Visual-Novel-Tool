@@ -266,8 +266,9 @@ func make_img(buff: PackedByteArray, w: int, h: int, pal: PackedByteArray) -> Im
 			var g: int = pal[pixel_index * 4 + 1]
 			var b: int = pal[pixel_index * 4 + 2]
 			var a: int = pal[pixel_index * 4 + 3]
+			a = int((a / 128.0) * 255.0)
+			
 			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
-	image.convert(Image.FORMAT_RGB8)
 	return image
 	
 	
