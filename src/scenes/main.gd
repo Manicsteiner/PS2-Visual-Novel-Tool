@@ -122,6 +122,8 @@ enum {
 	KOISURU,
 	KOKORONOTOBIRA, 
 	KONOAOZORA,
+	KONOHARETA,
+	KOUENJIJOSHI,
 	LITTLEAID,
 	LITTLEBUSTERS,
 	LNOKISETSU,
@@ -223,6 +225,7 @@ enum {
 	SHINSEIKIEVABATTLE,
 	SHOUJOMAHOU,
 	SHIROGANE,
+	SHIROGANENOTORIKAGO,
 	SHUFFLE,
 	SHUUMATSUSHOUJO,
 	SKIPBEAT,
@@ -419,6 +422,24 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(IDOLJANSHIR)
 		game_type = IDOLJANSHIR
 		var next_scene: PackedScene = load("res://src/scenes/PccwJapan.tscn")
+		sceneChanger(next_scene)
+	elif index == KOUENJIJOSHI:
+		game_type_sub_text.text = "Supports:\nExtraction (some), images (PNG).\nMost images supported."
+		game_type_selector.select(KOUENJIJOSHI)
+		game_type = KOUENJIJOSHI
+		var next_scene: PackedScene = load("res://src/scenes/GameFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == KONOHARETA:
+		game_type_sub_text.text = "Supports:\nExtraction (some), images (PNG)."
+		game_type_selector.select(KONOHARETA)
+		game_type = KONOHARETA
+		var next_scene: PackedScene = load("res://src/scenes/GameFactory.tscn")
+		sceneChanger(next_scene)
+	elif index == SHIROGANENOTORIKAGO:
+		game_type_sub_text.text = "Supports:\nExtraction (some), images (PNG)."
+		game_type_selector.select(SHIROGANENOTORIKAGO)
+		game_type = SHIROGANENOTORIKAGO
+		var next_scene: PackedScene = load("res://src/scenes/GameFactory.tscn")
 		sceneChanger(next_scene)
 	elif index == PRINCESSCONCERTO:
 		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
@@ -2056,6 +2077,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
+	game_type_selector.add_item("Kono Hareta Sora no Shita de", KONOHARETA)
+	game_type_selector.add_item("Kouenji Joshi Soccer", KOUENJIJOSHI)
 	game_type_selector.add_item("Little Aid", LITTLEAID)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
@@ -2157,6 +2180,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shoujo Mahou Gaku Littlewitch Romanesque: Aria to Kaya to Kuro no Tou", SHOUJOMAHOU)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
+	game_type_selector.add_item("Shirogane no Torikago: The Angels with Strange Wings", SHIROGANENOTORIKAGO)
 	game_type_selector.add_item("Shuffle! On the Stage", SHUFFLE)
 	game_type_selector.add_item("Shuumatsu Shoujo Gensou Alicematic: Apocalypse", SHUUMATSUSHOUJO)
 	game_type_selector.add_item("Skip Beat!", SKIPBEAT)
