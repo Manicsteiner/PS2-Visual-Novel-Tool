@@ -66,6 +66,7 @@ enum {
 	FUTAKOI,
 	FUTAKOIALT,
 	FUTAKOIJIMA,
+	GAKUENUTOPIA,
 	GALAXYANGEL,
 	GALAXYANGEL2EI,
 	GALAXYANGEL2MU,
@@ -1809,6 +1810,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SHUFFLE
 		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
 		sceneChanger(next_scene)
+	elif index == GAKUENUTOPIA:
+		game_type_sub_text.text = "Supports:\nImages (PNG).\nSupports some images"
+		game_type_selector.select(GAKUENUTOPIA)
+		game_type = GAKUENUTOPIA
+		var next_scene: PackedScene = load("res://src/scenes/Vridge.tscn")
+		sceneChanger(next_scene)
 	elif index == FRAGMENTSBLUE:
 		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(FRAGMENTSBLUE)
@@ -2021,6 +2028,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Futakoi", FUTAKOI)
 	game_type_selector.add_item("Futakoi Alternative: Koi to Shoujo to Machine Gun", FUTAKOIALT)
 	game_type_selector.add_item("Futakoijima: Koi to Mizugi no Survival", FUTAKOIJIMA)
+	game_type_selector.add_item("Gakuen Utopia: Manabi Straight! KiraKira Happy Festa!", GAKUENUTOPIA)
 	game_type_selector.add_item("Galaxy Angel", GALAXYANGEL)
 	game_type_selector.add_item("Galaxy Angel II: Eigou Kaiki no Toki", GALAXYANGEL2EI)
 	game_type_selector.add_item("Galaxy Angel II: Mugen Kairou no Kagi", GALAXYANGEL2MU)

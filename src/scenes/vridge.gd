@@ -48,7 +48,7 @@ func convert_obj() -> void:
 		if Main.game_type != Main.SHINE:
 			in_file.seek(0)
 			palette = ComFuncs.unswizzle_palette(in_file.get_buffer(0x400), 32)
-		if Main.game_type == Main.SHAKUGAN or Main.game_type == Main.NOGIZAKA:
+		if Main.game_type == Main.SHAKUGAN or Main.game_type == Main.NOGIZAKA or Main.game_type == Main.GAKUENUTOPIA:
 			sections_off = 0x1800
 		elif Main.game_type == Main.SHINE or Main.game_type == Main.GUARDIANANGEL:
 			sections_off = 0
@@ -106,16 +106,19 @@ func convert_obj() -> void:
 			h = in_file.get_16()
 			
 		if palette:
-			var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGB8)
+			var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
 			for y in range(h):
 				for x in range(w):
 					var pixel_index: int = img_dat[x + y * w]
 					var r: int = palette[pixel_index * 4 + 0]
 					var g: int = palette[pixel_index * 4 + 1]
 					var b: int = palette[pixel_index * 4 + 2]
-					#var a: int = palette[pixel_index * 4 + 3]
-					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+					var a: int = palette[pixel_index * 4 + 3]
+					a = int((a / 128.0) * 255.0)
+					
+					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 			f_name += ".PNG"
+			#image = build_image_from_parts(image)
 			image.save_png(folder_path + "/%s" % f_name)
 		elif Main.game_type == Main.SHINE or Main.game_type == Main.GUARDIANANGEL:
 			var image: Image = ComFuncs.convert_rgb555_to_image(img_dat, w, h, true)
@@ -125,6 +128,33 @@ func convert_obj() -> void:
 		img_dat.clear()
 		
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func build_image_from_parts(source_image: Image) -> Image:
+	var IMAGE_WIDTH: int = source_image.get_width()
+	var IMAGE_HEIGHT: int = source_image.get_height()
+
+	var parts: Array[Vector4i] = [
+		Vector4i(64, 64,   0,   0),
+		Vector4i(64, 64, 64,   0),
+		Vector4i(64, 64, 128,   0),
+		Vector4i(64, 64, 256,   0),
+		Vector4i(64,  64, 384,   0)
+		]
+
+	var new_image: Image = Image.create_empty(IMAGE_WIDTH, IMAGE_HEIGHT, false, Image.FORMAT_RGBA8)
+
+	for part in parts:
+		var pw: int = part.x
+		var ph: int = part.y
+		var px: int = part.z
+		var py: int = part.w
+
+		var src_rect := Rect2i(px, py, pw, ph)
+		var region := source_image.get_region(src_rect)
+		new_image.blit_rect(region, Rect2i(Vector2i.ZERO, Vector2i(pw, ph)), Vector2i(px, py))
+
+	return new_image
 	
 	
 func _on_load_obj_pressed() -> void:
