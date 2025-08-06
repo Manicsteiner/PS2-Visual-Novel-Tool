@@ -119,6 +119,7 @@ enum {
 	KIMISUTA,
 	KIRAKIRA, 
 	KISHINHOUKOU,
+	KITAHEDIAMONDDUST,
 	KOIHIMEMUSOU,
 	KOISURU,
 	KOKORONOTOBIRA, 
@@ -399,6 +400,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(SHINKOIHIME)
 		game_type = SHINKOIHIME
 		var next_scene: PackedScene = load("res://src/scenes/RainEntertainment.tscn")
+		sceneChanger(next_scene)
+	elif index == KITAHEDIAMONDDUST:
+		game_type_sub_text.text = "Supports:\nExtraction (BGxxx.BINs only), images (PNG)."
+		game_type_selector.select(KITAHEDIAMONDDUST)
+		game_type = KITAHEDIAMONDDUST
+		var next_scene: PackedScene = load("res://src/scenes/RedEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == UTAU:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
@@ -2081,6 +2088,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kishin Houkou Demonbane", KISHINHOUKOU)
+	game_type_selector.add_item("Kita he. Diamond Dust", KITAHEDIAMONDDUST)
 	game_type_selector.add_item("Koi-hime Musou: Doki Otome Darake no Sangokushi Engi", KOIHIMEMUSOU)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
