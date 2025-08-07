@@ -120,6 +120,7 @@ enum {
 	KIRAKIRA, 
 	KISHINHOUKOU,
 	KITAHEDIAMONDDUST,
+	KITAHEDIAMONDDUSTPLUS,
 	KOIHIMEMUSOU,
 	KOISURU,
 	KOKORONOTOBIRA, 
@@ -405,6 +406,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction (BGxxx.BINs only), images (PNG)."
 		game_type_selector.select(KITAHEDIAMONDDUST)
 		game_type = KITAHEDIAMONDDUST
+		var next_scene: PackedScene = load("res://src/scenes/RedEntertainment.tscn")
+		sceneChanger(next_scene)
+	elif index == KITAHEDIAMONDDUSTPLUS:
+		game_type_sub_text.text = "Supports:\nExtraction (BGxxx.BINs only), images (PNG)."
+		game_type_selector.select(KITAHEDIAMONDDUSTPLUS)
+		game_type = KITAHEDIAMONDDUSTPLUS
 		var next_scene: PackedScene = load("res://src/scenes/RedEntertainment.tscn")
 		sceneChanger(next_scene)
 	elif index == UTAU:
@@ -2089,6 +2096,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
 	game_type_selector.add_item("Kishin Houkou Demonbane", KISHINHOUKOU)
 	game_type_selector.add_item("Kita he. Diamond Dust", KITAHEDIAMONDDUST)
+	game_type_selector.add_item("Kita he. Diamond Dust+ Kiss is Beginning.", KITAHEDIAMONDDUSTPLUS)
 	game_type_selector.add_item("Koi-hime Musou: Doki Otome Darake no Sangokushi Engi", KOIHIMEMUSOU)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)

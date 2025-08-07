@@ -13,7 +13,8 @@ func _ready() -> void:
 	file_load_bin.filters = [
 		"BG000.BIN, BG100.BIN, BG200.BIN,
 		BG300.BIN, BG400.BIN, BG500.BIN,
-		BG800.BIN, BG900.BIN"
+		BG600.BIN, BG700.BIN, BG800.BIN, 
+		BG900.BIN"
 		]
 	file_load_accessdb.filters = ["ACCESSDB.BIN"]
 
@@ -33,30 +34,56 @@ func extract_bin() -> void:
 		
 		var tbl_start: int
 		var tbl_end: int
-		if arc_name == "BG000":
-			tbl_start = 0x100
-			tbl_end = 0x9F0
-		elif arc_name == "BG100":
-			tbl_start = 0x9F0
-			tbl_end = 0x1990
-		elif arc_name == "BG200":
-			tbl_start = 0x1990
-			tbl_end = 0x2A88
-		elif arc_name == "BG300":
-			tbl_start = 0x2A90
-			tbl_end = 0x2F98
-		elif arc_name == "BG400":
-			tbl_start = 0x2FA0
-			tbl_end = 0x3A18
-		elif arc_name == "BG500":
-			tbl_start = 0x3A20
-			tbl_end = 0x4200
-		elif arc_name == "BG800":
-			tbl_start = 0x4200
-			tbl_end = 0x42F8
-		elif arc_name == "BG900":
-			tbl_start = 0x4300
-			tbl_end = 0x4838
+		if Main.game_type == Main.KITAHEDIAMONDDUST:
+			if arc_name == "BG000":
+				tbl_start = 0x100
+				tbl_end = 0x9F0
+			elif arc_name == "BG100":
+				tbl_start = 0x9F0
+				tbl_end = 0x1990
+			elif arc_name == "BG200":
+				tbl_start = 0x1990
+				tbl_end = 0x2A88
+			elif arc_name == "BG300":
+				tbl_start = 0x2A90
+				tbl_end = 0x2F98
+			elif arc_name == "BG400":
+				tbl_start = 0x2FA0
+				tbl_end = 0x3A18
+			elif arc_name == "BG500":
+				tbl_start = 0x3A20
+				tbl_end = 0x4200
+			elif arc_name == "BG800":
+				tbl_start = 0x4200
+				tbl_end = 0x42F8
+			elif arc_name == "BG900":
+				tbl_start = 0x4300
+				tbl_end = 0x4838
+		elif Main.game_type == Main.KITAHEDIAMONDDUSTPLUS:
+			if arc_name == "BG000":
+				tbl_start = 0x120
+				tbl_end = 0xFF0
+			elif arc_name == "BG100":
+				tbl_start = 0xFF0
+				tbl_end = 0x1710
+			elif arc_name == "BG200":
+				tbl_start = 0x1710
+				tbl_end = 0x1D78
+			elif arc_name == "BG300":
+				tbl_start = 0x1D80
+				tbl_end = 0x2438
+			elif arc_name == "BG400":
+				tbl_start = 0x2440
+				tbl_end = 0x2EB8
+			elif arc_name == "BG500":
+				tbl_start = 0x2EC0
+				tbl_end = 0x3430
+			elif arc_name == "BG600":
+				tbl_start = 0x3430
+				tbl_end = 0x3868
+			elif arc_name == "BG700":
+				tbl_start = 0x3870
+				tbl_end = 0x3C10
 		
 		var table: int = tbl_start
 		var id: int = 0
@@ -64,7 +91,7 @@ func extract_bin() -> void:
 			accessdb_file.seek(table)
 			var f_off: int = accessdb_file.get_32() * 0x800
 			var f_size: int = accessdb_file.get_32() * 0x800
-			#if id != 334:
+			#if id != 368:
 				#table += 8
 				#id += 1
 				#continue
@@ -176,7 +203,7 @@ func make_img(data: PackedByteArray) -> Image:
 	return final_img
 	
 	
-func decode_task(src: PackedByteArray, start_offset: int, dst_size: int = 0xD2000) -> PackedByteArray: ##Size is guessed as its not clear where they are.
+func decode_task(src: PackedByteArray, start_offset: int, dst_size: int = 0x100000) -> PackedByteArray: ##Size is guessed as its not clear where they are.
 	var dst := PackedByteArray()
 	dst.resize(dst_size)
 	
