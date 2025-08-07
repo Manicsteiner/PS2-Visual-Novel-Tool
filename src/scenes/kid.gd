@@ -418,22 +418,24 @@ func extract_arcs() -> void:
 					if bpp == 8:
 						var palette: PackedByteArray = ComFuncs.unswizzle_palette(buff.slice(8, 0x408), 32)
 						var pixel_data: PackedByteArray = buff.slice(0x408, 0x408 + w * h)
-						var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGB8)
+						var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
 						for y in range(h):
 							for x in range(w):
 								var pixel_index: int = pixel_data[x + y * w]
 								var r: int = palette[pixel_index * 4 + 0]
 								var g: int = palette[pixel_index * 4 + 1]
 								var b: int = palette[pixel_index * 4 + 2]
-								#var a: int = palette[pixel_index * 4 + 3]
-								image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+								var a: int = palette[pixel_index * 4 + 3]
+								a = int((a / 128.0) * 255.0)
+								
+								image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 						f_name += ".PNG"
 						image.save_png(folder_path + "/" + arc_name + "/%s" % f_name)
 					elif bpp == 24:
 						buff = buff.slice(8, buff.size() - 8)
 						if remove_alpha:
 							for i in range(0, buff.size(), 4):
-								buff.encode_u8(i + 3, 255)
+								buff.encode_u8(i + 3, int((buff.decode_u8(i + 3) / 128.0) * 255.0))
 						var image: Image = Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, buff)
 						f_name += ".PNG"
 						image.save_png(folder_path + "/" + arc_name + "/%s" % f_name)
