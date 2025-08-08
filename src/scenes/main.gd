@@ -278,6 +278,7 @@ enum {
 	YATOHIME,
 	YOJINBO,
 	YOAKE,
+	YOTSUNOHA,
 	YOUKIHIMDEN,
 	YRMEMORIES,
 	YUKIGATARI,
@@ -1096,6 +1097,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Fukakutei Sekai no Tantei Shinshi: Akugyou Futaasa no Jiken File'."
 		game_type_selector.select(FUKAKUTEI)
 		game_type = FUKAKUTEI
+		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
+		sceneChanger(next_scene)
+	elif index == YOTSUNOHA:
+		game_type_sub_text.text = "Supports decompression of BMPs to PNG."
+		game_type_selector.select(YOTSUNOHA)
+		game_type = YOTSUNOHA
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == RUNEPRINCESS:
@@ -2254,6 +2261,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
 	game_type_selector.add_item("Yo-Jin-Bo: Unmei no Freude", YOJINBO)
 	game_type_selector.add_item("Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue", YOAKE)
+	game_type_selector.add_item("Yotsunoha: A Journey of Sincerity", YOTSUNOHA)
 	game_type_selector.add_item("Youkihimeden: Ayakashi Gentoubanashi", YOUKIHIMDEN)
 	game_type_selector.add_item("Your Memories Off: Girl's Style", YRMEMORIES)
 	game_type_selector.add_item("Yuki Gatari: Renewal Edition", YUKIGATARI)
