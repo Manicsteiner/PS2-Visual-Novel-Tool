@@ -2,7 +2,7 @@ extends Control
 
 @onready var file_load_dat: FileDialog = $FILELoadDAT
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
-@onready var remove_alpha_button: CheckBox = $VBoxContainer/removeAlphaButton
+@onready var fix_alpha_button: CheckBox = $VBoxContainer/fixAlphaButton
 @onready var load_dat: Button = $HBoxContainer/LoadDAT
 @onready var decomp_button: CheckBox = $VBoxContainer/decompButton
 @onready var load_bind: Button = $HBoxContainer/LoadBIND
@@ -14,11 +14,11 @@ var selected_files: PackedStringArray
 var chose_files: bool = false
 var chose_folder: bool = false
 var out_decomp: bool = false
-var remove_alpha: bool = false
+var fix_alpha: bool = true
 
 func _ready() -> void:
-	if Main.game_type == Main.OUKA:
-		remove_alpha_button.visible = true
+	if Main.game_type == Main.OUKA or Main.game_type == Main.WHITECLARITY:
+		fix_alpha_button.visible = true
 		load_dat.visible = true
 		load_bind.visible = false
 	elif (
@@ -28,12 +28,12 @@ func _ready() -> void:
 	Main.game_type == Main.ANGELSFEATHER or
 	Main.game_type == Main.MENATWORK3
 	):
-		remove_alpha_button.visible = false
+		fix_alpha_button.visible = false
 		load_dat.visible = false
 		load_bind.visible = true
 		decomp_button.visible = false
 	else:
-		remove_alpha_button.visible = false
+		fix_alpha_button.visible = false
 		load_dat.visible = false
 		load_bind.visible = false
 		
@@ -54,7 +54,7 @@ func extract() -> void:
 	var png: Image
 	var offset: int
 		
-	if Main.game_type == Main.OUKA:
+	if Main.game_type == Main.OUKA or Main.game_type == Main.WHITECLARITY:
 		for i in range(0, selected_files.size()):
 			in_file = FileAccess.open(selected_files[i], FileAccess.READ)
 			f_name = selected_files[i].get_file()
@@ -65,6 +65,15 @@ func extract() -> void:
 			var height: int = buff.decode_u16(0x16)
 			var bpp: int = buff.decode_u16(0x1C)
 
+			if buff.slice(0, 2).get_string_from_ascii() == "BM": # Not compressed
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				print("%08X %s/%s" % [buff.size(), folder_path, f_name])
+				in_file.close()
+				buff.clear()
+				continue
 			if bpp == 24:
 				buff = decompressBmp(buff)
 				png = Image.create_from_data(width, height, false, Image.FORMAT_RGB8, buff)
@@ -81,7 +90,7 @@ func extract() -> void:
 				out_file.close()
 				
 				#print("0x%08X 0x%08X %s/%s" % [offset, buff.size(), folder_path, f_name])
-				print("0x%08X %s/%s" % [buff.size(), folder_path, f_name])
+				print("%08X %s/%s" % [buff.size(), folder_path, f_name])
 				in_file.close()
 				buff.clear()
 				continue
@@ -100,7 +109,7 @@ func extract() -> void:
 				continue
 			
 			#print("0x%08X 0x%08X %s/%s" % [offset, buff.size(), folder_path, f_name])
-			print("0x%08X %s/%s" % [buff.size(), folder_path, f_name])
+			print("%08X %s/%s" % [buff.size(), folder_path, f_name])
 			png.save_png(folder_path + "/%s" % f_name + ".PNG")
 			
 			if out_decomp:
@@ -306,8 +315,8 @@ func decompressBmp(compressed_data: PackedByteArray) -> PackedByteArray:
 					var b: int = compressed_data[read_pos + 3]
 					read_pos += 4
 
-					if remove_alpha:
-						a = 255
+					if fix_alpha:
+						a = int((a / 128.0) * 255.0)
 					else:
 						# Special alpha handling
 						if a == 0xFF:
@@ -331,8 +340,8 @@ func decompressBmp(compressed_data: PackedByteArray) -> PackedByteArray:
 				var b: int = compressed_data[read_pos + 3]
 				read_pos += 4
 
-				if remove_alpha:
-					a = 255
+				if fix_alpha:
+					a = int((a / 128.0) * 255.0)
 				else:
 					# Special alpha handling
 					if a == 0xFF:
@@ -393,8 +402,8 @@ func _on_decomp_button_toggled(_toggled_on: bool) -> void:
 	out_decomp = !out_decomp
 
 
-func _on_remove_alpha_button_toggled(_toggled_on: bool) -> void:
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_button_toggled(_toggled_on: bool) -> void:
+	fix_alpha = !fix_alpha
 
 
 func _on_load_bind_pressed() -> void:

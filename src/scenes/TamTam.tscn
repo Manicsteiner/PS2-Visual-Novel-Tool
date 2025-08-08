@@ -50,13 +50,14 @@ offset_bottom = 145.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="fixAlphaButton" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Fix Alpha Channel in Images"
+
 [node name="decompButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 text = "Output Decompressed Files (Debug)"
-
-[node name="removeAlphaButton" type="CheckBox" parent="VBoxContainer"]
-layout_mode = 2
-text = "Remove Alpha Channel in PNGs"
 
 [node name="FILELoadDAT" type="FileDialog" parent="."]
 auto_translate_mode = 1
@@ -92,8 +93,8 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadDAT" to="." method="_on_load_dat_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadBIND" to="." method="_on_load_bind_pressed"]
+[connection signal="toggled" from="VBoxContainer/fixAlphaButton" to="." method="_on_fix_alpha_button_toggled"]
 [connection signal="toggled" from="VBoxContainer/decompButton" to="." method="_on_decomp_button_toggled"]
-[connection signal="toggled" from="VBoxContainer/removeAlphaButton" to="." method="_on_remove_alpha_button_toggled"]
 [connection signal="files_selected" from="FILELoadDAT" to="." method="_on_file_load_dat_files_selected"]
 [connection signal="files_selected" from="FILELoadBIND" to="." method="_on_file_load_bind_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

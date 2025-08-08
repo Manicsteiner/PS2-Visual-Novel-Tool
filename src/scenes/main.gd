@@ -273,6 +273,7 @@ enum {
 	UTAU,
 	WEARE,
 	WHITEBREATH,
+	WHITECLARITY,
 	WHITEPRINCESS,
 	YAMIYO,
 	YATOHIME,
@@ -1100,7 +1101,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
 		sceneChanger(next_scene)
 	elif index == YOTSUNOHA:
-		game_type_sub_text.text = "Supports decompression of BMPs to PNG."
+		game_type_sub_text.text = "Supports extraction."
 		game_type_selector.select(YOTSUNOHA)
 		game_type = YOTSUNOHA
 		var next_scene: PackedScene = load("res://src/scenes/AbelSoft.tscn")
@@ -1385,6 +1386,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Ouka: Kokoro Kagayakaseru Sakura'."
 		game_type_selector.select(OUKA)
 		game_type = OUKA
+		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
+		sceneChanger(next_scene)
+	elif index == WHITECLARITY:
+		game_type_sub_text.text = "Supports decompression of BMPs to PNG."
+		game_type_selector.select(WHITECLARITY)
+		game_type = WHITECLARITY
 		var next_scene: PackedScene = load("res://src/scenes/TamTam.tscn")
 		sceneChanger(next_scene)
 	elif index == PATISSERIE:
@@ -2256,6 +2263,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Utau * Tumbling Dice", UTAU)
 	game_type_selector.add_item("WeAre*", WEARE)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
+	game_type_selector.add_item("White Clarity: And, the Tears Became You", WHITECLARITY)
 	game_type_selector.add_item("White Princess the Second", WHITEPRINCESS)
 	game_type_selector.add_item("Yamiyo ni Sasayaku: Tantei Sagara Kyouichirou", YAMIYO)
 	game_type_selector.add_item("Yatohime Zankikou", YATOHIME)
