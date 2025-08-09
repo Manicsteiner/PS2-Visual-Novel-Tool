@@ -193,6 +193,7 @@ enum {
 	PRINCESSCONCERTO,
 	PRINCESSHOLIDAY,
 	PRINCESSLOVER,
+	PRINCESSMAKER2,
 	PRINCESSMAKER5,
 	PRINCESSNIGHTMARE,
 	PRINCESSPRINCESS,
@@ -547,6 +548,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(PRINCESSMAKER5)
 		game_type = PRINCESSMAKER5
 		var next_scene: PackedScene = load("res://src/scenes/Tose.tscn")
+		sceneChanger(next_scene)
+	elif index == PRINCESSMAKER2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP)."
+		game_type_selector.select(PRINCESSMAKER2)
+		game_type = PRINCESSMAKER2
+		var next_scene: PackedScene = load("res://src/scenes/PrincessMaker2.tscn")
 		sceneChanger(next_scene)
 	elif index == NATURAL2:
 		game_type_sub_text.text = "Supports:\nExtraction, unsupported tiled images."
@@ -2183,6 +2190,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Princess Concerto", PRINCESSCONCERTO)
 	game_type_selector.add_item("Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya", PRINCESSHOLIDAY)
 	game_type_selector.add_item("Princess Lover! Eternal Love for My Lady", PRINCESSLOVER)
+	game_type_selector.add_item("Princess Maker 2", PRINCESSMAKER2)
 	game_type_selector.add_item("Princess Maker 5", PRINCESSMAKER5)
 	game_type_selector.add_item("Princess Nightmare", PRINCESSNIGHTMARE)
 	game_type_selector.add_item("Princess Princess: Himetachi no Abunai Houkago", PRINCESSPRINCESS)
