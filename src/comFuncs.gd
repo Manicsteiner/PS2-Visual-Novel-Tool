@@ -116,7 +116,7 @@ func convert_rgba_5551_to_rgba8(image_data: PackedByteArray, palette_data: Packe
 	return img
 	
 
-func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, swap_color_order: bool) -> Image:
+func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, swap_color_order: bool) -> Image: ## RGBA5551
 	# Create a blank Image object
 	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
 	
@@ -133,10 +133,11 @@ func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: 
 			var pixel_16: int = input_buffer.decode_u16(idx)
 			idx += 2
 
-			# Extract RGB values from RGB555 format
+			# Extract RGBA values from RGBA5551 format
 			var r: int = ((pixel_16 >> 10) & 0x1F) * 8
 			var g: int = ((pixel_16 >> 5) & 0x1F) * 8
 			var b: int = (pixel_16 & 0x1F) * 8
+			var a: float = float((pixel_16 >> 15) & 0x1)
 
 			# Swap color order if requested
 			if swap_color_order:
@@ -145,7 +146,7 @@ func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: 
 				b = temp
 
 			# Set pixel color
-			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, 1.0)
+			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, a)
 			img.set_pixel(x, y, color)
 
 	return img
