@@ -227,6 +227,7 @@ enum {
 	SHAKUGAN,
 	SHINE,
 	SHINKOIHIME,
+	SHINKYOUKU,
 	SHINSEIKIEVABATTLE,
 	SHOUJOMAHOU,
 	SHIROGANE,
@@ -1010,6 +1011,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Air' (most images)."
 		game_type_selector.select(AIR)
 		game_type = AIR
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == SHINKYOUKU:
+		game_type_sub_text.text = "Supports 'Shinkyouku Soukai Polyphonica' (most images)."
+		game_type_selector.select(SHINKYOUKU)
+		game_type = SHINKYOUKU
 		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
 		sceneChanger(next_scene)
 	elif index == ARABIANS:
@@ -2231,6 +2238,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)
 	game_type_selector.add_item("Shine: Kotoba wo Tsumui de", SHINE)
 	game_type_selector.add_item("Shin Koihime Musou: Otome Ryouran Sangokushi Engi", SHINKOIHIME)
+	game_type_selector.add_item("Shinkyouku Soukai Polyphonica", SHINKYOUKU)
 	game_type_selector.add_item("Shin Seiki Evangelion: Battle Orchestra", SHINSEIKIEVABATTLE)
 	game_type_selector.add_item("Shoujo Mahou Gaku Littlewitch Romanesque: Aria to Kaya to Kuro no Tou", SHOUJOMAHOU)
 	game_type_selector.add_item("Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku", SHIROGANE)
