@@ -328,7 +328,7 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 0:
+			#if file != 27:
 				#continue
 				
 			in_file.seek(f_offset)
@@ -387,7 +387,7 @@ func cybellePakExtract() -> void:
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 					continue
 				
-			# TODO: If flag at 0x1F in header, has a palette? If flag is 4, seems to have a compressed palette
+			# TODO: If flag at 0x1F (Planetarian?) in header, has a palette? If flag is 4, seems to have a compressed palette
 			if bytes_2 and buff.decode_u8(bytes_2 + 10) == 0xC:
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
@@ -601,7 +601,6 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	var s2: int
 	var width:int
 	var height:int
-	var start_off: int 
 	var out_size: int
 	var mem_01A922B0: int
 	var mem_01A922BC: int
@@ -615,96 +614,89 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	var mem_01A9235C: int
 	var comp_type: int
 	
-	#if input.decode_u8(9) == 1:
-		#push_error("File uses old RLE format! Skipping")
-		#return PackedByteArray()
-		
 	# Older header check (Canvas)
-	start_off = input.decode_u32(0x4)
-	if start_off != 0:
-		input = input.slice(start_off)
+	var start_offset: int = input.decode_u32(0x4)
+	if start_offset != 0:
+		input = input.slice(start_offset)
 	else:
-		start_off = 0x20
+		start_offset = 0x20
 		
 	comp_type = input.decode_u8(9)
-	# Determine start of bytes to decode
-	a1 = 0
-	a2 = 0
-	v1 = input.decode_u8(10)
-	if v1 == 0xA:
-		a1 = 0x200
-	elif v1 == 0xC:
-		a1 = 0x400
-	elif v1 == 0xD:
-		a1 = 0x40
-	elif v1 == 0xF:
-		# Encrypted / compressed palettes?
-		v0 = input.decode_u16(0x1E)
-		a1 = v0 << 1
+	
+	# Determine palette offset
+	var palette_size: int = 0
+	var palette_type: int = input.decode_u8(10)
+	match palette_type:
+		0xA:
+			palette_size = 0x200
+		0xC:
+			palette_size = 0x400
+		0xD:
+			palette_size = 0x40
+		0xF:
+			# Possibly encrypted/compressed palettes. What are these and where does the game get the palettes from?
+			palette_size = input.decode_u16(0x1E) << 1
 		
-	a0 = input.decode_u32(0x10)
-	v1 = (a2 + a1) + start_off
-	start_off = v1 # New start off
-	a0 <<= 1
-	a0 = v1 + a0
+	var section_start: int  = input.decode_u32(0x10)
+	start_offset += palette_size
+	section_start = start_offset + (section_start << 1)
 	
 	width = input.decode_u16(0)
 	height = input.decode_u16(2)
 	
 	fill_size = (width << 4) + 0x10
-	mem_01A922B0 = 0 # Part size when one pass finishes decompression?
-	mem_01A922BC = fill_size # ending of fill bytes
-	mem_01A922C4 = a0 # First section of bytes to decode
-	mem_01A922C8 = start_off
-	mem_01A922CC = input.decode_u8(0x1C)
+	var pass_fill_end: int = fill_size
+	var decode_section_ptr: int = section_start
+	var decode_start_ptr: int = start_offset
+	var section_id: int = input.decode_u8(0x1C)
+	var pass_counter: int = 0
+	var chunk_size: int = 0x00014C80  # Decompression chunk size
+	var header_start_addr: int = 0
+	var decode_mode: int = input.decode_u8(0x1D)
+	
+	mem_01A922B0 = pass_counter # Part size when one pass finishes decompression?
+	mem_01A922BC = pass_fill_end # ending of fill bytes
+	mem_01A922C4 = section_start # First section of bytes to decode
+	mem_01A922C8 = start_offset
+	mem_01A922CC = section_id
 	mem_01A92350 = 0
 	mem_01A92354 = 0
-	mem_01A92358 = 0x00014C80 # Seems to be part size for decompression. 
-	mem_01A9235C = 0 # Header start address of input buffer
-	mem_01A922D0 = input.decode_u8(0x1D)
+	mem_01A92358 = chunk_size # Seems to be part size for decompression. 
+	mem_01A9235C = header_start_addr # Header start address of input buffer
+	mem_01A922D0 = decode_mode
 	
-	a3 = 0
-	t0 = 0x1E
-	temp_buff.resize((t0 + 1) << 2)
-	while t0 != -1:
-		# These create wrap around bytes for seeking to memory addresses.
-		# These bytes later when read would normally wrap around the lowest 32 bits of a register value
-		v1 = mem_01A922C4
-		t0 -= 1
-		a2 = width
-		a1 = v1 + 1
-		a0 = input.decode_u8(v1)
-		mem_01A922C4 = a1
-		v1 += 2
-		a0 -= 8 & 0xFFFFFFFF
-		v0 = input.decode_u8(a1)
-		mem_01A922C4 = v1
-		v0 -= 8 & 0xFFFFFFFF
-		v0 = v0 * a2
-		v0 = (v0 + a0) & 0xFFFFFFFF
-		temp_buff.encode_s32(a3, v0)
-		a3 += 4
-		
-	# Combine fill bytes and out buffer into one. 
-	out_size = (width * height) * 2 # * 2 = 16 bit color components
+	# --- TEMP BUFFER INITIALIZATION ---
+	var temp_buffer_size: int = (0x1E + 1) << 2
+	temp_buff.resize(temp_buffer_size)
+	var buffer_index: int = 0
+	var loop_counter: int = 0x1E
+	
+	while loop_counter >= 0:
+		var section_pos: int = decode_section_ptr
+		decode_section_ptr += 1
+		var base_value: int = input.decode_u8(section_pos) - 8
+		section_pos = decode_section_ptr
+		decode_section_ptr += 1
+		var row_value: int = (input.decode_u8(section_pos) - 8) * width
+		var final_value: int = (row_value + base_value) & 0xFFFFFFFF
+		temp_buff.encode_s32(buffer_index, final_value)
+		buffer_index += 4
+		loop_counter -= 1
+	
+	# --- SAVE DECODED SECTION POINTER --- 
+	mem_01A922C4 = decode_section_ptr
+	# --- OUTPUT BUFFER PREPARATION ---
+	out_size = (width * height) * 2  # *2 for 16-bit color
 	out.resize(fill_size + out_size)
 	
-	v0 = (width << 3) + 8
-	#fill_buff.resize(v0)
-	t1 = mem_01A9235C
-	a1 = 0
-	if v0 < 0x7FFFFFFF:
-		s1 = 0 # Start address of out buffer where fill bytes start
-		while v0 != 0:
-			# Create fill buffer based on bytes at 0xC in the header of the image
-			v1 = a1 << 1
-			a1 += 1
-			a0 = input.decode_u16(t1 + 0xC)
-			v1 += s1
-			out.encode_s16(v1, a0)
-			v0 = (width << 3) + 8
-			v0 = a1 < v0
-			t1 = mem_01A9235C
+	var fill_bytes_count: int = (width << 3) + 8
+	var out_offset: int = 0
+	var fill_index: int = 0
+	while fill_index < fill_bytes_count:
+		var dest_pos: int = (fill_index << 1) + out_offset
+		var fill_value: int = input.decode_u16(header_start_addr + 0xC)
+		out.encode_s16(dest_pos, fill_value)
+		fill_index += 1
 			
 	if comp_type == 3:
 		var final_size: int = fill_size + out_size
