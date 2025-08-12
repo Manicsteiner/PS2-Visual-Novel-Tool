@@ -328,7 +328,7 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 160:
+			#if file != 0:
 				#continue
 				
 			in_file.seek(f_offset)
@@ -388,7 +388,7 @@ func cybellePakExtract() -> void:
 					continue
 				
 			# TODO: If flag at 0x1F in header, has a palette? If flag is 4, seems to have a compressed palette
-			if bytes_2 and buff.decode_u8(bytes_2 + 0x1F):
+			if bytes_2 and buff.decode_u8(bytes_2 + 10) == 0xC:
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
 				pal = ComFuncs.unswizzle_palette(pal, 32)
@@ -402,7 +402,7 @@ func cybellePakExtract() -> void:
 				f_name += ".PNG"
 				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGB8, buff)
 				png.save_png(folder_path + "/%s" % f_name)
-			elif buff.decode_u8(0x1F):
+			elif buff.decode_u8(10) == 0xC:
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
 				pal = ComFuncs.unswizzle_palette(pal, 32)
@@ -414,7 +414,7 @@ func cybellePakExtract() -> void:
 				buff = convert_rgb555_with_palette(buff, width, height, pal)
 				
 				f_name += ".PNG"
-				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGB8, buff)
+				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
 				png.save_png(folder_path + "/%s" % f_name)
 			else:
 				buff = cCbsd(buff)
@@ -448,11 +448,14 @@ func convert_rgb555_with_palette(image_data: PackedByteArray, width: int, height
 			var r = palette_data[palette_index * 4]
 			var g = palette_data[palette_index * 4 + 1]
 			var b = palette_data[palette_index * 4 + 2]
+			var a = palette_data[palette_index * 4 + 3]
+			a = int((a / 128.0) * 255.0)
 			
 			# Append the RGB values to the output
 			output_data.append(r)
 			output_data.append(g)
 			output_data.append(b)
+			output_data.append(a)
 	
 	return output_data
 	
