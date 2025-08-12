@@ -294,7 +294,6 @@ func cybellePakExtract() -> void:
 	# OTHCG.PAK_0176.BIN - OTHCG.PAK_0178.BIN huge multi image files
 	# Check for names in some paks
 	# RBB extraction (song loop info in exe)
-	# Compression type 2 (flag at 0x9 in the header of images). Function for it is at 0x001038f8 in Sangoku Renseki (cCbsd::idxEx())
 	# Compression type 1 at 0x001032f0 in Sangoku Renseki (cCbsd::fastEx())
 	
 	if debug_out:
@@ -329,7 +328,7 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 2:
+			#if file != 160:
 				#continue
 				
 			in_file.seek(f_offset)
@@ -368,16 +367,11 @@ func cybellePakExtract() -> void:
 					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 					continue
-				elif buff.decode_u8(9) == 2 and !debug_out:
-					push_error("TODO: File %s uses compression type %02X. Skipping." % [f_name, decomp_type])
-					print_rich("[color=red]TODO: File %s uses compression type %02X. Skipping.[/color]" % [f_name, decomp_type])
-					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
-					continue
-				elif buff.decode_u8(9) != 3:
+				elif buff.decode_u8(9) > 3 and !debug_out:
 					push_error("File %s has unknown compression type %02X!" % [f_name, decomp_type])
 					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, decomp_type])
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
-					continue
+					#continue
 			else:
 				width = buff.decode_u16(bytes_2)
 				height = buff.decode_u16(bytes_2 + 2)
@@ -387,12 +381,7 @@ func cybellePakExtract() -> void:
 					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 					continue
-				elif buff.decode_u8(bytes_2 + 9) == 2 and !debug_out:
-					push_error("TODO: File %s uses compression type %02X. Skipping." % [f_name, decomp_type])
-					print_rich("[color=red]TODO: File %s uses compression type %02X. Skipping.[/color]" % [f_name, decomp_type])
-					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
-					continue
-				elif buff.decode_u8(bytes_2 + 9) != 3:
+				elif buff.decode_u8(bytes_2 + 9) > 3:
 					push_error("File %s has unknown compression type %02X!" % [f_name, decomp_type])
 					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, decomp_type])
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
@@ -584,11 +573,10 @@ func make_lookup_tables() -> void:
 func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	# This decompression function and related lookups is absurdly complex.
 	# Based on offsets from Sangoku Renseki.
-	# TODO: decomp_type 2 and 1
+	# TODO: decomp_type 1 (these just seem like entire black / white images)
 	
 	var out: PackedByteArray
 	var temp_buff: PackedByteArray
-	#var fill_buff: PackedByteArray
 	var fill_size: int
 	var v0:int
 	var v1:int
@@ -647,6 +635,7 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	elif v1 == 0xD:
 		a1 = 0x40
 	elif v1 == 0xF:
+		# Encrypted / compressed palettes?
 		v0 = input.decode_u16(0x1E)
 		a1 = v0 << 1
 		
@@ -1257,551 +1246,603 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 							return out.slice(fill_size)
 						else:
 							goto = "init"
-	# TODO (haven't started)
 	elif comp_type == 2:
 		var final_size: int = fill_size + out_size
-		var goto: String = "init"
+		var pc: int = 0
 		while true:
-			match goto:
-				"init":
-					# Simulates function re-entry
+			match pc:
+				0:
 					t2 = 0 # temp_buff start offset
 					v0 = mem_01A92358
-					a2 = mem_01A922BC # out buffer offset
-					t6 = final_size # Think this is correct
-					v0 <<= 1
-					v0 = a2 + v0
-					t9 = a2
-					v1 = v0 < t6
-					t7 = v0
+					a2 = mem_01A922BC # out buffer offset $000c(s0)
+					t4 = final_size # Think this is correct
+					v0 = (v0 << 1) & 0xFFFFFFFF
+					v0 = (a2 + v0) & 0xFFFFFFFF
+					t8 = a2
+					v1 = v0 < t4
+					t5 = v0
 					if v1 == 0:
-						t7 = t6
-					t1 = mem_01A922C4
-					v0 = a2 < t7
-					a3 = mem_01A92354
-					t4 = mem_01A92350
-					# 00104010
-					t5 = mem_01A922C8
+						t5 = t4
+					t1 = mem_01A922C4 #$0014(s0)
+					v0 = a2 < t5
+					t0 = mem_01A92354 #$00a4(s0)
+					#t4 = mem_01A92350 #$00a0(s0)
+					#mem_01A922B0 $0000(s0) v1
+					t7 = mem_01A922C8 #$0018(s0)
 					if v0 == 0:
-						goto = "00104670"
+						pc = 0x00103f60
+						continue
 					else:
-						t8 = mem_01A922D0
-						s1 = 0 # Points to start of lookup_table
-						s2 = 0x200 # Points to next 0x200 of lookup table
+						t6 = mem_01A922D0 #0020(s0)
+						t9 = 0 # Points to start of lookup_table
+						s1 = 0x200 # Points to next 0x200 of lookup table
 						t3 = 0xFFFFFFFF
 						v1 = input.decode_u8(t1 + 1)
-						goto = "start"
-				"start":
-					v0 = input.decode_u8(t1)
-					v1 <<= 8
-					v0 = v0 | v1
-					v0 = v0 >> a3
-					v0 &= 0x1FF
-					v1 = v0 + s2
-					v0 += s1
-					a0 = lookup_table.decode_u8(v1)
-					t0 = lookup_table.decode_u8(v0)
-					a3 += a0
-					v0 = a3 >> 3
-					a3 &= 7
-					t1 += v0
-					a1 = input.decode_u8(t1 + 3)
-					v1 = input.decode_u8(t1 + 2)
-					a0 = input.decode_u8(t1 + 1)
+					pc = 0x00103968
+					continue
+				0x00103968:
+					v0 = input.decode_u8(t1)#load_byte_unsigned(t1 + 0x0000)
+					v1 = (v1 << 8) & 0xFFFFFFFF
+					v0 = v0 | v1 # or                v0, v0, v1
+					v0 = v0 >> t0 # srav              v0, v0, t0
+					v0 = v0 & 511
+					v1 = (v0 + s1) & 0xFFFFFFFF
+					v0 = v0 + t9
+					a0 = lookup_table.decode_u8(v1)#load_byte_unsigned(v1 + 0x0000)
+					a3 = lookup_table.decode_u8(v0)#load_byte_unsigned(v0 + 0x0000)
+					t0 = t0 + a0
+					v0 = t0 >> 3  # arithmetic shift
+					t0 = t0 & 7
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a1 = input.decode_u8(t1 + 3)#load_byte_unsigned(t1 + 0x0003)
+					v1 = input.decode_u8(t1 + 2)#load_byte_unsigned(t1 + 0x0002)
+					a0 = input.decode_u8(t1 + 1)#load_byte_unsigned(t1 + 0x0001)
 					a1 = (a1 << 24) & 0xFFFFFFFF
-					v0 = input.decode_u8(t1)
+					v0 = input.decode_u8(t1)#load_byte_unsigned(t1 + 0x0000)
 					v1 = (v1 << 16) & 0xFFFFFFFF
 					a0 = (a0 << 8) & 0xFFFFFFFF
-					v1 = v1 | a0
-					v0 = v0 | a1
-					v0 = v0 | v1
-					v1 = v0 >> a3
-					# 001039C4 diff
-					if t0 != t8:
-						goto = "00104118"
-					else:
-						v0 = v1 & 1
-						if v0 != 0:
-							goto = "001040D8"
-							a0 = mem_01A922CC
-						else:
-							v0 = t4 << 1
-							t4 += 1
-							v0 = v0 + t5
-							a3 += 1
-							a0 = input.decode_u16(v0)
-							v1 = a3 >> 3
-							t1 = t1 + v1
-							a3 &= 7
-							out.encode_s16(a2, a0)
-							goto = "00104664"
-							a2 += 2
-				"001040D8":
-					v0 = 1
-					v1 >>= 1
-					v0 <<= a0
-					a0 = a3 + a0
-					v0 = (v0 - 1) & 0xFFFFFFFF
-					a3 = a0 + 1
-					v1 &= v0
-					a0 = a3 >> 3
-					v1 = (t4 - v1) & 0xFFFFFFFF
-					t1 = t1 + a0
-					v1 <<= 1
-					a3 &= 7
-					v1 += t5
-					goto = "0010420C"
-					v0 = input.decode_u16(v1 - 2)
-				"00104118":
-					v0 = v1 & 1
+					v1 = v1 | a0# or                v1, v1, a0
+					v0 = v0 | a1# or                v0, v0, a1
+					v0 = v0 | v1# or                v0, v0, v1
+					a0 = v0 >> t0 # srav              a0, v0, t0
+					if a3 != t6:
+						pc = 0x00103a08
+						continue
+					v1 = mem_01A922CC #load_word(s0 + 0x001c)
+					v0 = 0 + 1
+					v0 = (v0 << v1) & 0xFFFFFFFF # sllv              v0, v0, v1
+					t0 = (t0 + v1) & 0xFFFFFFFF
+					v0 = (v0 + -1) & 0xFFFFFFFF
+					v1 = t0 >> 3  # arithmetic shift
+					v0 = a0 & v0 # and               v0, a0, v0
+					t1 = (t1 + v1) & 0xFFFFFFFF
+					v0 = (v0 << 1) & 0xFFFFFFFF
+					t0 = t0 & 7
+					v0 = (v0 + t7) & 0xFFFFFFFF
+					v1 = input.decode_u16(v0)# lhu               v1, $0000(v0)
+					out.encode_s16(a2, v1)# sh                v1, $0000(a2)
+					a2 = a2 + 2
+					pc = 0x00103f54
+					continue
+				0x00103A08:
+					v0 = a0 & 1
 					if v0 != 0:
-						v0 = v1 & 2
-						goto = "00104150"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						a3 += 1
-						v0 = v0 + t2
-						a0 = a3 >> 3
-						v1 = temp_buff.decode_u32(v0)
-						t1 = t1 + a0
-						a3 &= 7
-						v1 = (v1 << 1) & 0xFFFFFFFF
-						v1 = (a2 + v1) & 0xFFFFFFFF
-						goto = "0010420C"
-						v0 = out.decode_u16(v1)
-				"00104150":
-					if v0 == 0:
-						v0 = v1 & 4
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						a3 += 2
-						v0 += t2
-						a0 = a3 >> 3
-						v1 = temp_buff.decode_u32(v0)
-						t1 += a0
-						a3 &= 7
-						v1 = (v1 << 1) & 0xFFFFFFFF
-						goto = "001041FC"
-						v1 = (a2 + v1) & 0xFFFFFFFF
-					else:
-						# 00104180
-						v0 = v1 & 4
-						if v0 == 0:
-							v0 = v1 & 8
-							v0 = (t0 << 2) & 0xFFFFFFFF
-							a3 += 3
-							v0 += t2
-							a0 = a3 >> 3
-							v1 = temp_buff.decode_u32(v0)
-							t1 += a0
-							a3 &= 7
-							v1 = (v1 << 1) & 0xFFFFFFFF
-							goto = "001041EC"
-							v1 = (a2 + v1) & 0xFFFFFFFF
-						else:
-							v0 = v1 & 8
-							# 001041B0
-							if v0 != 0:
-								v0 = v1 & 0x10
-								goto = "00104218"
-							else:
-								# v0 = v1 & 0x10
-								v0 = (t0 << 2) & 0xFFFFFFFF
-								a3 += 4
-								v0 = (v0 + t2) & 0xFFFFFFFF
-								a0 = a3 >> 3
-								v1 = temp_buff.decode_u32(v0)
-								t1 += a0
-								a3 &= 7
-								v1 = (v1 << 1) & 0xFFFFFFFF
-								v1 = (a2 + v1) & 0xFFFFFFFF
-								v0 = out.decode_u16(v1)
-								v1 += 2
-								out.encode_s16(a2, v0)
-								a2 += 2
-								# 001041EC
-								v0 = out.decode_u16(v1)
-								v1 += 2
-								out.encode_s16(a2, v0)
-								a2 += 2
-								# 001041FC
-								v0 = out.decode_u16(v1)
-								out.encode_s16(a2, v0)
-								a2 += 2
-								v0 = out.decode_u16(v1 + 2)
-								goto = "0010420C"
-				"001041EC":
-					v1 &= 0xFFFFFFFF
-					v0 = out.decode_u16(v1)
-					v1 += 2
-					out.encode_s16(a2, v0)
-					a2 += 2
-					# 001041FC
-					v0 = out.decode_u16(v1)
-					out.encode_s16(a2, v0)
-					a2 += 2
-					v0 = out.decode_u16(v1 + 2)
-					goto = "0010420C"
-				"001041FC":
-					v1 &= 0xFFFFFFFF
-					v0 = out.decode_u16(v1)
-					out.encode_s16(a2, v0)
-					a2 += 2
-					v0 = out.decode_u16(v1 + 2)
-					goto = "0010420C"
-				"0010420C":
-					out.encode_s16(a2, v0)
-					goto = "00104664"
-					a2 += 2
-				"00104218":
+						v0 = a0 & 2
+						pc = 0x00103a40
+						continue
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					t0 = t0 + 1
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					a0 = t0 >> 3  # arithmetic shift
+					v1 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					t1 = (t1 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					v1 = (v1 + a2) & 0xFFFFFFFF
+					v0 = out.decode_u16(v1) # lhu               v0, $0000(v1)
+					pc = 0x00103afc
+					continue
+				0x00103A40:
 					if v0 != 0:
-						v0 = v1 & 0x20
-						goto = "001042D0"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 5
-						v0 += t2
-						a1 = v1 & 3
-						a0 = temp_buff.decode_u32(v0)
-						a3 += 7
-						v1 = a3 >> 3
-						a3 &= 7
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						a1 = (a1 - 1) & 0xFFFFFFFF
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						t1 += v1
-						v0 = out.decode_u16(a0)
-						a0 += 2
-						out.encode_s16(a2, v0)
-						a2 += 2
-						v0 = out.decode_u16(a0)
-						a0 += 2
-						out.encode_s16(a2, v0)
-						a2 += 2
-						v0 = out.decode_u16(a0)
-						a0 += 2
-						out.encode_s16(a2, v0)
-						a2 += 2
-						v0 = out.decode_u16(a0)
-						a0 += 2
-						out.encode_s16(a2, v0)
-						a2 += 2
-						v0 = out.decode_u16(a0)
-						a0 += 2
-						out.encode_s16(a2, v0)
-						a2 += 2
-						if a1 == t3:
-							goto = "00104664"
-						else:
-							v1 = 0xFFFFFFFF
-							while a1 != v1:
-								a0 &= 0xFFFFFFFF
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								a1 = (a1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"001042D0":
+						v0 = a0 & 4
+						pc = 0x00103a70
+						continue
+					v0 = a0 & 4
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					t0 = t0 + 2
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					a0 = t0 >> 3  # arithmetic shift
+					v1 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					t1 = (t1 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					v1 = (a2 + v1) & 0xFFFFFFFF
+					pc = 0x00103aec
+					continue
+				0x00103A70:
 					if v0 != 0:
-						v0 = v1 & 0x40
-						goto = "00104338"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 6
-						v0 += t2
-						a3 += 9
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 7
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 8
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								a0 &= 0xFFFFFFFF
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"00104338":
+						v0 = a0 & 8
+						pc = 0x00103aa0
+						continue
+					v0 = a0 & 8
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					t0 = t0 + 3
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					a0 = t0 >> 3  # arithmetic shift
+					v1 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					t1 = (t1 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					v1 = (a2 + v1) & 0xFFFFFFFF
+					pc = 0x00103adc
+					continue
+				0x00103AA0:
 					if v0 != 0:
-						v0 = v1 & 0x80
-						goto = "001043A0"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 7
-						v0 += t2
-						a3 += 0xB
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0xF
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x10
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								a0 &= 0xFFFFFFFF
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"001043A0":
+						v0 = a0 & 16
+						pc = 0x00103b08
+						continue
+					v0 = a0 & 16
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					t0 = t0 + 4
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					a0 = t0 >> 3  # arithmetic shift
+					v1 = temp_buff.decode_u32(v0) #load_word(v0 + 0x0000)
+					t1 = (t1 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					v1 = (v1 << 1) & 0xFFFFFFFF
+					v1 = (a2 + v1) & 0xFFFFFFFF
+					v0 = out.decode_u16(v1)# lhu               v0, $0000(v1)
+					v1 = v1 + 2
+					out.encode_s16(a2, v0)# sh                v0, $0000(a2)
+					a2 = a2 + 2
+					pc = 0x00103ADC
+					continue
+				0x00103ADC:
+					v0 = out.decode_u16(v1) # lhu               v0, $0000(v1)
+					v1 = v1 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					pc = 0x00103AEC
+					continue
+				0x00103AEC:
+					v0 = out.decode_u16(v1) # lhu               v0, $0000(v1)
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					v0 = out.decode_u16(v1 + 2) # lhu               v0, $0002(v1)
+					pc = 0x00103AFC
+					continue
+				0x00103AFC:
+					out.encode_s16(a2, v0)# sh                v0, $0000(a2)
+					a2 = a2 + 2
+					pc = 0x00103f54
+					continue
+				0x00103B08:
 					if v0 != 0:
-						v0 = v1 & 0x100
-						goto = "00104408"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 8
-						v0 += t2
-						a3 += 0xD
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0x1F
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x20
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								a0 &= 0xFFFFFFFF
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"00104408":
-					if v0 != 0:
-						v0 = v1 & 0x200
-						goto = "00104470"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 9
-						v0 += t2
-						a3 += 0xF
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0x3F
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x40
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								a0 &= 0xFFFFFFFF
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"00104470":
-					if v0 != 0:
-						v0 = v1 & 0x400
-						goto = "001044D8"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 10
-						v0 += t2
-						a3 += 0x11
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0x7F
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x80
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"001044D8":
-					if v0 != 0:
-						v0 = v1 & 0x800
-						goto = "00104540"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 11
-						v0 += t2
-						a3 += 0x13
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0xFF
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x100
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"00104540":
-					if v0 != 0:
-						v0 = v1 & 0x1000
-						goto = "001045A8"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 12
-						v0 += t2
-						a3 += 0x15
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0x1FF
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x200
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"001045A8":
-					if v0 != 0:
-						goto = "00104610"
-					else:
-						v0 = (t0 << 2) & 0xFFFFFFFF
-						v1 >>= 13
-						v0 += t2
-						a3 += 0x17
-						a0 = temp_buff.decode_u32(v0)
-						v0 = a3 >> 3
-						v1 &= 0x3FF
-						t1 += v0
-						a0 = (a0 << 1) & 0xFFFFFFFF
-						v1 += 0x400
-						a0 = (a2 + a0) & 0xFFFFFFFF
-						a3 &= 7
-						if v1 == t3:
-							goto = "00104664"
-						else:
-							a1 = 0xFFFFFFFF
-							while a1 != v1:
-								v0 = out.decode_u16(a0)
-								a0 += 2
-								v1 = (v1 - 1) & 0xFFFFFFFF
-								out.encode_s16(a2, v0)
-								a2 += 2
-							goto = "00104668"
-							v0 = a2 < t7
-				"00104610":
-					v1 >>= 14
-					v0 += t2
-					a3 += 0x19
-					a0 = temp_buff.decode_u32(v0)
-					v0 = a3 >> 3
-					v1 &= 0x7FF
-					t1 += v0
+						v0 = a0 & 32
+						pc = 0x00103bc0
+						continue
+					v0 = a0 & 32
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 5
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					a1 = v1 & 3
+					a0 = temp_buff.decode_u32(v0) #load_word(v0 + 0x0000)
+					t0 = t0 + 7
+					v1 = t0 >> 3  # arithmetic shift
+					t0 = t0 & 7
 					a0 = (a0 << 1) & 0xFFFFFFFF
-					v1 += 0x800
+					a1 = (a1 + -1) & 0xFFFFFFFF
 					a0 = (a2 + a0) & 0xFFFFFFFF
-					a3 &= 7
-					if v1 == t3:
-						goto = "00104664"
-					else:
-						a1 = 0xFFFFFFFF
-						while a1 != v1:
-							v0 = out.decode_u16(a0)
-							a0 += 2
-							v1 = (v1 - 1) & 0xFFFFFFFF
-							out.encode_s16(a2, v0)
-							a2 += 2
-						goto = "00104668"
-						v0 = a2 < t7
-				"00104664":
-					v0 = a2 < t7
-					if v0 != 0: # 00104668
-						goto = "start"
-						v1 = input.decode_u8(t1 + 1)
-					else:
-						goto = "00104670"
-				"00104668":
+					t1 = (t1 + v1) & 0xFFFFFFFF
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					v0 = out.decode_u16(a0)# lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					a2 = a2 + 2
+					if a1 == t3:
+						pc = 0x00103f54
+						continue
+					v1 = 0xFFFFFFFF #0 + -1
+					pc = 0x00103B98
+					continue
+				0x00103B98:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					a1 = (a1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if a1 != v1:
+						pc = 0x00103b98
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103BC0:
 					if v0 != 0:
-						goto = "start"
-						v1 = input.decode_u8(t1 + 1)
+						v0 = a0 & 64
+						pc = 0x00103c28
+						continue
+					v0 = a0 & 64
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 6
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 9
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 7
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 8
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#(0 + -1) & 0xFFFFFFFF
+					pc = 0x00103C00
+					continue
+				0x00103C00:
+					v0 = out.decode_u16(a0)# lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103c00
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103C28:
+					if v0 != 0:
+						v0 = a0 & 128
+						pc = 0x00103c90
+						continue
+					v0 = a0 & 128
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 7
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 11
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 15
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 16
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF #(0 + -1) & 0xFFFFFFFF
+					pc = 0x00103C68
+					continue
+				0x00103C68:
+					v0 = out.decode_u16(a0)# lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0)# sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103c68
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103C90:
+					if v0 != 0:
+						v0 = a0 & 256
+						pc = 0x00103cf8
+						continue
+					v0 = a0 & 256
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 8
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 13
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 31
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 32
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					pc = 0x00103CD0
+					continue
+				0x00103CD0:
+					v0 = out.decode_u16(a0)# lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103cd0
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103CF8:
+					if v0 != 0:
+						v0 = a0 & 512
+						pc = 0x00103d60
+						continue
+					v0 = a0 & 512
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 9
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 15
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 63
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 64
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					pc = 0x00103D38
+					continue
+				0x00103D38:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103d38
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103D60:
+					if v0 != 0:
+						v0 = a0 & 1024
+						pc = 0x00103dc8
+						continue
+					v0 = a0 & 1024
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 10
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 17
+					a0 = temp_buff.decode_s32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 127
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 128
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					pc = 0x00103DA0
+					continue
+				0x00103DA0:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103da0
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103DC8:
+					if v0 != 0:
+						v0 = a0 & 2048
+						pc = 0x00103e30
+						continue
+					v0 = a0 & 2048
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 11
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 19
+					a0 = temp_buff.decode_s32(v0) #load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 255
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 256
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					pc = 0x00103E08
+					continue
+				0x00103E08:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103e08
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103E30:
+					if v0 != 0:
+						v0 = a0 & 4096
+						pc = 0x00103e98
+						continue
+					v0 = a0 & 4096
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 12
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 21
+					a0 = temp_buff.decode_s32(v0) #load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 511
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 512
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					pc = 0x00103E70
+					continue
+				0x00103E70:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103e70
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103E98:
+					if v0 != 0:
+						v0 = (a3 << 2) & 0xFFFFFFFF
+						pc = 0x00103f00
+						continue
+					v0 = (a3 << 2) & 0xFFFFFFFF
+					v1 = a0 >> 13
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 23
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 1023
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 1024
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					# nop
+					pc = 0x00103ED8
+					continue
+				0x00103ED8:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103ed8
+						continue
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103f58
+					continue
+				0x00103F00:
+					v1 = a0 >> 14
+					v0 = (v0 + t2) & 0xFFFFFFFF
+					t0 = t0 + 25
+					a0 = temp_buff.decode_u32(v0)#load_word(v0 + 0x0000)
+					v0 = t0 >> 3  # arithmetic shift
+					v1 = v1 & 2047
+					t1 = (t1 + v0) & 0xFFFFFFFF
+					a0 = (a0 << 1) & 0xFFFFFFFF
+					v1 = v1 + 2048
+					a0 = (a2 + a0) & 0xFFFFFFFF
+					t0 = t0 & 7
+					if v1 == t3:
+						pc = 0x00103f54
+						continue
+					a1 = 0xFFFFFFFF#0 + -1
+					# nop
+					pc = 0x00103F38
+					continue
+				0x00103F38:
+					v0 = out.decode_u16(a0) # lhu               v0, $0000(a0)
+					a0 = a0 + 2
+					v1 = (v1 + -1) & 0xFFFFFFFF
+					out.encode_s16(a2, v0) # sh                v0, $0000(a2)
+					# nop
+					a2 = a2 + 2
+					if v1 != a1:
+						pc = 0x00103f38
+						continue
+					pc = 0x00103F54
+					continue
+				0x00103F54:
+					v0 = 1 if a2 < t5 else 0
+					pc = 0x00103F58
+					continue
+				0x00103F58:
+					if v0 != 0:
+						v1 = input.decode_u8(t1 + 1)#load_byte_unsigned(t1 + 0x0001)
+						pc = 0x00103968
+						continue
+					pc = 0x00103F60
+					continue
+				0x00103F60:
+					v1 = mem_01A922B0 #load_word(s0 + 0x0000)
+					v0 = (a2 - t8) & 0xFFFFFFFF  # unsigned
+					v0 = v0 >> 1  # arithmetic shift
+					a0 = 1 if a2 < t4 else 0
+					v1 = (v1 + v0) & 0xFFFFFFFF
+					mem_01A922C4 = t1 #store_word(s0 + 0x0014, t1)
+					mem_01A92354 = t0 #store_word(s0 + 0x00a4, t0)
+					mem_01A922B0 = v1 #$store_word(s0 + 0x0000, v1)
+					mem_01A922BC = a2 #store_word(s0 + 0x000c, a2)
+					if a0 != 0:
+						pc = 0x00103fa4
+						continue
+					v0 = 0xFFFFFFFF#0 + -1
+					v1 = 1 if t4 < a2 else 0
+					mem_01A922B0 = v0 #store_word(s0 + 0x0000, v0)
+					if v1 == 0:
+						pc = 0x00103fa4
+						continue
+					# lui               a0, $0037
+					# jal               $001053f0
+					push_error("cCbsd::idxEx() overrun!!!!!")
+					return out.slice(fill_size)
+					#pc = 0x00103FA4
+				0x00103FA4:
+					v0 = mem_01A922B0
+					if v0 == 0xFFFFFFFF:
+						return out.slice(fill_size)
 					else:
-						goto = "00104670"
-				"00104670":
-					v1 = mem_01A922B0
-					v0 = (a2 - t9) & 0xFFFFFFFF
-					v0 >>= 1
-					a0 = a2 < t6
-					v1 += v0
-					mem_01A922C4 = t1
-					mem_01A92354 = a3
-					mem_01A92350 = t4
-					mem_01A922B0 = v1
-					mem_01A922BC = a2
-					if a0 == 0:
-						v0 = 0xFFFFFFFF
-						mem_01A922B0 = v0
-						v1 = t6 < a2
-						if v1 == 0:
-							goto = "001046B8"
-						else:
-							push_error("cCbsd::newEx() overrun!!!!!")
-							return out.slice(fill_size)
-					else:
-						goto = "001046B8"
-				"001046B8":
-						v0 = mem_01A922B0
-						if v0 == 0xFFFFFFFF:
-							return out.slice(fill_size)
-						else:
-							goto = "init"
+						pc = 0
+						continue
+						
 							
 	return out.slice(fill_size)
 	
