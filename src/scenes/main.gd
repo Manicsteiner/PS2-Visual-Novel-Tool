@@ -205,6 +205,7 @@ enum {
 	QUE,
 	QUILT,
 	RAMUNE,
+	REALIZE,
 	#REGISTA, # temp value
 	ROSARIO,
 	ROUTESPE,
@@ -1017,6 +1018,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Shinkyouku Soukai Polyphonica' (most images)."
 		game_type_selector.select(SHINKYOUKU)
 		game_type = SHINKYOUKU
+		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
+		sceneChanger(next_scene)
+	elif index == REALIZE:
+		game_type_sub_text.text = "Supports 'Realize: Panorama Luminary' (most images)."
+		game_type_selector.select(REALIZE)
+		game_type = REALIZE
 		var next_scene: PackedScene = load("res://src/scenes/Cybelle.tscn")
 		sceneChanger(next_scene)
 	elif index == ARABIANS:
@@ -2216,6 +2223,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Que: Ancient Leaf no Yousei", QUE)
 	game_type_selector.add_item("Quilt: Anata to Tsumugu Yume to Koi no Dress", QUILT)
 	game_type_selector.add_item("Ramune: Garasu-bin ni Utsuru Umi", RAMUNE)
+	game_type_selector.add_item("Realize: Panorama Luminary", REALIZE)
 	#game_type_selector.add_item("Regista Games", REGISTA)
 	game_type_selector.add_item("Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia", ROSARIO)
 	game_type_selector.add_item("Routes PE", ROUTESPE)

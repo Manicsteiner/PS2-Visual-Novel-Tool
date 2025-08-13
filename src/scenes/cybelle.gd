@@ -308,7 +308,11 @@ func cybellePakExtract() -> void:
 		in_file.seek(0)
 		num_files = in_file.get_32()
 		pak_size = in_file.get_32()
-		if pak_size != pak_len:
+		if Main.game_type == Main.REALIZE and pak_name == "EVENTCG.PAK":
+			in_file.seek(0)
+			num_files = in_file.get_16()
+			file_tbl = 0x18
+		elif pak_size != pak_len:
 			file_tbl = 4
 		else:
 			file_tbl = 8
@@ -328,7 +332,7 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 27:
+			#if file != 9:
 				#continue
 				
 			in_file.seek(f_offset)
