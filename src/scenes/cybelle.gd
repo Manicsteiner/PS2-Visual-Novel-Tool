@@ -308,7 +308,9 @@ func cybellePakExtract() -> void:
 		in_file.seek(0)
 		num_files = in_file.get_32()
 		pak_size = in_file.get_32()
-		if Main.game_type == Main.REALIZE and pak_name == "EVENTCG.PAK":
+		if pak_name == "SCRIPT.PAK":
+			file_tbl = 0x4
+		elif Main.game_type == Main.REALIZE and pak_name == "EVENTCG.PAK":
 			in_file.seek(0)
 			num_files = in_file.get_16()
 			file_tbl = 0x18
@@ -332,8 +334,20 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 9:
+			#if file != 97:
 				#continue
+				
+			if pak_name == "SCRIPT.PAK" or pak_name == "FONT.PAK":
+				in_file.seek(f_offset)
+				buff = in_file.get_buffer(f_size)
+				
+				f_name = pak_name + "_%04d" % file + ".BIN"
+				
+				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				
+				print("%08X %08X /%s/%s" % [f_offset, f_size, folder_path, f_name])
+				continue
 				
 			in_file.seek(f_offset)
 			var bytes: int = in_file.get_32()
@@ -366,47 +380,93 @@ func cybellePakExtract() -> void:
 				width = buff.decode_u16(0)
 				height = buff.decode_u16(2)
 				decomp_type = buff.decode_u8(9)
-				if buff.decode_u8(9) == 1 and !debug_out:
-					push_error("File %s uses old compression format! Skipping." % f_name)
-					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
+				if decomp_type == 0 and !debug_out:
+					push_error("Unknown file? %s" % f_name)
+					print_rich("[color=red]Unknown file? %s[/color]" % f_name)
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 					continue
-				elif buff.decode_u8(9) > 3 and !debug_out:
-					push_error("File %s has unknown compression type %02X!" % [f_name, decomp_type])
-					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, decomp_type])
+				if decomp_type == 1 or decomp_type > 3 and !debug_out:
+					push_error("File %s uses compression type %02X! Skipping." % [f_name, decomp_type])
+					print_rich("[color=red]File %s uses compression type %02X! Skipping.[/color]" % [f_name, decomp_type])
 					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
-					#continue
+					continue
 			else:
-				width = buff.decode_u16(bytes_2)
-				height = buff.decode_u16(bytes_2 + 2)
-				decomp_type = buff.decode_u8(bytes_2 + 9)
-				if buff.decode_u8(bytes_2 + 9) == 1 and !debug_out:
-					push_error("File %s uses old compression format! Skipping." % f_name)
-					print_rich("[color=red]File %s uses old compression format! Skipping.[/color]" % f_name)
-					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+				if bytes_2:
+					var temp_num_files: int = bytes
+					
+					in_file.seek(f_offset + 4)
+					var size_mod: int = in_file.get_32()
+					
+					in_file.seek((temp_num_files * 4) + f_offset + 4)
+					var final_size: int = in_file.get_32()
+					var temp_pos: int = f_offset + 4
+					var buffs: Array[PackedByteArray] = []
+					
+					for i in range(0, temp_num_files):
+						in_file.seek(temp_pos)
+						if i == temp_num_files - 1:
+							var temp_off: int = in_file.get_32()
+							
+							in_file.seek(f_offset + temp_off)
+							buffs.append(in_file.get_buffer(final_size - size_mod))
+							break
+						var temp_off: int = in_file.get_32()
+						var temp_size: int = in_file.get_32()
+						
+						in_file.seek(f_offset + temp_off)
+						buffs.append(in_file.get_buffer(temp_size))
+						
+						temp_pos += 4
+					for i: int in buffs.size():
+						var t_buff: PackedByteArray = buffs[i]
+						width = t_buff.decode_u16(0)
+						height = t_buff.decode_u16(2)
+						decomp_type = t_buff.decode_u8(9)
+						if debug_out:
+							f_name = pak_name + "_%04d" % file + "_%04d" % i + ".COMP"
+							out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+							out_file.store_buffer(t_buff)
+							
+						f_name = pak_name + "_%04d" % file + "_%04d" % i + ".BIN"
+						if decomp_type == 0 and !debug_out:
+							push_error("Unknown file? %s" % f_name)
+							print_rich("[color=red]Unknown file? %s[/color]" % f_name)
+							print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+							continue
+						if decomp_type == 1 or decomp_type > 3 and !debug_out:
+							push_error("File %s uses compression type %02X! Skipping." % [f_name, decomp_type])
+							print_rich("[color=red]File %s uses compression type %02X! Skipping.[/color]" % [f_name, decomp_type])
+							print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
+							continue
+							
+						if t_buff.decode_u8(10) == 0xC:
+							var pal: PackedByteArray = t_buff.slice(0x20, 0x420)
+							pal = ComFuncs.unswizzle_palette(pal, 32)
+							t_buff = cCbsd(t_buff, 0x20)
+							if debug_out:
+								out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+								out_file.store_buffer(t_buff)
+							
+							t_buff = convert_rgb555_with_palette(t_buff, width, height, pal)
+							
+							f_name += ".PNG"
+							var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, t_buff)
+							png.save_png(folder_path + "/%s" % f_name)
+						else:
+							t_buff = cCbsd(t_buff, 0x20)
+							if debug_out:
+								out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+								out_file.store_buffer(t_buff)
+								
+							f_name += ".PNG"
+							var png: Image = ComFuncs.convert_rgb555_to_image(t_buff, width, height, true)
+							png.save_png(folder_path + "/%s" % f_name)
+						
+						print("%08X %08X %02X /%s/%s" % [f_offset, t_buff.size(), decomp_type, folder_path, f_name])
 					continue
-				elif buff.decode_u8(bytes_2 + 9) > 3:
-					push_error("File %s has unknown compression type %02X!" % [f_name, decomp_type])
-					print_rich("[color=red]File %s has unknown compression type %02X![/color]" % [f_name, decomp_type])
-					print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
-					continue
-				
-			# TODO: If flag at 0x1F (Planetarian?) in header, has a palette? If flag is 4, seems to have a compressed palette
-			if bytes_2 and buff.decode_u8(bytes_2 + 10) == 0xC:
-				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
-				#pal = ComFuncs.rgba_to_bgra(pal)
-				pal = ComFuncs.unswizzle_palette(pal, 32)
-				buff = cCbsd(buff)
-				if debug_out:
-					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
-				
-				buff = convert_rgb555_with_palette(buff, width, height, pal)
-				
-				f_name += ".PNG"
-				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGB8, buff)
-				png.save_png(folder_path + "/%s" % f_name)
-			elif buff.decode_u8(10) == 0xC:
+					
+			# TODO: If flag at 0x1F (Planetarian?) in header, has a palette? If flag is 4, seems to have a compressed palette?
+			if buff.decode_u8(10) == 0xC:
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
 				pal = ComFuncs.unswizzle_palette(pal, 32)
@@ -577,7 +637,7 @@ func make_lookup_tables() -> void:
 	return
 	
 	
-func cCbsd(input: PackedByteArray) -> PackedByteArray:
+func cCbsd(input: PackedByteArray, header_off: int = 0) -> PackedByteArray:
 	# This decompression function and related lookups is absurdly complex.
 	# Based on offsets from Sangoku Renseki.
 	# TODO: decomp_type 1 (these just seem like entire black / white images)
@@ -620,7 +680,9 @@ func cCbsd(input: PackedByteArray) -> PackedByteArray:
 	
 	# Older header check (Canvas)
 	var start_offset: int = input.decode_u32(0x4)
-	if start_offset != 0:
+	if header_off != 0:
+		start_offset = 0x20
+	elif start_offset != 0:
 		input = input.slice(start_offset)
 	else:
 		start_offset = 0x20
