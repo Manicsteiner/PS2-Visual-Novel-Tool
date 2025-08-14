@@ -57,7 +57,8 @@ text = "Output Combined Images"
 
 [node name="removeAlphaButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
-text = "Remove Alpha Channel in Images"
+button_pressed = true
+text = "Fix Alpha Channel in Images"
 
 [node name="outDebugButton" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2

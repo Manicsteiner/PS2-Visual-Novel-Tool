@@ -13,7 +13,7 @@ var selected_files: PackedStringArray
 
 var out_png: bool = true
 var output_combined_image: bool = true
-var remove_alpha: bool = false
+var remove_alpha: bool = true
 var debug_out: bool = false
 
 # XOR keys for width and height of images in Interlude and Sentimental Prelude
@@ -26,7 +26,7 @@ const height_key: int = 0x5441
 var lookup_table: PackedByteArray
 
 func _ready() -> void:
-	if Main.game_type != Main.INTERLUDE or Main.game_type != Main.SENTIMENTALPRELUDE:
+	if Main.game_type != Main.INTERLUDE and Main.game_type != Main.SENTIMENTALPRELUDE:
 		make_lookup_tables()
 		remove_alpha_button.hide()
 		output_combined.hide()
@@ -49,228 +49,173 @@ func _process(_delta):
 			selected_files.clear()
 	
 	
-func interludeMakeFiles() -> void:
-	var file: FileAccess
-	var file_data001: FileAccess
-	var file_data002: FileAccess
-	var new_file: FileAccess
-	var header_file: FileAccess
-	var file_name: String
-	var start_off: int
-	var file_size: int
-	var mem_file: PackedByteArray
-	var mem_file_len: int
-	var k: int
-	var byte: int
-	var initial_key: int
-	var key_1_lower: int
-	var key_1: int
-	var key_2: int
-	var key_3: int
-	var max_size: int
-	var png_out: Image
-	var ogg_bytes: int
-	var archive_id: String
-	var png_buffer: PackedByteArray
-	var width: int
-	var height: int
-	var unk_bytes: int
-	var mem_file_off: int
+func decrypt_header(file: FileAccess) -> PackedByteArray:
+	const max_header_size: int = 0x3CA00 # Assumed maximum header size
 	
-	max_size = 0x3CA00 # Max header size to assume.
-	for usr_file in selected_files.size():
-		file = FileAccess.open(selected_files[usr_file], FileAccess.READ)
-		file_name = selected_files[usr_file].get_file()
-		if file_name == "DATA.IMG":
-			file_data001 = FileAccess.open(selected_files[usr_file].get_basename() + ".001", FileAccess.READ)
-			file_data002 = FileAccess.open(selected_files[usr_file].get_basename() + ".002", FileAccess.READ)
-			if (file_data001 == null) or (file_data002 == null):
-				OS.alert("DATA.001 and DATA.002 must be in the same directory as DATA.IMG")
-				continue
-		
-		initial_key = 0x6E86CC2E
-		key_1 = initial_key
-		mem_file.resize(max_size) # Assumed header size.
-		
-		for j in range(0, max_size):
-			file.seek(j)
-			byte = file.get_8()
-			key_1_lower = key_1 & 0xFF
+	var mem_file: PackedByteArray = PackedByteArray()
+	mem_file.resize(max_header_size)
+
+	var key_1: int = 0x6E86CC2E
+	var key_2: int = 0
+	var key_3: int = 0
+
+	for j in range(0, max_header_size):
+		file.seek(j)
+		var byte: int = file.get_8()
+		var key_1_lower: int = key_1 & 0xFF
+
+		# First rotate every iteration
+		key_2 = (key_1 << 1) & 0xFFFFFFFF
+		key_3 = (key_1 >> 31) & 0xFFFFFFFF
+		key_1 = (key_2 | key_3) & 0xFFFFFFFF
+
+		byte += key_1_lower
+		mem_file.encode_s8(j, byte)
+
+		if (j & 0x5) != 0:
+			# Header end check (reads from current pos after get_8)
+			if file.get_32() == 0:
+				mem_file.resize(file.get_position() - 4)
+				break
+			# Second rotate on these iterations when not ending
 			key_2 = (key_1 << 1) & 0xFFFFFFFF
 			key_3 = (key_1 >> 31) & 0xFFFFFFFF
-			key_1 = key_2 | key_3
-			byte = byte + key_1_lower
-			mem_file.encode_s8(j, byte)
-			if j & 0x5 != 0:
-				#Unsure how to determine header end
-				if (file.get_32()) == 0:
-					mem_file_len = file.get_position() - 4
-					mem_file.resize(mem_file_len)
-					break
-				key_2 = key_1 << 1
-				key_3 = key_1 >> 31
-				key_1 = key_2 | key_3
+			key_1 = (key_2 | key_3) & 0xFFFFFFFF
+
+	return mem_file
+
+
+func extract_png(mem_file: PackedByteArray, offset: int, suffix: String, xor_keys: bool, save: bool, file_name: String, output_combined_image: bool) -> Image:
+	var width_key_used: int = width_key if xor_keys else 0
+	var height_key_used: int = height_key if xor_keys else 0
+	var w_raw: int = mem_file.decode_u16(offset)
+	var h_raw: int = mem_file.decode_u16(offset + 2)
+	var width: int = w_raw ^ width_key_used
+	var height: int = h_raw ^ height_key_used
+	
+	var unk_bytes: int = mem_file.decode_u32(offset + 4)
+	var png_buffer: PackedByteArray = interludeDecodeImage(mem_file, width, height, unk_bytes, offset)
+	var png_out: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
+	png_buffer.clear()
+	if save and !output_combined_image:
+		png_out.save_png(folder_path + "/%s" % file_name + suffix + ".PNG")
+	return png_out
+
+
+func interludeMakeFiles() -> void:
+	for usr_file in selected_files.size():
+		var file_path: String = selected_files[usr_file]
+		var file: FileAccess = FileAccess.open(file_path, FileAccess.READ)
+		var file_name: String = file_path.get_file()
+
+		var file_data001: FileAccess
+		var file_data002: FileAccess
+		if file_name == "DATA.IMG":
+			file_data001 = FileAccess.open(file_path.get_basename() + ".001", FileAccess.READ)
+			file_data002 = FileAccess.open(file_path.get_basename() + ".002", FileAccess.READ)
+			if file_data001 == null or file_data002 == null:
+				OS.alert("DATA.001 and DATA.002 must be in the same directory as DATA.IMG")
+				continue
+
+		file_data001.close()
+		file_data002.close()
 		
-		header_file = FileAccess.open(folder_path + "/%s" % file_name + ".HED", FileAccess.WRITE_READ)
+		var mem_file: PackedByteArray = decrypt_header(file)
+		var mem_file_len: int = mem_file.size()
+
+		var dir: DirAccess = DirAccess.open(folder_path)
+		dir.make_dir_recursive(file_name)
+		
+		var header_file: FileAccess = FileAccess.open(folder_path + "/%s/%s" % [file_name, "%s" % file_name + ".HED"], FileAccess.WRITE_READ)
 		header_file.store_buffer(mem_file)
 		mem_file.clear()
-		
-		k = 0
+
+		var k: int = 0
 		while k < mem_file_len:
 			header_file.seek(k)
 			file_name = header_file.get_line()
 			if file_name == "":
 				print("Assumed header ending at 0x%X" % header_file.get_position())
 				break
+
 			header_file.seek(k + 0xC)
-			start_off = header_file.get_32()
+			var start_off: int = header_file.get_32()
 			header_file.seek(k + 0x10)
-			file_size = header_file.get_32()
-			
+			var file_size: int = header_file.get_32()
+
+			# Load file from correct archive
+			var archive_id: String
 			mem_file.resize(file_size)
-			
-			#DATA.IMG
-			if (file_size & 0xFF000000) == 0x00000000:
-				archive_id = selected_files[usr_file]
-				file_size &= 0x00FFFFFF
-				file.seek(start_off)
-				mem_file = file.get_buffer(file_size)
-			#DATA.001
-			elif (file_size & 0xFF000000) == 0x01000000:
-				archive_id = "DATA.001"
-				file_size &= 0x00FFFFFF
-				file_data001.seek(start_off)
-				mem_file = file_data001.get_buffer(file_size)
-			#DATA.002
-			elif (file_size & 0xFF000000) == 0x02000000:
-				archive_id = "DATA.002"
-				file_size &= 0x00FFFFFF
-				file_data002.seek(start_off)
-				mem_file = file_data002.get_buffer(file_size)
-			
-			if file_name.get_extension() == "VTV" and out_png: # Check for type 1 image formats with vorbis headers
-				ogg_bytes = mem_file.decode_u32(0)
-				if ogg_bytes == 0x5367674F: #OggS
-					# Begin checks for multiple images
-					var png_images: Array[Image]
-					
-					mem_file_off = 0xA8 #always start of first image
-					width = mem_file.decode_u16(mem_file_off) ^ width_key
-					height = mem_file.decode_u16(mem_file_off + 2) ^ height_key
-					unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-					png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-					png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-					if !output_combined_image:
-						png_out.save_png(folder_path + "/%s" % file_name + ".0" + ".PNG")
-					png_images.append(png_out)
-					png_buffer.clear()
-					
-					#check for second file
+			match file_size & 0xFF000000:
+				0x00000000:
+					archive_id = file_path
+					file_size &= 0x00FFFFFF
+					file.seek(start_off)
+					mem_file = file.get_buffer(file_size)
+				0x01000000:
+					file.close()
+					file_data001 = FileAccess.open(file_path.get_basename() + ".001", FileAccess.READ)
+					archive_id = "DATA.001"
+					file_size &= 0x00FFFFFF
+					file_data001.seek(start_off)
+					mem_file = file_data001.get_buffer(file_size)
+				0x02000000:
+					file_data001.close()
+					file_data002 = FileAccess.open(file_path.get_basename() + ".002", FileAccess.READ)
+					archive_id = "DATA.002"
+					file_size &= 0x00FFFFFF
+					file_data002.seek(start_off)
+					mem_file = file_data002.get_buffer(file_size)
+
+			# Handle formats
+			if file_name.get_extension() == "VTV" and out_png:
+				if mem_file.decode_u32(0) == 0x5367674F:
+					var offsets: Array[int] = [0xA8]
 					if mem_file.decode_u32(0x9C) != 0:
-						mem_file_off = mem_file.decode_u32(0x98) + 0xA8 #get first image ending
-						width = mem_file.decode_u16(mem_file_off) ^ width_key
-						height = mem_file.decode_u16(mem_file_off + 2) ^ height_key
-						unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-						png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-						png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-						if !output_combined_image:
-							png_out.save_png(folder_path + "/%s" % file_name + ".1" + ".PNG")
-						png_images.append(png_out)
-						png_buffer.clear()
-						
-					#check for third file
+						offsets.append(mem_file.decode_u32(0x98) + 0xA8)
 					if mem_file.decode_u32(0xA0) != 0:
-						mem_file_off = (mem_file.decode_u32(0x98) + 0xA8) + mem_file.decode_u32(0x9C)
-						width = mem_file.decode_u16(mem_file_off) ^ width_key
-						height = mem_file.decode_u16(mem_file_off + 2) ^ height_key
-						unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-						png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-						png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-						if !output_combined_image:
-							png_out.save_png(folder_path + "/%s" % file_name + ".2" + ".PNG")
-						png_images.append(png_out)
-						png_buffer.clear()
-						
-					#check for forth file
+						offsets.append(offsets[-1] + mem_file.decode_u32(0x9C))
 					if mem_file.decode_u32(0xA4) != 0:
-						mem_file_off = ((mem_file.decode_u32(0x98) + 0xA8) + mem_file.decode_u32(0x9C)) + mem_file.decode_u32(0xA0)
-						width = mem_file.decode_u16(mem_file_off) ^ width_key
-						height = mem_file.decode_u16(mem_file_off + 2) ^ height_key
-						unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-						png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-						png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-						if !output_combined_image:
-							png_out.save_png(folder_path + "/%s" % file_name + ".3" + ".PNG")
-						png_images.append(png_out)
-						png_buffer.clear()
-					
+						offsets.append(offsets[-1] + mem_file.decode_u32(0xA0))
+
+					var png_images: Array[Image]
+					for i in range(offsets.size()):
+						png_images.append(extract_png(mem_file, offsets[i], ".%d" % i, true, !output_combined_image, file_name, output_combined_image))
+
 					if output_combined_image and png_images.size() > 1:
-						 # Store the last element
-						var last_entry: Image = png_images[png_images.size() - 1]
-						# Shift all elements down by one
-						for i in range(png_images.size() - 1, 0, -1):
-							png_images[i] = png_images[i - 1]
-						# Move the last element to the first position
-						png_images[0] = last_entry
-						png_out = ComFuncs.combine_images_vertically(png_images)
-						png_out.save_png(folder_path + "/%s" % file_name + ".FULL" + ".PNG")
+						var last_entry: Image = png_images.pop_back()
+						png_images.insert(0, last_entry)
+						var combined: Image = ComFuncs.combine_images_vertically(png_images)
+						combined.save_png(folder_path + "/%s/%s" % [archive_id.get_file(), file_name] + ".FULL" + ".PNG")
 					else:
-						png_out = png_images[0]
-						png_out.save_png(folder_path + "/%s" % file_name + ".FULL" + ".PNG")
-						
-				elif mem_file.decode_u32(0) == mem_file.size() - 0x10: #type 2 format where 0x0 is file size
-					mem_file_off = 0x10
-					width = mem_file.decode_u16(mem_file_off)
-					height = mem_file.decode_u16(mem_file_off + 2)
-					unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-					png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-					png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-					png_out.save_png(folder_path + "/%s" % file_name + ".PNG")
-					png_buffer.clear()
-					
-							
+						png_images[0].save_png(folder_path + "/%s/%s" % [archive_id.get_file(), file_name] + ".FULL" + ".PNG")
+
+				elif mem_file.decode_u32(0) == mem_file.size() - 0x10:
+					extract_png(mem_file, 0x10, "", false, true, file_name, false).save_png(folder_path + "/%s" % file_name + ".PNG")
+
 			elif file_name.ends_with(".GCD") and out_png:
-				if file_name == "REGION.GCD":
-					printerr("Skipping REGION.GCD as it causes the decompresser to screw up for some reason")
+				if file_name != "REGION.GCD":
+					extract_png(mem_file, 0, "", false, true, file_name, false).save_png(folder_path + "/%s" % file_name + ".PNG")
 				else:
-					mem_file_off = 0
-					width = mem_file.decode_u16(0x0)
-					height = mem_file.decode_u16(0x2)
-					unk_bytes = mem_file.decode_u32(0x4)
-					
-					png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-							
-					png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-					png_out.save_png(folder_path + "/%s" % file_name + ".PNG")
-					png_buffer.clear()
-					
-			elif file_name.get_extension() == "AVT" and out_png: #for Sentimental Prelude
-					mem_file_off = 0xA8
-					width = mem_file.decode_u16(mem_file_off) ^ width_key
-					height = mem_file.decode_u16(mem_file_off + 2) ^ height_key
-					unk_bytes = mem_file.decode_u32(mem_file_off + 4)
-					png_buffer = interludeDecodeImage(mem_file, width, height, unk_bytes, mem_file_off)
-					
-					png_out = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, png_buffer)
-					png_out.save_png(folder_path + "/%s" % file_name + ".PNG")
-					png_buffer.clear()
-				
-			print("0x%08X " % start_off, "0x%08X " % file_size, "%s " % archive_id, "%s " % file_name)
+					printerr("Skipping REGION.GCD as it causes the decompresser to screw up for some reason")
+
+			elif file_name.get_extension() == "AVT" and out_png:
+				extract_png(mem_file, 0xA8, "", true, true, file_name, false).save_png(folder_path + "/%s" % file_name + ".PNG")
+
+			dir.make_dir_recursive(archive_id.get_file())
 			
-			new_file = FileAccess.open(folder_path + "/%s" % file_name, FileAccess.WRITE)
-			new_file.store_buffer(mem_file)
+			print("%08X " % start_off, "%08X " % file_size, "/%s/%s" % [folder_path, archive_id.get_file()], "/%s " % file_name)
+			
+			var out_file: FileAccess = FileAccess.open(folder_path + "/%s/%s" % [archive_id.get_file(), file_name], FileAccess.WRITE)
+			out_file.store_buffer(mem_file)
 			mem_file.clear()
-			new_file.close()
+			out_file.close()
+
 			k += 0x14
-			
+
 		header_file.close()
 		file.close()
-		
+
 	print_rich("[color=green]Finished![/color]")
 	
 
@@ -393,6 +338,10 @@ func cybellePakExtract() -> void:
 			else:
 				if bytes_2:
 					var temp_num_files: int = bytes
+					if temp_num_files >= 50:
+						push_error("Num files too large %d in %s. Skipping." % [temp_num_files, f_name])
+						print_rich("[color=red]Num files too large %d in %s. Skipping.[/color]" % [temp_num_files, f_name])
+						continue
 					
 					in_file.seek(f_offset + 4)
 					var size_mod: int = in_file.get_32()
@@ -1909,178 +1858,102 @@ func cCbsd(input: PackedByteArray, header_off: int = 0) -> PackedByteArray:
 	
 	
 func interludeDecodeImage(buffer:PackedByteArray, dimension_x:int, dimension_y:int, unk_bytes:int, off:int) -> PackedByteArray:
-	var out_buffer:PackedByteArray
-	var v0:int
-	var v1:int
-	var a0:int
-	var a1:int
-	var a2:int
-	var a3:int
-	var t0:int 
-	var t1:int
-	var t2:int
-	var t3:int
-	var t4:int
-	var t5:int
-	var t6:int
-	var size:int
-	var width:int
-	var height:int
-	var unk:int
-	var start_off:int
-	
-	start_off = off
-	
-	width = dimension_x
-	height = dimension_y
-	unk = unk_bytes #not needed for anything?
-	size = (width * height) << 2
-	
-	out_buffer.resize(size)
-	
-	a0 = start_off + 0x8 #buffer off
-	a1 = 0 #out buffer offset
-	a2 = size
-	t3 = buffer.decode_s32(a0)
-	v0 = buffer.decode_s8(a0 - 4) & 0xFF
-	a3 = v0 & 0x0F
-	t2 = v0 & 0x80
-	v0 = 1
-	t1 = a0 + 4
-	v0 <<= a3
-	t0 = 0xFFFF
-	v1 = v0 - 1
-	v0 = a0 + t3
-	if t2 > 0:
-		t6 = v1
-	else:
-		t6 = 0xFFFFFFFF
-		
-	if a2 <= 0:
+	var width: int = dimension_x
+	var height: int = dimension_y
+	var output_size: int = (width * height) << 2
+
+	var out_buffer: PackedByteArray
+	out_buffer.resize(output_size)
+
+	# --- Initial setup ---
+	var src_offset: int = off + 0x8      # Buffer start offset
+	var out_offset: int = 0              # Output buffer offset
+	var remaining: int = output_size     # Remaining bytes to write
+
+	var t3_val: int = buffer.decode_s32(src_offset)
+	var control_byte: int = buffer.decode_s8(src_offset - 4) & 0xFF
+	var bit_shift: int = control_byte & 0x0F
+	var has_t6_flag: bool = (control_byte & 0x80) != 0
+
+	var t6_val: int = ((1 << bit_shift) - 1) if has_t6_flag else 0xFFFFFFFF
+	var t1_offset: int = src_offset + 4
+	var v0_offset: int = src_offset + t3_val
+
+	var t0_bits: int = 0xFFFF            # Current bit sequence
+	var high_mask: int = 0xFFFF0000
+	var low_mask: int = 0xFFFF
+
+	if remaining <= 0:
 		return out_buffer
-		
-	t2 = 0xFFFF0000
-	t3 = 0xFFFF
-	while a2 > 0:
-		if t0 == t3:
-			a0 = buffer.decode_s16(t1) & 0xFFFFFFFF
-			t0 = a0 | t2 & 0xFFFFFFFF
-			t1 += 2
-		a0 = t0 & 1
-		if a0 != 0:
-			a0 = buffer.decode_u8(v0)
-			a2 -= 1
-			out_buffer.encode_s8(a1, a0)
-			a1 += 1
-			v0 += 1
-			t0 >>= 1
+
+	# --- Main decode loop ---
+	while remaining > 0:
+		# Refill t0_bits when exhausted
+		if t0_bits == low_mask:
+			var read_val: int = buffer.decode_s16(t1_offset) & 0xFFFFFFFF
+			t0_bits = read_val | high_mask
+			t1_offset += 2
+
+		var is_literal: bool = (t0_bits & 1) != 0
+		if is_literal:
+			# Copy literal byte from source
+			var literal: int = buffer.decode_u8(v0_offset)
+			out_buffer.encode_s8(out_offset, literal)
+			out_offset += 1
+			v0_offset += 1
+			remaining -= 1
+			t0_bits >>= 1
 			continue
-		
-		a0 = buffer.decode_u16(t1)
-		t5 = a0 & v1
-		a0 >>= a3
-		t1 += 2
-		if a0 == 0:
-			a0 = buffer.decode_u16(t1)
-			t1 += 2
-		t4 = a1 - a0 & 0xFFFFFFFF
-		if t5 == t6:
-			a0 = buffer.decode_u8(v0)
-			t5 = a0 + t6
-			v0 += 1
-		t5 += 3
-		a0 = t5 & 1
-		a2 -= t5
-		if a0 != 0:
-			a0 = out_buffer.decode_u8(t4)
-			t5 -= 1
-			out_buffer.encode_s8(a1, a0)
-			t4 += 1
-			a1 += 1
-		t5 >>= 1
-		if t5 <= 0:
-			t0 >>= 1
-			continue
-		while t5 > 0:
-			a0 = out_buffer.decode_u8(t4)
-			t5 -= 1
-			out_buffer.encode_s8(a1, a0)
-			a0 = out_buffer.decode_u8(t4 + 1)
-			out_buffer.encode_s8(a1 + 1, a0)
-			t4 += 2
-			a1 += 2
-		t0 >>= 1
-			
-	#null transparent byte for png output
+
+		# Decode length/distance pair
+		var a0_val: int = buffer.decode_u16(t1_offset)
+		var length_code: int = a0_val & ((1 << bit_shift) - 1)
+		var distance: int = a0_val >> bit_shift
+		t1_offset += 2
+
+		# If distance is zero, read it from next word
+		if distance == 0:
+			distance = buffer.decode_u16(t1_offset)
+			t1_offset += 2
+
+		var copy_src: int = (out_offset - distance) & 0xFFFFFFFF
+
+		# Handle special case where length_code equals t6_val
+		if length_code == t6_val:
+			var extra_len: int = buffer.decode_u8(v0_offset)
+			length_code = extra_len + t6_val
+			v0_offset += 1
+
+		length_code += 3
+
+		# Copy odd byte if length is odd
+		if (length_code & 1) != 0:
+			var odd_byte: int = out_buffer.decode_u8(copy_src)
+			out_buffer.encode_s8(out_offset, odd_byte)
+			copy_src += 1
+			out_offset += 1
+			length_code -= 1
+			remaining -= 1
+
+		# Copy words (2 bytes at a time)
+		length_code >>= 1
+		remaining -= length_code << 1
+		while length_code > 0:
+			out_buffer.encode_s8(out_offset, out_buffer.decode_u8(copy_src))
+			out_buffer.encode_s8(out_offset + 1, out_buffer.decode_u8(copy_src + 1))
+			copy_src += 2
+			out_offset += 2
+			length_code -= 1
+
+		t0_bits >>= 1
+
+	# --- Fix alpha channel if required ---
 	if out_png and remove_alpha:
-		a0 = 0
-		while a0 < size:
-			out_buffer.encode_u8(a0 + 3, 0xFF)
-			a0 += 4
-			
+		for i in range(0, output_size, 4):
+			var alpha_val: float = out_buffer.decode_u8(i + 3) / 128.0
+			out_buffer.encode_u8(i + 3, int(alpha_val * 255.0))
+
 	return out_buffer
-	
-	
-func canvasDecodeHeader(header:PackedByteArray) -> PackedInt32Array:
-	# TODO: figure out this decompression routine one day that covers several PS2 games https://tcrf.net/Category:Games_developed_by_Cybelle
-	
-	var header_vars: PackedInt32Array #0 decode 1 offset, 1 decode 2 offset
-	var i:int = 0
-	var v0:int
-	var v1:int
-	var a0:int = 0 #always zero?
-	var a1:int
-	var a2:int = 0 #always zero?
-	var a3:int
-	var t0:int 
-	var t1:int
-	var t2:int
-	var t3:int
-	var t4:int
-	var t5:int
-	var t6:int
-	var s1:int = 0
-	var s2:int = 0
-	var s3:int
-	var gp_8880:int
-	
-	#func 001075B8
-	#s2 = + 0x20 from header
-	s2 = 0x20
-	v0 = header.decode_s32(s2 + 0x10)
-	v1 = a0 + s2
-	v1 += 0x20
-	v0 <<= 1
-	v0 = v1 + v0
-	header_vars.append(v0) #buffer start
-	header_vars.append(v1) #compressed data offset
-	return header_vars
-	
-func canvasDecodeImage(header_vars:PackedInt32Array) -> void:
-	# TODO: figure out this decompression routine one day that covers several PS2 games https://tcrf.net/Category:Games_developed_by_Cybelle
-	
-	var v0:int
-	var v1:int
-	var a0:int = 0 #always zero?
-	var a1:int
-	var a2:int = 0 #always zero?
-	var a3:int
-	var t0:int = 0 #out buffer 1
-	var t1:int
-	var t2:int
-	var t3:int
-	var t4:int
-	var t5:int
-	var t6:int = 0 #out buffer 2
-	var t9:int = 0x00011800 #read buffer
-	var s1:int = 0
-	var s2:int = 0
-	var s3:int
-	
-	
-	s1 = t0
-	a0 = 0 #lw       a3, $0514(s0) unk
-	t2 = header_vars[0]
 
 
 func _on_interlude_load_folder_dir_selected(dir: String) -> void:
