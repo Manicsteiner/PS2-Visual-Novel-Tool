@@ -386,6 +386,8 @@ func make_img2(data: PackedByteArray, pal: PackedByteArray, is_std: bool, img_id
 					var g: int = pal[pixel_index * 4 + 1]
 					var b: int = pal[pixel_index * 4 + 2]
 					var a: int = pal[pixel_index * 4 + 3]
+					a = int((a / 128.0) * 255.0)
+					
 					image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 		elif img_format == 0x14:
 			for y in range(h):
@@ -402,6 +404,8 @@ func make_img2(data: PackedByteArray, pal: PackedByteArray, is_std: bool, img_id
 					var g1: int = pal[pixel_index_1 * 4 + 1]
 					var b1: int = pal[pixel_index_1 * 4 + 2]
 					var a1: int = pal[pixel_index_1 * 4 + 3]
+					a1 = int((a1 / 128.0) * 255.0)
+					
 					image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
 
 					# Set second pixel (only if within bounds)
@@ -410,15 +414,17 @@ func make_img2(data: PackedByteArray, pal: PackedByteArray, is_std: bool, img_id
 						var g2: int = pal[pixel_index_2 * 4 + 1]
 						var b2: int = pal[pixel_index_2 * 4 + 2]
 						var a2: int = pal[pixel_index_2 * 4 + 3]
+						a2 = int((a2 / 128.0) * 255.0)
+						
 						image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
 	else:
 		print_rich("[color=red]Unknown image format 0x%02X!" % img_format)
 		return Image.create_empty(1, 1, false, Image.FORMAT_L8)
 		
-	if !is_std and remove_alpha:
-		image.convert(Image.FORMAT_RGB8)
-	elif is_std and img_id > 0 and !keep_alpha_char: # always keep alpha in mask parts of character images
-		image.convert(Image.FORMAT_RGB8)
+	#if !is_std and remove_alpha:
+		#image.convert(Image.FORMAT_RGB8)
+	#elif is_std and img_id > 0 and !keep_alpha_char: # always keep alpha in mask parts of character images
+		#image.convert(Image.FORMAT_RGB8)
 		
 	return image
 	
@@ -446,8 +452,10 @@ func make_img(data: PackedByteArray) -> Image:
 				var r: int = pal[pixel_index * 4 + 0]
 				var g: int = pal[pixel_index * 4 + 1]
 				var b: int = pal[pixel_index * 4 + 2]
-				#var a: int = palette[pixel_index * 4 + 3]
-				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0))
+				var a: int = pal[pixel_index * 4 + 3]
+				a = int((a / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 	elif bpp == 4:
 		pal_size = 0x40
 		var img_dat:PackedByteArray = data.slice(0x20, img_size + 0x20)
@@ -467,7 +475,9 @@ func make_img(data: PackedByteArray) -> Image:
 				var g1: int = pal[pixel_index_1 * 4 + 1]
 				var b1: int = pal[pixel_index_1 * 4 + 2]
 				var a1: int = pal[pixel_index_1 * 4 + 3]
-				image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0))
+				a1 = int((a1 / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
 
 				# Set second pixel (only if within bounds)
 				if x + 1 < w:
@@ -475,7 +485,9 @@ func make_img(data: PackedByteArray) -> Image:
 					var g2: int = pal[pixel_index_2 * 4 + 1]
 					var b2: int = pal[pixel_index_2 * 4 + 2]
 					var a2: int = pal[pixel_index_2 * 4 + 3]
-					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0))
+					a2 = int((a1 / 128.0) * 255.0)
+					
+					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
 	return image
 	
 	
@@ -577,204 +589,51 @@ func make_img(data: PackedByteArray) -> Image:
 	#return final_image
 	
 	
-func tile_images_by_batch(images: Array[Image], final_width: int, final_height: int, img_id: int, is_std: bool) -> Image:
+func tile_images_by_batch(
+	images: Array[Image],
+	final_width: int,
+	final_height: int,
+	img_id: int,
+	is_std: bool
+	) -> Image:
 	var n: int = images.size()
 	if n == 0:
 		push_error("No images to tile!")
-		return Image.create_empty(1,1, false, Image.FORMAT_L8)
-		
-	var exceptions: PackedInt32Array = []
+		return Image.create_empty(1, 1, false, Image.FORMAT_L8)
 	
-	if Main.game_type == Main.SEKIREI:
-		exceptions.append(20)
-		exceptions.append(30)
-		exceptions.append(148)
-		exceptions.append(169)
-		for i in range(150, 168):
-			exceptions.append(i)
-		for i in range(195, 201):
-			exceptions.append(i)
-		for i in range(212, 216):
-			exceptions.append(i)
-		
 	var tile_w: int = images[0].get_width()
 	var tile_h: int = images[0].get_height()
 
-	# 1) Find the “closest to square” divisor pair (c ≤ r):
-	var grid: Vector2i = get_best_divisor_grid(n)
-	var cols: int = grid.x
-	var rows: int = grid.y
-	
-	# I don't know what these games are doing. Surely there's a better way...
-	
-	if n >= 200:
-		cols = final_width / tile_w
-		rows = final_height / tile_h
-	elif Main.game_type == Main.SEKIREI:
-		if n >= 64:
-			cols = grid.y
-			rows = grid.x
-		elif n >= 100:
-			cols = grid.x
-			rows = grid.y
-		elif n == 48:
-			cols = grid.y
-			rows = grid.x
-		elif n in range(40, 50):
-			cols = grid.y
-			rows = grid.x
-		elif n in range(20, 31):
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-		elif n == 9:
-			cols = grid.y
-			rows = grid.x
-		elif n == 5:
-			cols = grid.x
-			rows = grid.y
-		elif n == 8:
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-		elif n <= 11:
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-		if img_id in exceptions:
-			if img_id == 148:
-				cols = grid.x
-				rows = grid.y
-			elif img_id in range(150, 168) or img_id in range(195, 201) or img_id in range(212, 216):
-				cols = grid.y
-				rows = grid.x
-			elif img_id == 30 or img_id == 20:
-				cols = grid.y
-				rows = grid.x
-	elif Main.game_type == Main.SUZUNONE:
-		cols = grid.y
-		rows = grid.x
-		if n >= 160:
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-		elif n >= 150:
-			cols = grid.x
-			rows = grid.y
-		elif n in range(50, 60):
-			cols = grid.x
-			rows = grid.y
-		elif n in range(40, 50):
-			cols = grid.x
-			rows = grid.y
-		elif n == 32:
-			cols = grid.x
-			rows = grid.y
-		elif n in range(9, 11):
-			cols = grid.x
-			rows = grid.y
-		elif n <= 11:
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.MAPLECOLORS:
-		cols = grid.y
-		rows = grid.x
-		if n >= 120:
-			cols = grid.x
-			rows = grid.y
-		elif n in range(68, 73):
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-		elif n in range(12, 19):
-			cols = grid.x
-			rows = grid.y
-		elif n <= 11:
-			cols = final_width / tile_w
-			rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 190:
-		cols = final_width / tile_w
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 180:
-		cols = grid.y
-		rows = grid.x
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 170:
-		cols = final_width / tile_w
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 168:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 160:
-		cols = final_width / tile_w
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 158:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 150:
-		cols = grid.x
-		rows = grid.y
-	elif Main.game_type == Main.HARUNOASHIOTO and n == 144:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 140:
-		cols = grid.x
-		rows = grid.y
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 130:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 120:
-		cols = grid.x
-		rows = grid.y
-		#cols = final_width / tile_w
-		#rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 110:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n >= 90:
-		cols = grid.y
-		rows = grid.x
-	elif n >= 90:
-		cols = grid.x
-		rows = grid.y
-	elif Main.game_type == Main.SCARLETNICHIJOU and n == 70:
-		cols = grid.y
-		rows = grid.x
-	elif n == 70:
-		cols = grid.x
-		rows = grid.y
-	elif n >= 64:
-		cols = grid.y
-		rows = grid.x
-	elif n == 36:
-		cols = final_width / tile_w + 1
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.HARUNOASHIOTO and n <= 18:
-		cols = grid.y
-		rows = grid.x
-	elif Main.game_type == Main.SCARLETNICHIJOU and n == 30:
-		cols = final_width / tile_w
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(42, 49):
-		cols = grid.x
-		rows = grid.y
-	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(9, 59):
-		cols = grid.y
-		rows = grid.x
-	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(8, 12):
-		cols = final_width / tile_w
-		rows = int(ceili(n / float(cols)))
-	elif Main.game_type == Main.SCARLETNICHIJOU and n in range(2, 5):
-		cols = grid.y
-		rows = grid.x
-	elif n in range(4, 9):
-		if Main.game_type == Main.HARUNOASHIOTO:
-			cols = grid.y
-			rows = grid.x
-			pass
-		elif cols - 1 != 0:
-			cols -= 1
-		rows = int(ceili(n / float(cols)))
+	# Optional special exceptions for known truly weird cases
+	var exceptions: Dictionary = {
+		#148: Vector2i(get_best_divisor_grid(n).x, get_best_divisor_grid(n).y),
+		#20:  Vector2i(get_best_divisor_grid(n).y, get_best_divisor_grid(n).x),
+		#30:  Vector2i(get_best_divisor_grid(n).y, get_best_divisor_grid(n).x)
+	}
 
-	#print("n=", n, " → cols=", cols, ", rows=", rows)  # debug
+	var cols: int
+	var rows: int
 
+	if img_id in exceptions:
+		cols = exceptions[img_id].x
+		rows = exceptions[img_id].y
+	elif final_width > 0 and final_height > 0:
+		# Use best-fit testing against known dimensions
+		var fit: Vector2i = get_best_fit_from_dimensions(n, tile_w, tile_h, final_width, final_height)
+		cols = fit.x
+		rows = fit.y
+	else:
+		# Fallback: closest-to-square guess
+		var grid: Vector2i = get_best_divisor_grid(n)
+		cols = grid.x
+		rows = grid.y
+		final_width = cols * tile_w
+		final_height = rows * tile_h
+
+	# Create final canvas
 	var final_image: Image = Image.create_empty(final_width, final_height, false, images[0].get_format())
 
-	# 3) Blit/blend row-major:
+	# Blit images in row-major order
 	var img_i: int = 0
 	for y in range(rows):
 		for x in range(cols):
@@ -783,31 +642,42 @@ func tile_images_by_batch(images: Array[Image], final_width: int, final_height: 
 			var dst_x: int = x * tile_w
 			var dst_y: int = y * tile_h
 			if !is_std:
-				final_image.blit_rect(images[img_i], Rect2i(0,0,tile_w,tile_h), Vector2i(dst_x,dst_y))
+				final_image.blit_rect(images[img_i], Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
 			else:
-				final_image.blend_rect(images[img_i], Rect2i(0,0,tile_w,tile_h), Vector2i(dst_x,dst_y))
+				final_image.blend_rect(images[img_i], Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
 			img_i += 1
+	
 	return final_image
 	
 	
 func get_best_divisor_grid(n: int) -> Vector2i:
-	# Returns (c, r) so that c*r == N and |c-r| is minimal.  Always c ≤ r.
-	if n <= 0:
-		return Vector2i(1,1)
-	var best_c: int = 1
-	var best_r: int = n
-	var best_diff: int = abs(n - 1)
-	var limit := int(floor(sqrt(n)))
-	for c in range(1, limit+1):
-		if n % c == 0:
-			var r: int = n / c
-			var diff: int = abs(r - c)
-			if diff < best_diff:
-				best_diff = diff
-				best_c = c
-				best_r = r
-			# (Note: we do NOT swap or tie-break by “larger side.”)
-	return Vector2i(best_c, best_r)  # c ≤ r
+	var best: Vector2i = Vector2i(n, 1)
+	var best_diff: int = n
+	for cols in range(1, n + 1):
+		var rows: int = int(ceil(n / float(cols)))
+		var diff: int = abs(cols - rows)
+		if cols * rows >= n and diff < best_diff:
+			best = Vector2i(cols, rows)
+			best_diff = diff
+	return best
+	
+	
+func get_best_fit_from_dimensions(n: int, tile_w: int, tile_h: int, final_width: int, final_height: int) -> Vector2i:
+	var best_cols: int = 1
+	var best_rows: int = n
+	var best_error: float = 1e9
+
+	for cols in range(1, n + 1):
+		var rows: int = int(ceil(n / float(cols)))
+		var calc_width: int = cols * tile_w
+		var calc_height: int = rows * tile_h
+		var error: float = abs(final_width - calc_width) + abs(final_height - calc_height)
+		if error < best_error:
+			best_cols = cols
+			best_rows = rows
+			best_error = error
+	
+	return Vector2i(best_cols, best_rows)
 	
 	
 func _on_load_folder_dir_selected(dir):

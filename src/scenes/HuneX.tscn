@@ -70,11 +70,13 @@ layout_mode = 2
 text = "Export Tiled Images"
 
 [node name="RemoveAlpha1" type="CheckBox" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 button_pressed = true
-text = "Remove Alpha Channel"
+text = "Fix Alpha Channel"
 
 [node name="RemoveAlpha2" type="CheckBox" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 text = "Keep Alpha in Character Images"
 
