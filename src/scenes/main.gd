@@ -104,6 +104,7 @@ enum {
 	INTERLUDE,
 	INUYASHATHESECRET,
 	ITSUKA,
+	IZUMO2TAKEKI,
 	IZUMOZERO,
 	JEWELSOCEAN,
 	JIGOKUSHOUJO,
@@ -1548,6 +1549,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = TSUKIWAHIGASHI
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == IZUMO2TAKEKI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(IZUMO2TAKEKI)
+		game_type = IZUMO2TAKEKI
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == PRINCESSHOLIDAY:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(PRINCESSHOLIDAY)
@@ -2122,6 +2129,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Interlude", INTERLUDE)
 	game_type_selector.add_item("Inuyasha: The Secret of the Cursed Mask", INUYASHATHESECRET)
 	game_type_selector.add_item("Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~", ITSUKA)
+	game_type_selector.add_item("Izumo 2 Takeki Tsurugi no Senki", IZUMO2TAKEKI)
 	game_type_selector.add_item("Izumo Zero: Yokohama Ayakashi Emaki", IZUMOZERO)
 	game_type_selector.add_item("Jewels Ocean: Star of Sierra Leone", JEWELSOCEAN)
 	game_type_selector.add_item("Jigoku Shoujo Mioyosuga", JIGOKUSHOUJO)

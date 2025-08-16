@@ -13,10 +13,13 @@ extends Node
 @onready var load_image_button: Button = $HBoxContainer/LoadImage
 @onready var load_databin: FileDialog = $LoadDATABIN
 @onready var load_databin_button: Button = $HBoxContainer/LoadDatabin
+@onready var load_biz: Button = $HBoxContainer/LoadBiz
+@onready var load_biz_file: FileDialog = $LoadBIZ
 
 
 var folder_path: String
 var selected_file: String
+var selected_bizs: PackedStringArray
 var selected_imgs: PackedStringArray
 var data_bin_path: String
 var exe_path: String
@@ -30,29 +33,42 @@ var type2_game_types: PackedInt32Array = [
 	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
 	Main.SCARLETNICHIJOU, Main.MAPLECOLORS,
 	Main.SUZUNONE, Main.SEKIREI]
+var type3_game_types: PackedInt32Array = [
+	Main.IZUMO2TAKEKI]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
 
 func _ready() -> void:
 	load_exe.filters = [
-		"SLPM_657.17, SLPM_655.85, SLPM_550.98, SLPM_661.65, SLPM_664.37, MAIN.ELF"
+		"SLPM_657.17, SLPM_655.85, SLPM_550.98, SLPM_661.65, SLPM_664.37, SLPM_661.92, MAIN.ELF"
 		]
 		
 	if Main.game_type in type2_game_types:
 		load_exe_button.hide()
 		load_cd_bin_file.hide()
 		debug_output_button.hide()
+		load_biz.hide()
+	elif Main.game_type in type3_game_types:
+		remove_alpha_1.hide()
+		remove_alpha_2.hide()
+		load_image_button.hide()
+		load_databin_button.hide()
+		load_cd_bin_file.hide()
 	elif Main.game_type not in type2_game_types:
 		remove_alpha_1.hide()
 		remove_alpha_2.hide()
 		tiled_output.hide()
 		load_image_button.hide()
 		load_databin_button.hide()
+		load_biz.hide()
 		
 		
 func _process(_delta):
 	if selected_file and folder_path:
 		extract_cd_bin()
+		_clear_strings()
+	elif selected_bizs and folder_path:
+		extract_biz()
 		_clear_strings()
 	elif data_bin_path and folder_path:
 		extract_mf_uffa()
@@ -67,6 +83,7 @@ func _clear_strings() -> void:
 	selected_file = ""
 	selected_imgs.clear()
 	data_bin_path = ""
+	selected_bizs.clear()
 	return
 	
 	
@@ -228,6 +245,417 @@ func extract_mf_uffa() -> void:
 	else:
 		print_rich("[color=red]%s does not have a valid header!" % f_name)
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func extract_biz() -> void:
+	for file: int in selected_bizs.size():
+		var in_file: FileAccess = FileAccess.open(selected_bizs[file], FileAccess.READ)
+		var exe_file: FileAccess = FileAccess.open(exe_path, FileAccess.READ)
+		var arc_name: String = selected_bizs[file].get_file().get_basename()
+		
+		var compressed_arc: bool = false
+		var tbl_start: int
+		var tbl_end: int
+		if arc_name == "PACK_SYS":
+			tbl_start = 0x276340
+			tbl_end = 0x276F40
+			compressed_arc = true
+		elif arc_name == "PACK_EGP":
+			tbl_start = 0x276F40
+			tbl_end = 0x278BC0
+			compressed_arc = true
+		elif arc_name == "PACK_MPK":
+			tbl_start = 0x278BC0
+			tbl_end = 0x2790E0
+			compressed_arc = true
+		elif arc_name == "PACK_BG":
+			tbl_start = 0x279140
+			tbl_end = 0x27A120
+			compressed_arc = true
+		elif arc_name == "PACK_BUP":
+			tbl_start = 0x27A120
+			tbl_end = 0x27B200
+			compressed_arc = true
+		elif arc_name == "PACK_BTL":
+			tbl_start = 0x27B200
+			tbl_end = 0x27B390
+			compressed_arc = true
+		elif arc_name == "PACK_BTL":
+			tbl_start = 0x27B200
+			tbl_end = 0x27B390
+			compressed_arc = true
+			
+		var id: int = 0
+		for i in range(tbl_start, tbl_end, 16):
+			exe_file.seek(i)
+			
+			var f_name: String = "%s_%04d.BIN" % [arc_name, id]
+			var f_off: int = exe_file.get_32()
+			var f_sec_off: int = exe_file.get_32() * 0x800
+			var f_dec_size: int = exe_file.get_32()
+			var f_size: int = exe_file.get_32()
+			
+			in_file.seek(f_off)
+			var buff: PackedByteArray = in_file.get_buffer(f_size)
+			var buff_dec_size: int = 0
+			
+			print("%08X %08X %s" % [f_off, f_size, folder_path + "/%s" % f_name])
+			if arc_name == "PACK_SYS" and (id == 184 or id == 185):
+				print_rich("[color=red]PACK_SYS_%04d is a multi packed M2D file (TODO)" % id)
+				buff = decompress_lz(buff, f_dec_size)
+				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+				id += 1
+				continue
+			
+			if compressed_arc:
+				buff_dec_size = buff.decode_u32(0)
+				if buff_dec_size != f_dec_size:
+					push_error("Decompressed sizes don't match!")
+				buff = decompress_lz(buff, f_dec_size)
+				if debug_output:
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+			else:
+				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+				
+			if buff.slice(0, 3).get_string_from_ascii() == "M2D":
+				var pngs: Array[Image] = make_img_biz(buff)
+				for img in range(0, pngs.size()):
+					var png: Image = pngs[img]
+					if tile_output:
+						png.save_png(folder_path + "/%s" % f_name + "_%04d" % img + ".PNG")
+					else:
+						png = arrange_images_in_pairs(pngs)
+						png.save_png(folder_path + "/%s" % f_name + ".PNG")
+						break
+			elif buff.slice(0, 4).get_string_from_ascii() == "LPKT":
+				var num_files: int = buff.decode_u32(4)
+				var pos: int = 8
+				for k in range(0, num_files):
+					f_name = "%s_%04d.BIN_%04d.BIN" % [arc_name, id, k]
+					var off: int = buff.decode_u32((pos * k) + 8)
+					var size_t: int = buff.decode_u32((pos * k) + 8 + 4)
+					var t_buff: PackedByteArray = buff.slice(off, off + size_t)
+					if t_buff.slice(0, 3).get_string_from_ascii() == "M2D":
+						var pngs: Array[Image] = make_img_biz(t_buff)
+						for img in range(0, pngs.size()):
+							var png: Image = pngs[img]
+							if tile_output:
+								png.save_png(folder_path + "/%s" % f_name + "_%04d" % img + ".PNG")
+							else:
+								png = arrange_images_in_pairs(pngs)
+								png.save_png(folder_path + "/%s" % f_name + ".PNG")
+								break
+					else:
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".BIN", FileAccess.WRITE)
+						out_file.store_buffer(t_buff)
+						out_file.close()
+			elif buff.slice(0, 8).get_string_from_ascii() == "EGA_PACK":
+				var num_files: int = buff.decode_u32(8)
+				var pos: int = 16
+				for k in range(0, num_files + 1):
+					f_name = "%s_%04d.BIN_%04d.BIN" % [arc_name, id, k]
+					var off: int = buff.decode_u32(pos)
+					var size_t: int = buff.decode_u32(pos + 4)
+					if size_t == 0:
+						size_t = buff.size()
+					else:
+						size_t -= off
+					var t_buff: PackedByteArray = buff.slice(off, off + size_t)
+					if t_buff.slice(0, 3).get_string_from_ascii() == "M2D":
+						var pngs: Array[Image] = make_img_biz(t_buff)
+						for img in range(0, pngs.size()):
+							var png: Image = pngs[img]
+							if tile_output:
+								png.save_png(folder_path + "/%s" % f_name + "_%04d" % img + ".PNG")
+							else:
+								png = arrange_images_in_pairs(pngs)
+								png.save_png(folder_path + "/%s" % f_name + ".PNG")
+								break
+					else:
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".BIN", FileAccess.WRITE)
+						out_file.store_buffer(t_buff)
+						out_file.close()
+					pos += 4
+			else:
+				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+						
+			id += 1
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func arrange_images_in_pairs(images: Array[Image]) -> Image:
+	if images.is_empty():
+		return null
+	
+	# Assume all images are the same size
+	var img_width: int = images[0].get_width()
+	var img_height: int = images[0].get_height()
+	
+	# Calculate rows (2 images per row)
+	var rows: int = int(ceil(images.size() / 2.0))
+	var final_width: int = img_width * 2
+	var final_height: int = img_height * rows
+	
+	# Create the final image
+	var final_img: Image = Image.create_empty(final_width, final_height, false, images[0].get_format())
+	
+	# Draw each image in the correct position
+	for i in range(images.size()):
+		var row: int = i / 2
+		var col: int = i % 2
+		var pos_x: int = col * img_width
+		var pos_y: int = row * img_height
+		final_img.blit_rect(images[i], Rect2i(Vector2i(0, 0), images[i].get_size()), Vector2i(pos_x, pos_y))
+	
+	return final_img
+	
+func make_img_biz(data: PackedByteArray) -> Array[Image]:
+	var imgs: Array[Image]
+	var data_size: int = data.size()
+	var off: int = 0x20
+	while off < data_size:
+		var w: int = data.decode_u32(off + 0x10)
+		if w == 0:
+			print_rich("[color=red]Premature end of image?")
+			return imgs
+		var h: int = data.decode_u32(off + 0x14)
+		var img_size: int = (w * h) + off + 0x420
+		var pal: PackedByteArray = ComFuncs.unswizzle_palette(data.slice(off + 0x20, off + 0x420), 32)
+		var img_data: PackedByteArray = unswizzle8(data.slice(off + 0x420, img_size), w, h)
+		var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+		for y in range(h):
+			for x in range(w):
+				var pixel_index: int = img_data[x + y * w]
+				var r: int = pal[pixel_index * 4 + 0]
+				var g: int = pal[pixel_index * 4 + 1]
+				var b: int = pal[pixel_index * 4 + 2]
+				var a: int = pal[pixel_index * 4 + 3]
+				a = int((a / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+		imgs.append(image)
+		off = img_size
+	return imgs
+	
+	
+func unswizzle8(data: PackedByteArray, w: int, h: int, swizz: bool = false) -> PackedByteArray:
+	# Original code from: https://github.com/leeao/PS2Textures/blob/583f68411b4f6cca491730fbb18cb064822f1017/PS2Textures.py#L266
+	# Unknown license
+	
+	var out: PackedByteArray = data.duplicate()
+	for y in range(h):
+		for x in range(w):
+			var bs: int = ((y + 2) >> 2 & 1) * 4
+			var idx: int = \
+				((y & ~0xF) * w) + ((x & ~0xF) * 2) + \
+				( ((((y & ~3) >> 1) + (y & 1)) & 7) * w * 2 ) + \
+				(((x + bs) & 7) * 4) + \
+				(((y >> 1) & 1) + ((x >> 2) & 2))
+			if swizz:
+				out[idx] = data[y * w + x]
+			else:
+				out[y * w + x] = data[idx]
+	return out
+	
+	
+func decompress_lz(input_buffer: PackedByteArray, output_size: int) -> PackedByteArray:
+	var output: PackedByteArray = PackedByteArray()
+	output.resize(output_size)
+	var temp_buff: PackedByteArray = PackedByteArray()
+	temp_buff.resize(0x800)
+	
+	for i in range(0x7EF):
+		temp_buff.encode_u8(i, 0x20)
+		
+	var gp: PackedByteArray = PackedByteArray()
+	gp.resize(0x50)
+	
+	var a0: int = 0
+	var a1: int = 0
+	var a2: int = 0
+	var t2: int = 0
+	var t3: int = 0
+	var t4: int = 0
+	var t5: int = 0
+	var t6: int = 0
+	var t7: int = 0
+	var v0: int = 0
+	
+	gp.encode_u32(0, 4) #input pos
+	gp.encode_u32(4, 0) # output pos
+	gp.encode_u32(0x34, 0x7EF)
+	gp.encode_u32(0x20, output_size)
+	var pc: int = 0x00101FA0  # starting label
+	while true:
+		match pc:
+			0x00101FA0:
+				a1 = 1
+				gp = _decompress_lz(input_buffer, gp, a1)
+				v0 = gp.decode_u32(0x48)
+				gp.encode_s32(0x38, v0)
+				if v0 == 0:
+					pc = 0x001020dc
+					continue
+				a1 = 8
+				gp = _decompress_lz(input_buffer, gp, a1)
+				v0 = gp.decode_u32(0x48)
+				gp.encode_s32(0x38, v0)
+				t3 = gp.decode_s32(4)
+				t6 = 0
+				t7 = gp.decode_u8(0x38)#gpd738 & 0xFF #load_byte_unsigned(gp + 0xd738)
+				output.encode_s8(t3, t7)#store_byte(t3 + 0x0000, t7)
+				t4 = gp.decode_s32(0x34)#gpd734#load_word(gp + 0xd734)
+				t3 = t3 + 1
+				t5 = gp.decode_s32(0x24)#gpd724 #load_word(gp + 0xd724)
+				t6 = t4 + t6
+				t7 = gp.decode_u8(0x38)#gpd738 & 0xFF#load_byte_unsigned(gp + 0xd738)
+				t4 = t4 + 1
+				gp.encode_s32(4, t3)#gp8024 = t3#store_word(gp + 0x8024, t3)
+				t5 = t5 + 1
+				temp_buff.encode_s8(t6, t7)#store_byte(t6 + 0x0000, t7)
+				t4 = t4 & 2047
+				gp.encode_s32(0x24, t5)#gpd724 = t5#store_word(gp + 0xd724, t5)
+				gp.encode_s32(0x34, t4)#gpd734 = t4#store_word(gp + 0xd734, t4)
+				pc = 0x00102008
+				continue
+			0x00102008:
+				t6 = gp.decode_s32(0x24)#gpd724#load_word(gp + 0xd724)
+				pc = 0x0010200C
+				continue
+			0x0010200C:
+				t7 = gp.decode_s32(0x20)#gpd720#load_word(gp + 0xd720)
+				v0 = t6# daddu             v0, t6, zero
+				if t6 == t7:
+					pc = 0x001020c8
+					continue
+				pc = 0x00101FA0
+				continue
+			0x001020C8:
+				break
+			0x001020DC:
+				a1 = 11
+				gp = _decompress_lz(input_buffer, gp, a1)
+				v0 = gp.decode_u32(0x48)
+				gp.encode_s32(0x28, v0)#gpd728 = v0#store_word(gp + 0xd728, v0)
+				a1 = 4
+				gp = _decompress_lz(input_buffer, gp, a1)
+				v0 = gp.decode_u32(0x48)
+				gp.encode_s32(0x2C, v0)#gpd72c = v0#store_word(gp + 0xd72c, v0)
+				v0 = v0 + 1
+				gp.encode_u32(0x30, 0)#gpd730 = 0
+				if v0 < 0 or v0 >= 0xFFFFFFFF:
+					pc = 0x00102008
+					continue
+				pc = 0x00102108
+				continue
+			0x00102108:
+				t6 = gp.decode_s32(0x30)#gpd730#load_word(gp + 0xd730)
+				# lui               t3, $003e
+				t7 = gp.decode_s32(0x28)#gpd728#load_word(gp + 0xd728)
+				t3 = 0 #t3 + -30384
+				t2 = gp.decode_s32(0x4)#gp8024#load_word(gp + 0x8024)
+				t7 = t7 + t6
+				t7 = t7 & 2047
+				t7 = t7 + t3
+				t7 = temp_buff.decode_u8(t7)#load_byte_unsigned(t7 + 0x0000)
+				gp.encode_s32(0x38, t7)#gpd738 = t7#store_word(gp + 0xd738, t7)
+				t7 = gp.decode_u8(0x38)#gpd738 & 0xFF#load_byte_unsigned(gp + 0xd738)
+				output.encode_s8(t2, t7)#store_byte(t2 + 0x0000, t7)
+				t5 = gp.decode_s32(0x34)#gpd734#load_word(gp + 0xd734)
+				t2 = t2 + 1
+				t7 = gp.decode_u8(0x38)#gpd738 & 0xFF#load_byte_unsigned(gp + 0xd738)
+				t3 = t5 + t3
+				t4 = gp.decode_s32(0x30)#gpd730#load_word(gp + 0xd730)
+				temp_buff.encode_s8(t3, t7)#store_byte(t3 + 0x0000, t7)
+				t5 = t5 + 1
+				t6 = gp.decode_s32(0x24)#gpd724#load_word(gp + 0xd724)
+				t4 = t4 + 1
+				t7 = gp.decode_s32(0x2C)#gpd72c#load_word(gp + 0xd72c)
+				t5 = t5 & 2047
+				t6 = t6 + 1
+				gp.encode_s32(4, t2)#gp8024 = t2#store_word(gp + 0x8024, t2)
+				t7 = t7 + 1
+				gp.encode_s32(0x24, t6)#gpd724 = t6#store_word(gp + 0xd724, t6)
+				gp.encode_s32(0x34, t5)#gpd734 = t5#store_word(gp + 0xd734, t5)
+				t7 = 1 if t7 < t4 else 0
+				gp.encode_s32(0x30, t4)#gpd730 = t4#store_word(gp + 0xd730, t4)
+				if t7 == 0:
+					pc = 0x00102108
+					continue
+				t6 = gp.decode_s32(0x24)#gpd724#load_word(gp + 0xd724)
+				pc = 0x0010200c
+				continue
+
+	return output
+	
+	
+func _decompress_lz(input: PackedByteArray, gp: PackedByteArray, a1: int) -> PackedByteArray:
+	var a0: int = 0
+	var t4: int = 0
+	var t5: int = 0
+	var t6: int = 0
+	var t7: int = 0
+	var v0: int = 0
+	# return v0 in gp 0x48
+	#D5E0 is its own counter (as gp 0x44)
+	#DC48 is input read from input pos (as 0x4C)
+
+	var pc: int = 0x002141D8  # starting label
+	while true:
+		match pc:
+			0x002141D8:
+				v0 = 0
+				if a1 <= 0:
+					pc = 0x00214234
+					continue
+				# blez              a1, $00214234
+				# nop
+				pc = 0x002141E0
+				continue
+			0x002141E0:
+				t7 = gp.decode_s32(0x44)#load_word(gp + 0xd5e0)
+				if t7 != 0:
+					t6 = gp.decode_s32(0x44)#load_word(gp + 0xd5e0)
+					pc = 0x00214210
+					continue
+				t7 = gp.decode_s32(0)#load_word(a0 + 0x0000)
+				t7 = input.decode_u8(t7)#t7 = load_byte_unsigned(t7 + 0x0000)
+				gp.encode_s32(0x4C, t7)#DC48 = t7#store_word(gp + 0xdc48, t7)
+				t7 = gp.decode_s32(0)#load_word(a0 + 0x0000)
+				t7 = t7 + 1
+				gp.encode_s32(0, t7)#store_word(a0 + 0x0000, t7)
+				t7 = 0 + 128
+				gp.encode_s32(0x44, t7)#store_word(gp + 0xd5e0, t7)
+				t6 = gp.decode_s32(0x44)#load_word(gp + 0xd5e0)
+				pc = 0x00214210
+				continue
+			0x00214210:
+				v0 = v0 << 1
+				t7 = gp.decode_s32(0x4C)#t7 = DC48#load_word(gp + 0xdc48)
+				t5 = v0 + 1
+				t4 = t6 >> 1  # arithmetic shift
+				a1 = a1 + -1
+				t7 = t7 & t6 # and               t7, t7, t6
+				gp.encode_s32(0x44, t4)#store_word(gp + 0xd5e0, t4)
+				# movn              v0, t5, t7
+				if t7 != 0: v0 = t5
+				if a1 != 0:
+					pc = 0x002141e0
+					continue
+				break
+			0x00214234:
+				break
+	gp.encode_s32(0x48, v0)
+	return gp
 	
 	
 func convert_imgs() -> void:
@@ -491,104 +919,6 @@ func make_img(data: PackedByteArray) -> Image:
 	return image
 	
 	
-#func tile_images_by_batch(images: Array[Image], final_width: int, final_height: int, is_std: bool) -> Image:
-	#var tile_w: int = images[0].get_width()
-	#var tile_h: int = images[0].get_height()
-#
-	#var cols: int = final_width / tile_w
-	#var rows: int = final_height / tile_h
-	#if !is_std and images.size() >= 180: # there's likely some dynamic way to do this
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 138:
-		#pass
-	#elif !is_std and images.size() >= 128:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 120:
-		#rows += 1
-	#elif !is_std and images.size() >= 110:
-		#pass
-	#elif !is_std and images.size() >= 102:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 91:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 88:
-		##cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 80:
-		#rows += 1
-	#elif !is_std and images.size() >= 70:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 60:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 40:
-		#rows += 1
-	#elif !is_std and images.size() >= 30:
-		#cols += 1
-		#rows += 1
-	#elif !is_std and images.size() >= 20:
-		#cols += 1
-		#rows += 1
-	#elif is_std and images.size() >= 80:
-		#cols += 1
-		#rows += 1
-	#elif is_std and images.size() >= 68:
-		#cols += 1
-		#rows += 1
-	#elif is_std and images.size() >= 64:
-		#cols = int(ceili(sqrt(images.size())))
-		#rows = int(ceili(images.size() / float(cols)))
-	#elif is_std and images.size() >= 58:
-		#cols = int(ceili(sqrt(images.size()))) - 1
-		#rows = int(ceili(images.size() / float(cols)))
-	#elif is_std and images.size() >= 40:
-		#cols = int(ceili(sqrt(images.size()))) - 2
-		#rows = int(ceili(images.size() / float(cols)))
-	#elif images.size() < 4:
-		#cols = 1
-		#rows = 3
-	#elif is_std and images.size() >= 36:
-		#cols += 1
-		#rows = int(ceili(images.size() / float(cols)))
-	#elif is_std and images.size() < 35:
-		#cols = int(ceili(sqrt(images.size()))) - 2
-		#rows = int(ceili(images.size() / float(cols)))
-#
-	#var final_image: Image = Image.create_empty(final_width, final_height, false, images[0].get_format())
-#
-	## Tile in row-major order until we run out of tiles
-	#var img_i: int = 0
-	#for row in range(rows):
-		#for col in range(cols):
-			#if img_i >= images.size():
-				#return final_image
-#
-			#var dst_x: int = col * tile_w
-			#var dst_y: int = row * tile_h
-			#var tile_img: Image = images[img_i]
-#
-			## If you want a straight copy (no alpha blending), use blit_rect():
-			## If you specifically need to blend (e.g. preserve semi-transparency), use:
-			## final_image.blend_rect(tile_img, Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
-			#if !is_std and remove_alpha:
-				#final_image.blit_rect(tile_img, Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
-			#elif is_std and keep_alpha_char:
-				#final_image.blend_rect(tile_img, Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
-			#else:
-				#final_image.blend_rect(tile_img, Rect2i(0, 0, tile_w, tile_h), Vector2i(dst_x, dst_y))
-#
-			#img_i += 1
-		## next column
-	## next row
-#
-	#return final_image
-	
-	
 func tile_images_by_batch(
 	images: Array[Image],
 	final_width: int,
@@ -737,3 +1067,15 @@ func _on_load_bin_2_file_selected(path: String) -> void:
 
 func _on_load_databin_pressed() -> void:
 	load_databin.show()
+
+
+func _on_load_biz_pressed() -> void:
+	if not exe_path:
+		OS.alert("Please load a valid exe first (SLPM_xxx.xx).")
+		return
+	load_biz_file.show()
+
+
+func _on_load_biz_files_selected(paths: PackedStringArray) -> void:
+	selected_bizs = paths
+	load_folder.show()
