@@ -46,6 +46,10 @@ text = "Load .BIZ
 layout_mode = 2
 text = "Extract DATA.BIN / .MF Files"
 
+[node name="LoadHFU2Bin" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract .BIN (HFU2 Headers)"
+
 [node name="LoadImage" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "Convert Image From .MF File
@@ -68,7 +72,7 @@ theme_override_constants/separation = 0
 
 [node name="DebugOutput" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
-text = "Output Decompressed Images (Debug)"
+text = "Output Decompressed Images / Files (Debug)"
 
 [node name="TiledOutput" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
@@ -117,6 +121,17 @@ access = 2
 filters = PackedStringArray("*.BIN, *.MF")
 use_native_dialog = true
 
+[node name="LoadHFU2BIN" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.BIN, *.HFU2")
+use_native_dialog = true
+
 [node name="LoadIMAGE" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open File(s)"
@@ -151,6 +166,7 @@ use_native_dialog = true
 [connection signal="pressed" from="HBoxContainer/LoadCdBinFile" to="." method="_on_load_cd_bin_file_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadBiz" to="." method="_on_load_biz_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadDatabin" to="." method="_on_load_databin_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadHFU2Bin" to="." method="_on_load_hfu_2_bin_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadImage" to="." method="_on_load_image_pressed"]
 [connection signal="pressed" from="VBoxContainer/DebugOutput" to="." method="_on_debug_output_pressed"]
 [connection signal="toggled" from="VBoxContainer/TiledOutput" to="." method="_on_tiled_output_toggled"]
@@ -159,6 +175,7 @@ use_native_dialog = true
 [connection signal="file_selected" from="LoadBIN" to="." method="_on_load_bin_file_selected"]
 [connection signal="files_selected" from="LoadBIZ" to="." method="_on_load_biz_files_selected"]
 [connection signal="file_selected" from="LoadDATABIN" to="." method="_on_load_bin_2_file_selected"]
+[connection signal="files_selected" from="LoadHFU2BIN" to="." method="_on_load_hfu_2bin_files_selected"]
 [connection signal="files_selected" from="LoadIMAGE" to="." method="_on_load_image_files_selected"]
 [connection signal="file_selected" from="LoadExe" to="." method="_on_load_exe_file_selected"]
 [connection signal="dir_selected" from="LoadFOLDER" to="." method="_on_load_folder_dir_selected"]

@@ -25,6 +25,7 @@ enum {
 	CAFELINDBERGHSUMMER,
 	CAFELITTLEWISH,
 	CAMBRIAN,
+	CANARIA,
 	CANVAS1,
 	CANVAS2,
 	CARTAGRA,
@@ -277,6 +278,7 @@ enum {
 	UNDERTHEMOON,
 	UTAU,
 	WEARE,
+	WIND,
 	WHITEBREATH,
 	WHITECLARITY,
 	WHITEPRINCESS,
@@ -1543,6 +1545,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = TSUYOKISS2
 		var next_scene: PackedScene = load("res://src/scenes/Piacci.tscn")
 		sceneChanger(next_scene)
+	elif index == WIND:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(WIND)
+		game_type = WIND
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == CANARIA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(CANARIA)
+		game_type = CANARIA
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == TSUKIWAHIGASHI:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(TSUKIWAHIGASHI)
@@ -2050,6 +2064,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
+	game_type_selector.add_item("Canaria: Kono Omoi wo Uta ni Nosete", CANARIA)
 	game_type_selector.add_item("Canvas: Sepia-iro no Motif", CANVAS1)
 	game_type_selector.add_item("Canvas 2: Akaneiro no Palette", CANVAS2)
 	game_type_selector.add_item("Cartagra: Tamashii no Kunou", CARTAGRA)
@@ -2302,6 +2317,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Under the Moon: Crescent", UNDERTHEMOON)
 	game_type_selector.add_item("Utau * Tumbling Dice", UTAU)
 	game_type_selector.add_item("WeAre*", WEARE)
+	game_type_selector.add_item("Wind: A Breath of Heart", WIND)
 	game_type_selector.add_item("White Breath: Kizuna", WHITEBREATH)
 	game_type_selector.add_item("White Clarity: And, the Tears Became You", WHITECLARITY)
 	game_type_selector.add_item("White Princess the Second", WHITEPRINCESS)
