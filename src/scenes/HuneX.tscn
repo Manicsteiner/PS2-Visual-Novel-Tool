@@ -129,7 +129,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 1
 access = 2
-filters = PackedStringArray("*.BIN, *.MF")
+filters = PackedStringArray("*.BIN, *.HFU2")
 use_native_dialog = true
 
 [node name="LoadIMAGE" type="FileDialog" parent="."]

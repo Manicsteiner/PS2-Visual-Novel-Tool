@@ -41,7 +41,7 @@ var type3_game_types: PackedInt32Array = [
 	Main.IZUMO2TAKEKI
 	]
 var type4_game_types: PackedInt32Array = [
-	Main.WIND
+	Main.CANARIA, Main.WIND
 	]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
@@ -271,6 +271,8 @@ func extract_mf_uffa() -> void:
 	
 	
 func extract_hfu2() -> void:
+	#TODO: Images in SYSDAT.BIN from Canaria seem to have hardcoded dimensions
+	
 	const BUFFER_SIZE = 8 * 1024 * 1024
 	
 	for file in selected_hfu2s.size():
@@ -297,15 +299,25 @@ func extract_hfu2() -> void:
 				if f_comp_size == 0:
 					continue
 					
-				#if hfu_i != 160:
+				#if hfu_i != 353:
 					#continue
-				
-				in_file.seek(f_offset)
-				var hdr_bytes: String = in_file.get_buffer(4).get_string_from_ascii()
-				if hdr_bytes == "HEP":
-					in_file.seek(f_offset)
-					var buff: PackedByteArray = in_file.get_buffer(f_comp_size)
 					
+				var buff: PackedByteArray
+				var is_comp: bool = false
+				
+				if f_comp_size != f_dec_size:
+					in_file.seek(f_offset)
+					buff = in_file.get_buffer(f_comp_size)
+					f_comp_size = buff.decode_u32(4)
+					f_dec_size = buff.decode_u32(8)
+					buff = ComFuncs.decompLZSS(buff.slice(16), f_comp_size, f_dec_size)
+					is_comp = true
+				else:
+					in_file.seek(f_offset)
+					buff = in_file.get_buffer(f_comp_size)
+					
+				var hdr_bytes: String = buff.slice(0, 4).get_string_from_ascii()
+				if hdr_bytes == "HEP":
 					if debug_output:
 						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
 						out_file.store_buffer(buff)
@@ -322,26 +334,53 @@ func extract_hfu2() -> void:
 						
 					print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [hfu_i, ext]])
 					continue
-				else:
-					in_file.seek(f_offset)
-					var hdr_arr: PackedByteArray = in_file.get_buffer(16)
-					var is_adpcm: bool = true
-					for b in hdr_arr:
-						if b != 0:
-							is_adpcm = false
-							break
-					if is_adpcm:
-						ext = "ADPCM"
-					else:
-						ext = "BIN"
-						
+				elif hdr_bytes == "HFU2":
+					ext = "HFU2"
+					
 					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
-					in_file.seek(f_offset)
-					while in_file.get_position() < f_offset + f_comp_size:
-						var read_size: int = min(BUFFER_SIZE, (f_offset + f_comp_size) - in_file.get_position())
-						var buff: PackedByteArray = in_file.get_buffer(read_size)
-						out_file.store_buffer(buff)
+					out_file.store_buffer(buff)
 					out_file.close()
+				else:
+					if Main.game_type == Main.CANARIA and (f_name == "IMAGE.BIN" or f_name == "SYSDAT.BIN"):
+						if debug_output:
+							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
+							out_file.store_buffer(buff)
+							out_file.close()
+						var w: int = 640
+						var h: int = 448
+						var bpp: int 
+						if (w*h) < buff.size():
+							bpp = 8
+						elif (w*h) / 2 < buff.size():
+							bpp = 4
+						else:
+							print_rich("[color=yellow]%s_%04d.%s is a dummy image?" % [f_name, hfu_i, ext])
+							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
+							out_file.store_buffer(buff)
+							out_file.close()
+							continue
+						var png: Image = make_img_canaria(w, h, bpp, buff)
+						png.save_png(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, "PNG"])
+					else:
+						in_file.seek(f_offset)
+						var hdr_arr: PackedByteArray = in_file.get_buffer(16)
+						var is_adpcm: bool = true
+						for b in hdr_arr:
+							if b != 0:
+								is_adpcm = false
+								break
+						if is_adpcm:
+							ext = "ADPCM"
+						else:
+							ext = "BIN"
+							
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
+						in_file.seek(f_offset)
+						while in_file.get_position() < f_offset + f_comp_size:
+							var read_size: int = min(BUFFER_SIZE, (f_offset + f_comp_size) - in_file.get_position())
+							buff = in_file.get_buffer(read_size)
+							out_file.store_buffer(buff)
+						out_file.close()
 					
 				print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [hfu_i, ext]])
 		else:
@@ -492,6 +531,53 @@ func extract_biz() -> void:
 						
 			id += 1
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func make_img_canaria(w: int, h: int, bpp: int, data: PackedByteArray) -> Image:
+	var img_size: int = w*h if bpp == 8 else (w*h) / 2
+	var img_dat: PackedByteArray = data.slice(0, img_size)
+	var pal: PackedByteArray = ComFuncs.unswizzle_palette(data.slice(img_size), 32) if bpp == 8 else data.slice(img_size)
+	var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+	if bpp == 8:
+		for y in range(h):
+			for x in range(w):
+				var pixel_index: int = img_dat[x + y * w]
+				var r: int = pal[pixel_index * 4 + 0]
+				var g: int = pal[pixel_index * 4 + 1]
+				var b: int = pal[pixel_index * 4 + 2]
+				var a: int = pal[pixel_index * 4 + 3]
+				a = int((a / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+	elif bpp == 4:
+		for y in range(h):
+			for x in range(0, w, 2):  # Two pixels per byte
+				var byte_index: int  = (x + y * w) / 2
+				var byte_value: int  = data[byte_index]
+
+				# Extract two 4-bit indices (little-endian order)
+				var pixel_index_1 = byte_value & 0xF  # Low nibble (left pixel)
+				var pixel_index_2 = (byte_value >> 4) & 0xF  # High nibble (right pixel)
+
+				# Set first pixel
+				var r1: int = pal[pixel_index_1 * 4 + 0]
+				var g1: int = pal[pixel_index_1 * 4 + 1]
+				var b1: int = pal[pixel_index_1 * 4 + 2]
+				var a1: int = pal[pixel_index_1 * 4 + 3]
+				a1 = int((a1 / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
+
+				# Set second pixel (only if within bounds)
+				if x + 1 < w:
+					var r2: int = pal[pixel_index_2 * 4 + 0]
+					var g2: int = pal[pixel_index_2 * 4 + 1]
+					var b2: int = pal[pixel_index_2 * 4 + 2]
+					var a2: int = pal[pixel_index_2 * 4 + 3]
+					a2 = int((a2 / 128.0) * 255.0)
+					
+					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
+	return image
 	
 	
 #func arrange_images_side_by_side(images: Array[Image]) -> Image:
