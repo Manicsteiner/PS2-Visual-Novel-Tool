@@ -48,7 +48,7 @@ text = "Extract DATA.BIN / .MF Files"
 
 [node name="LoadHFU2Bin" type="Button" parent="HBoxContainer"]
 layout_mode = 2
-text = "Extract .BIN (HFU2 Headers)"
+text = "Extract .BIN (HFU2 / PACK Headers)"
 
 [node name="LoadImage" type="Button" parent="HBoxContainer"]
 layout_mode = 2
@@ -129,7 +129,7 @@ size = Vector2i(452, 400)
 ok_button_text = "Open"
 file_mode = 1
 access = 2
-filters = PackedStringArray("*.BIN, *.HFU2")
+filters = PackedStringArray("*.BIN, *.HFU2, *.PACK")
 use_native_dialog = true
 
 [node name="LoadIMAGE" type="FileDialog" parent="."]

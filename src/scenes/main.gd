@@ -155,6 +155,7 @@ enum {
 	MENATWORK3,
 	METALWOLF,
 	MISSINGBLUE,
+	MIZUIRO,
 	MIZUNOSENRITSU,
 	MIZUNOSENRITSU2,
 	MOEKAN,
@@ -262,6 +263,7 @@ enum {
 	TENTAMA1ST,
 	TENTAMA2,
 	THEMAGICIAN,
+	THREADCOLORS,
 	TOGAINU,
 	TOHEART,
 	TOHEART2,
@@ -1557,6 +1559,18 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = CANARIA
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == MIZUIRO:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(MIZUIRO)
+		game_type = MIZUIRO
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
+	elif index == THREADCOLORS:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(THREADCOLORS)
+		game_type = THREADCOLORS
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == TSUKIWAHIGASHI:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(TSUKIWAHIGASHI)
@@ -2194,6 +2208,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Men at Work! 3: Ai to Seishun no Hunter Gakuen", MENATWORK3)
 	game_type_selector.add_item("Metal Wolf REV", METALWOLF)
 	game_type_selector.add_item("Missing Blue", MISSINGBLUE)
+	game_type_selector.add_item("Mizuiro", MIZUIRO)
 	game_type_selector.add_item("Mizu no Senritsu", MIZUNOSENRITSU)
 	game_type_selector.add_item("Mizu no Senritsu 2: Hi no Kioku", MIZUNOSENRITSU2)
 	game_type_selector.add_item("Moekan: Moekko Company", MOEKAN)
@@ -2301,6 +2316,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Tentama: 1st Sunny Side", TENTAMA1ST)
 	game_type_selector.add_item("Tentama 2: Wins", TENTAMA2)
 	game_type_selector.add_item("The Magician's Academy", THEMAGICIAN)
+	game_type_selector.add_item("Thread Colors: Sayonara no Mukougawa", THREADCOLORS)
 	game_type_selector.add_item("Togainu no Chi: True Blood", TOGAINU)
 	game_type_selector.add_item("To Heart", TOHEART)
 	game_type_selector.add_item("To Heart 2", TOHEART2)

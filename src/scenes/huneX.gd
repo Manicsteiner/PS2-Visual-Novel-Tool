@@ -41,7 +41,8 @@ var type3_game_types: PackedInt32Array = [
 	Main.IZUMO2TAKEKI
 	]
 var type4_game_types: PackedInt32Array = [
-	Main.CANARIA, Main.WIND
+	Main.CANARIA, Main.MIZUIRO, Main.THREADCOLORS, 
+	Main.WIND
 	]
 
 #TODO: Image DATA2.BIN_00000016.MF_00003280.MF, DATA2.BIN_00000016.MF_00005021.MF in Fate Stay Night
@@ -93,7 +94,7 @@ func _process(_delta):
 		extract_mf_uffa()
 		_clear_strings()
 	elif selected_hfu2s and folder_path:
-		extract_hfu2()
+		extract_hfu2_pack()
 		_clear_strings()
 	elif selected_imgs and folder_path:
 		convert_imgs()
@@ -270,7 +271,7 @@ func extract_mf_uffa() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
-func extract_hfu2() -> void:
+func extract_hfu2_pack() -> void:
 	#TODO: Images in SYSDAT.BIN from Canaria seem to have hardcoded dimensions
 	
 	const BUFFER_SIZE = 8 * 1024 * 1024
@@ -383,6 +384,78 @@ func extract_hfu2() -> void:
 						out_file.close()
 					
 				print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [hfu_i, ext]])
+		if hdr == "PACK":
+			var ext: String = "BIN"
+			var pack_size: int = in_file.get_length()
+			
+			in_file.seek(4)
+			var num_files: int = in_file.get_32()
+			var base_off: int = in_file.get_32()
+			var pack_type: int = in_file.get_32() # if 2, has compressed files and theres only 1?
+			var pack_pos: int = 0x10
+			var hfu_id: int = 0
+			for pack_i in range(num_files):
+				if pack_type == 2 and pack_i == 1: break
+				in_file.seek(pack_pos)
+				
+				var f_offset: int = in_file.get_32() + base_off
+				var f_comp_size: int = in_file.get_32()
+				
+				pack_pos += 0x8
+				
+				if f_comp_size == 0:
+					continue
+					
+				#if pack_i != 353:
+					#continue
+					
+				var buff: PackedByteArray
+				
+				if pack_type == 2:
+					in_file.seek(f_offset)
+					buff = in_file.get_buffer(pack_size - base_off)
+				else:
+					in_file.seek(f_offset)
+					buff = in_file.get_buffer(f_comp_size)
+				
+				
+				var hdr_bytes: String = buff.slice(0, 4).get_string_from_ascii()
+				if hdr_bytes == "PACK":
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [pack_i, "PACK"], FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+					print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [pack_i, "PACK"]])
+					continue
+				elif hdr_bytes == "LZSS":
+					f_comp_size = buff.decode_u32(4)
+					var f_dec_size: int = buff.decode_u32(8)
+					buff = ComFuncs.decompLZSS(buff.slice(16), f_comp_size, f_dec_size)
+					
+					hdr_bytes = buff.slice(0, 4).get_string_from_ascii()
+				if hdr_bytes == "HEP":
+					if debug_output:
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [pack_i, ext], FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						
+					var pngs: Array[Image] = make_img_hed(buff)
+					var png: Image = arrange_images_side_by_side(pngs)
+					png.save_png(folder_path + "/%s" % f_name + "_%04d" % pack_i + ".PNG")
+						
+					print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [pack_i, ext]])
+					continue
+				elif hdr_bytes == "hss":
+					print_rich("[color=red]BUSTUP HSS images currently not supported!")
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [pack_i, "HSS"], FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+				else:
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [pack_i, "PACK"], FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+				
+				print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [pack_i, ext]])
 		else:
 			print_rich("[color=red]%s does not have a valid header!" % f_name)
 	print_rich("[color=green]Finished![/color]")
@@ -580,27 +653,27 @@ func make_img_canaria(w: int, h: int, bpp: int, data: PackedByteArray) -> Image:
 	return image
 	
 	
-#func arrange_images_side_by_side(images: Array[Image]) -> Image:
-	#if images.is_empty():
-		#return null
-	#
-	## Assume all images are the same size
-	#var img_width: int = images[0].get_width()
-	#var img_height: int = images[0].get_height()
-	#
-	## Calculate final dimensions
-	#var final_width: int = img_width * images.size()
-	#var final_height: int = img_height
-	#
-	## Create the final image
-	#var final_img: Image = Image.create_empty(final_width, final_height, false, images[0].get_format())
-	#
-	## Place each image horizontally
-	#for i in range(images.size()):
-		#var pos_x: int = i * img_width
-		#final_img.blit_rect(images[i], Rect2i(Vector2i(0, 0), images[i].get_size()), Vector2i(pos_x, 0))
-	#
-	#return final_img
+func arrange_images_side_by_side(images: Array[Image]) -> Image:
+	if images.is_empty():
+		return null
+	
+	# Assume all images are the same size
+	var img_width: int = images[0].get_width()
+	var img_height: int = images[0].get_height()
+	
+	# Calculate final dimensions
+	var final_width: int = img_width * images.size()
+	var final_height: int = img_height
+	
+	# Create the final image
+	var final_img: Image = Image.create_empty(final_width, final_height, false, images[0].get_format())
+	
+	# Place each image horizontally
+	for i in range(images.size()):
+		var pos_x: int = i * img_width
+		final_img.blit_rect(images[i], Rect2i(Vector2i(0, 0), images[i].get_size()), Vector2i(pos_x, 0))
+	
+	return final_img
 	
 	
 func arrange_images_in_pairs(images: Array[Image]) -> Image:
@@ -777,9 +850,12 @@ func make_img_hed(data: PackedByteArray) -> Array[Image]:
 		if img_type == 0x10:
 			# 8-bit indexed, 256-color palette (0x400 bytes)
 			img_data = data.slice(off + 0x20, off + 0x20 + img_size)
-			pal = ComFuncs.unswizzle_palette(
-				data.slice(off + img_size + 0x20, off + img_size + 0x420), 32
-			)
+			if Main.game_type == Main.MIZUIRO or Main.game_type == Main.THREADCOLORS:
+				pal = data.slice(off + img_size + 0x20, off + img_size + 0x420)
+			else:
+				pal = ComFuncs.unswizzle_palette(
+					data.slice(off + img_size + 0x20, off + img_size + 0x420), 32
+				)
 		elif img_type == 0x20:
 			# 4-bit indexed, 16-color palette (0x40 bytes)
 			var packed_size: int = int(ceil((w * h) / 2.0))
@@ -811,7 +887,11 @@ func make_img_hed(data: PackedByteArray) -> Array[Image]:
 				
 				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 		imgs.append(image)
-		off += section_end + 0xD0
+		
+		if Main.game_type == Main.MIZUIRO or Main.game_type == Main.THREADCOLORS: # no float section
+			off += section_end
+		else:
+			off += section_end + 0xD0
 	return imgs
 	
 	
