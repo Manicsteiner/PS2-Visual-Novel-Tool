@@ -126,6 +126,7 @@ enum {
 	KOIHIMEMUSOU,
 	KOISURU,
 	KOKORONOTOBIRA, 
+	KOMOREBI,
 	KONOAOZORA,
 	KONOHARETA,
 	KOUENJIJOSHI,
@@ -1583,6 +1584,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = IZUMO2TAKEKI
 		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
 		sceneChanger(next_scene)
+	elif index == KOMOREBI:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nSome images supported."
+		game_type_selector.select(KOMOREBI)
+		game_type = KOMOREBI
+		var next_scene: PackedScene = load("res://src/scenes/HuneX.tscn")
+		sceneChanger(next_scene)
 	elif index == PRINCESSHOLIDAY:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(PRINCESSHOLIDAY)
@@ -2179,6 +2186,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Koi-hime Musou: Doki Otome Darake no Sangokushi Engi", KOIHIMEMUSOU)
 	game_type_selector.add_item("Koi suru Otome to Shugo no Tate: The Shield of AIGIS", KOISURU)
 	game_type_selector.add_item("Kokoro no Tobira", KOKORONOTOBIRA)
+	game_type_selector.add_item("Komorebi no Namikimichi: Utsurikawaru Kisetsu no Chuu de", KOMOREBI)
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
 	game_type_selector.add_item("Kono Hareta Sora no Shita de", KONOHARETA)
 	game_type_selector.add_item("Kouenji Joshi Soccer", KOUENJIJOSHI)

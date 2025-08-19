@@ -35,7 +35,8 @@ var type2_game_types: PackedInt32Array = [
 	Main.RAMUNE, Main.FATESTAY, 
 	Main.HARUNOASHIOTO, Main.ONETWENTYYEN,
 	Main.SCARLETNICHIJOU, Main.MAPLECOLORS,
-	Main.SUZUNONE, Main.SEKIREI
+	Main.SUZUNONE, Main.SEKIREI,
+	Main.KOMOREBI
 	]
 var type3_game_types: PackedInt32Array = [
 	Main.IZUMO2TAKEKI
@@ -57,7 +58,8 @@ func _ready() -> void:
 		load_cd_bin_file.hide()
 		debug_output_button.hide()
 		load_biz.hide()
-		load_hfu_2_button.hide()
+		if Main.game_type != Main.KOMOREBI:
+			load_hfu_2_button.hide()
 	elif Main.game_type in type3_game_types:
 		remove_alpha_1.hide()
 		remove_alpha_2.hide()
@@ -218,7 +220,7 @@ func extract_mf_uffa() -> void:
 			var is_comp: bool = in_file.get_32()
 			var f_size: int = in_file.get_32()
 			mf_pos += 0x10
-			if f_offset == 0 or f_size == 0:
+			if Main.game_type != Main.KOMOREBI and (f_offset == 0 or f_size == 0):
 				continue
 			
 			if is_comp:
@@ -239,6 +241,7 @@ func extract_mf_uffa() -> void:
 				out_file.store_buffer(buff)
 				out_file.close()
 			else:
+				if Main.game_type == Main.KOMOREBI: f_size = f_comp_size
 				in_file.seek(f_offset)
 				var hdr_bytes: int = in_file.get_32()
 				in_file.seek(f_offset)
@@ -252,6 +255,8 @@ func extract_mf_uffa() -> void:
 					ext = "PSS"
 				elif hdr_bytes == 0x0000464D:
 					ext = "MF"
+				elif hdr_bytes == 0x48465532:
+					ext = "HFU2"
 				elif is_adpcm:
 					ext = "ADPCM"
 				else:
@@ -273,6 +278,7 @@ func extract_mf_uffa() -> void:
 	
 func extract_hfu2_pack() -> void:
 	#TODO: Images in SYSDAT.BIN from Canaria seem to have hardcoded dimensions
+	#TODO: Komorebi DATA0019 contains early format type 2 image data
 	
 	const BUFFER_SIZE = 8 * 1024 * 1024
 	
@@ -300,7 +306,7 @@ func extract_hfu2_pack() -> void:
 				if f_comp_size == 0:
 					continue
 					
-				#if hfu_i != 353:
+				#if hfu_i != 4:
 					#continue
 					
 				var buff: PackedByteArray
@@ -370,10 +376,24 @@ func extract_hfu2_pack() -> void:
 							if b != 0:
 								is_adpcm = false
 								break
-						if is_adpcm:
+						if Main.game_type == Main.KOMOREBI and (
+							f_name.contains("DATA.BIN_0008") or 
+							f_name.contains("DATA.BIN_0009") or 
+							f_name.contains("DATA.BIN_0010") or
+							f_name.contains("DATA.BIN_0017")):
+							ext = "IMG"
+						elif is_adpcm:
 							ext = "ADPCM"
 						else:
 							ext = "BIN"
+						
+						if is_comp:
+							var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
+							out_file.store_buffer(buff)
+							out_file.close()
+							
+							print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [hfu_i, ext]])
+							continue
 							
 						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + "_%04d.%s" % [hfu_i, ext], FileAccess.WRITE)
 						in_file.seek(f_offset)
@@ -384,7 +404,7 @@ func extract_hfu2_pack() -> void:
 						out_file.close()
 					
 				print("%08X %08X %s/%s" % [f_offset, f_comp_size, folder_path, f_name + "_%04d.%s" % [hfu_i, ext]])
-		if hdr == "PACK":
+		elif hdr == "PACK":
 			var ext: String = "BIN"
 			var pack_size: int = in_file.get_length()
 			
@@ -795,7 +815,6 @@ func make_img_hed_full(pack_name: String, image_id: int, data: PackedByteArray) 
 	
 	var final_img: Image
 	
-	
 	if (Main.game_type == Main.WIND and 
 		pack_name == "PCG.BIN" and 
 		image_id == 160 and 
@@ -1139,6 +1158,7 @@ func convert_imgs() -> void:
 	for file in range(selected_imgs.size()):
 		var in_file: FileAccess = FileAccess.open(selected_imgs[file], FileAccess.READ)
 		var f_name: String = selected_imgs[file].get_file()
+		var f_ext: String = selected_imgs[file].get_extension()
 		var hdr: String = in_file.get_buffer(4).get_string_from_ascii()
 		if hdr == "MF":
 			in_file.seek(0x14)
@@ -1240,6 +1260,25 @@ func convert_imgs() -> void:
 				print_rich("[color=yellow]%s has MF archive(s) in it. Please extract it first." % [folder_path + "/%s" % f_name])
 			else:
 				print_rich("[color=red]%s is not a valid image!" % [folder_path + "/%s" % f_name])
+		elif f_ext == "IMG": # Komorebi
+				in_file.seek(0)
+				var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
+				var img_buff: PackedByteArray
+				var pal: PackedByteArray
+				var w: int = buff.decode_u16(0x10)
+				var h: int = buff.decode_u16(0x14)
+				var img_format: int = buff.decode_u32(0xC)
+				if img_format == 0x13:
+					pal = ComFuncs.unswizzle_palette(buff.slice(0x20, 0x420), 32)
+					img_buff = buff.slice(0x420)
+				elif img_format == 0x14:
+					pal = buff.slice(0x20, 0x60)
+					img_buff = buff.slice(0x60)
+				
+				print("0x%02X %d x %d %s" % [img_format, w, h, folder_path + "/%s" % f_name + "_%04d.PNG" % file])
+				
+				var png: Image = make_img2(img_buff, pal, false, -1, w, h, img_format)
+				png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" % file)
 		else:
 			print_rich("[color=red]%s does not have a valid header!" % [folder_path + "/%s" % f_name])
 			
