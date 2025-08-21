@@ -255,7 +255,7 @@ func extract_mf_uffa() -> void:
 					ext = "PSS"
 				elif hdr_bytes == 0x0000464D:
 					ext = "MF"
-				elif hdr_bytes == 0x48465532:
+				elif hdr_bytes == 0x32554648:
 					ext = "HFU2"
 				elif is_adpcm:
 					ext = "ADPCM"

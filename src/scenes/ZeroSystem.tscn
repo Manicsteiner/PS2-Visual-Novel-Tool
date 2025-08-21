@@ -39,6 +39,12 @@ tooltip_text = "Extract from PFW3 archive."
 text = "Load PAC.BIN / .PAC
 "
 
+[node name="LoadTEX" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+tooltip_text = "Extract from PFW3 archive."
+text = "Convert .TEX Image
+"
+
 [node name="ZEROLoadEXE" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open a File"
@@ -60,6 +66,17 @@ access = 2
 filters = PackedStringArray("PAC.BIN, *.PAC")
 use_native_dialog = true
 
+[node name="ZEROLoadTEX" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+filters = PackedStringArray("*.TEX")
+use_native_dialog = true
+
 [node name="ZEROLoadFOLDER" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open a Directory"
@@ -72,6 +89,8 @@ use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadPAC" to="." method="_on_load_pac_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadTEX" to="." method="_on_load_tex_pressed"]
 [connection signal="file_selected" from="ZEROLoadEXE" to="." method="_on_zero_load_exe_file_selected"]
 [connection signal="file_selected" from="ZEROLoadPAC" to="." method="_on_zero_load_pac_file_selected"]
+[connection signal="files_selected" from="ZEROLoadTEX" to="." method="_on_zero_load_tex_files_selected"]
 [connection signal="dir_selected" from="ZEROLoadFOLDER" to="." method="_on_zero_load_folder_dir_selected"]

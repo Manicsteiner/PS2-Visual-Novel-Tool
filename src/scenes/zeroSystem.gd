@@ -3,10 +3,13 @@ extends Control
 @onready var zero_load_exe: FileDialog = $ZEROLoadEXE
 @onready var zero_load_pac: FileDialog = $ZEROLoadPAC
 @onready var zero_load_folder: FileDialog = $ZEROLoadFOLDER
+@onready var zero_load_tex: FileDialog = $ZEROLoadTEX
+@onready var load_tex: Button = $HBoxContainer/LoadTEX
 
 var exe_path: String
 var folder_path:String
 var selected_file: String
+var selected_texs: PackedStringArray
 
 
 func _ready() -> void:
@@ -27,11 +30,18 @@ func _ready() -> void:
 	SLPM_665.08,
 	SLPM_668.60"]
 	
+	if Main.game_type != Main.OTONANOGALJAN2:
+		load_tex.hide()
+	
 
 func _process(_delta: float) -> void:
 	if selected_file and folder_path:
 		extractBin()
 		selected_file = ""
+		folder_path = ""
+	elif selected_texs and folder_path:
+		convert_tex()
+		selected_texs
 		folder_path = ""
 		
 		
@@ -266,11 +276,132 @@ func extractBin() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
+					if f_name.get_extension() == "ext":
+						var png: Image = make_ext_img(buff)
+						png.save_png(folder_path + "/%s" % f_name + ".PNG")
+					
 					buff.clear()
 					
 					print("%08X %08X %s/%s" % [offset, f_size, folder_path, f_name])
 				
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func convert_tex() -> void:
+	for file: int in selected_texs.size():
+		var in_file: FileAccess = FileAccess.open(selected_texs[file], FileAccess.READ)
+		var arc_name: String = selected_texs[file].get_file().get_basename()
+		
+		var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
+		var f_size: int
+		if buff.slice(0, 3).get_string_from_ascii() == "LZS":
+			f_size = buff.decode_u32(4)
+			buff = ComFuncs.decompLZSS(buff.slice(8), buff.size() - 8, f_size)
+		
+			var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + ".DEC", FileAccess.WRITE)
+			out_file.store_buffer(buff)
+		
+		if buff.slice(0, 3).get_string_from_ascii() == "TEX":
+			var name_tbl: int = buff.decode_u32(12)
+			var num_files: int = buff.decode_u32(name_tbl)
+			var pos: int = 0x14
+			for i in range(num_files):
+				var f_off: int = buff.decode_u32(pos)
+				f_size = buff.decode_u32(pos + 4)
+				var f_name: String = buff.slice(name_tbl + 4, name_tbl + 0x20).get_string_from_ascii()
+				
+				var png: Image = make_ext_img(buff.slice(f_off, f_size + f_off))
+				png.save_png(folder_path + "/%s" % f_name + ".PNG")
+				
+				print("%08X %08X %s" %[f_off, f_size, folder_path + "/%s" % f_name + ".PNG"])
+				
+				pos += 8
+				name_tbl += 0x40
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func make_ext_img(data: PackedByteArray) -> Image:
+	var type: int = data.decode_u32(4)
+	if type not in [3, 8, 9]:
+		push_error("Unknown image type: %08X" % type)
+		return Image.create_empty(1, 1, false, Image.FORMAT_L8)
+		
+	var pal: PackedByteArray
+	var img_dat: PackedByteArray
+	var w: int = data.decode_u16(0x41C)
+	var h: int = data.decode_u16(0x41E)
+	if type == 3:
+		w = data.decode_u16(0x10)
+		h = data.decode_u16(0x12)
+		var img_size: int = data.decode_u32(8) + 4
+		img_dat = data.slice(0x14, img_size)
+		for j in range(3, img_dat.size(), 4):
+			var a: int = int((img_dat.decode_u8(j) / 128.0) * 255.0)
+			img_dat.encode_u8(j, a)
+		return Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, img_dat)
+	elif type == 8:
+		w = data.decode_u16(0x5C)
+		h = data.decode_u16(0x5E)
+
+		# Palette: 0x40 bytes = 16 entries
+		pal = data.slice(0x14, 0x54)
+
+		# Fix alpha scaling
+		for i in range(3, pal.size(), 4):
+			var a: int = pal.decode_u8(i)
+			pal.encode_u8(i, int((a / 128.0) * 255.0))
+
+		# Image data starts at 0x60
+		img_dat = data.slice(0x60)
+
+		var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+
+		for y in range(h):
+			for x in range(0, w, 2):  # 2 pixels per byte
+				var byte_index: int = (x + y * w) / 2
+				var byte_value: int = img_dat[byte_index]
+
+				var pixel_index_1 = byte_value & 0xF  # Low nibble (left pixel)
+				var pixel_index_2 = (byte_value >> 4) & 0xF  # High nibble (right pixel)
+
+				# Clamp to palette size (safety)
+				pixel_index_1 = clamp(pixel_index_1, 0, 15)
+				pixel_index_2 = clamp(pixel_index_2, 0, 15)
+
+				# Left pixel
+				var r1: int = pal[pixel_index_1 * 4 + 0]
+				var g1: int = pal[pixel_index_1 * 4 + 1]
+				var b1: int = pal[pixel_index_1 * 4 + 2]
+				var a1: int = pal[pixel_index_1 * 4 + 3]
+				image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
+
+				# Right pixel (if within width)
+				if x + 1 < w:
+					var r2: int = pal[pixel_index_2 * 4 + 0]
+					var g2: int = pal[pixel_index_2 * 4 + 1]
+					var b2: int = pal[pixel_index_2 * 4 + 2]
+					var a2: int = pal[pixel_index_2 * 4 + 3]
+					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
+
+		return image
+	elif type == 9:
+		var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+		
+		pal = data.slice(0x14, 0x414)
+		img_dat = data.slice(0x420)
+		for y in range(h):
+			for x in range(w):
+				var pixel_index: int = img_dat[x + y * w]
+				var r: int = pal[pixel_index * 4 + 0]
+				var g: int = pal[pixel_index * 4 + 1]
+				var b: int = pal[pixel_index * 4 + 2]
+				var a: int = pal[pixel_index * 4 + 3]
+				a = int((a / 128.0) * 255.0)
+				
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+		return image
+		
+	return Image.create_empty(1, 1, false, Image.FORMAT_L8)
 	
 	
 func upac_parse(buff: PackedByteArray) -> Array:
@@ -316,3 +447,12 @@ func _on_zero_load_pac_file_selected(path: String) -> void:
 
 func _on_zero_load_folder_dir_selected(dir: String) -> void:
 	folder_path = dir
+
+
+func _on_zero_load_tex_files_selected(paths: PackedStringArray) -> void:
+	selected_texs = paths
+	zero_load_folder.show()
+
+
+func _on_load_tex_pressed() -> void:
+	zero_load_tex.show()

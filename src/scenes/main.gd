@@ -184,6 +184,7 @@ enum {
 	OSOUJI,
 	OTOMENOJIJOU,
 	OTOMEWABOKU,
+	OTONANOGALJAN2,
 	OUKA,
 	PARFAIT,
 	PATISSERIE,
@@ -970,6 +971,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Sorairo no Fuukin Remix'."
 		game_type_selector.select(SORAIROFUUKIN)
 		game_type = SORAIROFUUKIN
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == OTONANOGALJAN2:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(OTONANOGALJAN2)
+		game_type = OTONANOGALJAN2
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == DOUBLEWISH:
@@ -2244,6 +2251,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Osouji Sentai Clean Keeper H", OSOUJI)
 	game_type_selector.add_item("Otome no Jijou", OTOMENOJIJOU)
 	game_type_selector.add_item("Otome wa Boku ni Koishiteru", OTOMEWABOKU)
+	game_type_selector.add_item("Otona no Gal-jong 2:  Koishite Bai Man!", OTONANOGALJAN2)
 	game_type_selector.add_item("Ouka: Kokoro Kagayakaseru Sakura", OUKA)
 	game_type_selector.add_item("Parfait: Chocolat Second Style", PARFAIT)
 	game_type_selector.add_item("Patisserie na Nyanko: Hatsukoi wa Ichigo Aji", PATISSERIE)
