@@ -7,6 +7,7 @@ extends Control
 var selected_grds: PackedStringArray
 var selected_exe: String = ""
 var folder_path: String = ""
+var tile_output: bool = true
 
 #TODO: Images are an unknown custom Dreamcast PVRT format with swizzeled image data. Header at 0x1C contains a bunch of Vector4 floats for tile positions.
 
@@ -27,19 +28,200 @@ func create_grd() -> void:
 		var arc_name: String = selected_grds[grd].get_file().get_basename()
 		
 		var buff: PackedByteArray = decompress_lz_variant(in_file.get_buffer(in_file.get_length()))
-		print_rich("[color=cyan]Final dimensions: %dx%d, Palette offset: %08X, PVRT offset: %08X, Tile positions offset: %08X" % [
-			buff.decode_u16(4), 
-			buff.decode_u16(6),
-			buff.decode_u32(0xC),
-			buff.decode_u32(0x10),
-			buff.decode_u32(0x18)
-		])
 		print("%08X %s" % [buff.size(), folder_path + "/%s" % arc_name + ".DEC"])
 		
 		var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + ".DEC", FileAccess.WRITE)
 		out_file.store_buffer(buff)
+		
+		var png: Image = load_htx_tiles_to_image(buff, folder_path + "/%s" % arc_name)
+		png.save_png(folder_path + "/%s" % arc_name + ".PNG")
 	print_rich("[color=green]Finished![/color]")
 	
+	
+func load_htx_tiles_to_image(data: PackedByteArray, path: String) -> Image:
+	# --- Main header ---
+	var final_w: int = data.decode_u16(0x4)
+	var final_h: int = data.decode_u16(0x6)
+	var palette_offset: int = data.decode_u32(0xC)
+	var image_header_offset: int = data.decode_u32(0x10)
+	var float_section_offset: int = data.decode_u32(0x18)
+
+	# --- Global palette ---
+	var pal_buf: PackedByteArray = PackedByteArray()
+	if palette_offset < image_header_offset:
+		pal_buf = data.slice(palette_offset, image_header_offset)
+	if pal_buf.size() > 0:
+		pal_buf = ComFuncs.unswizzle_palette(pal_buf, 32)
+	var pal_entries: int = max(1, pal_buf.size() / 4)
+
+	# --- Read PVRT tiles ---
+	var tiles: Array[Image] = []
+	var header_off: int = image_header_offset
+	while header_off + 12 <= data.size():
+		var tag: String = data.slice(header_off, header_off + 4).get_string_from_ascii()
+		var header_size: int = 0
+
+		if tag in ["GBIX", "PVRT"] and header_off + 0x8 + 4 <= data.size():
+			header_size = data.decode_u16(header_off + 0x4) + 8
+		elif tag in ["HTEX", "HTSF"] and header_off + 0x8 + 4 <= data.size():
+			header_size = data.decode_u16(header_off + 0x8)
+		if header_size <= 0:
+			break
+
+		if tag == "PVRT":
+			if header_off + 0x10 > data.size():
+				break
+			var tile_w: int = data.decode_u16(header_off + 0xC)
+			var tile_h: int = data.decode_u16(header_off + 0xE)
+			var tile_data_off: int = header_off + 0x10
+			var read_size: int = tile_w * tile_h
+			if read_size <= 0:
+				header_off += header_size
+				continue
+			
+			header_off += read_size
+			var idx_buf: PackedByteArray = data.slice(tile_data_off, tile_data_off + read_size)
+			idx_buf = unswizzle8(idx_buf, tile_w, tile_h)
+
+			var rgba: PackedByteArray = PackedByteArray()
+			rgba.resize(tile_w * tile_h * 4)
+			for i in range(tile_w * tile_h):
+				var pi: int = 0
+				if i < idx_buf.size():
+					pi = idx_buf.decode_u8(i)
+				if pi >= pal_entries:
+					pi = pal_entries - 1
+				var pofs: int = pi * 4
+				var r:int = 0; var g:int = 0; var b:int = 0; var a:int = 0
+				if pofs + 4 <= pal_buf.size():
+					r = pal_buf.decode_u8(pofs + 0)
+					g = pal_buf.decode_u8(pofs + 1)
+					b = pal_buf.decode_u8(pofs + 2)
+					a = pal_buf.decode_u8(pofs + 3)
+					a = int((a / 128.0) * 255.0)
+				var wofs: int = i * 4
+				rgba.encode_u8(wofs + 0, r)
+				rgba.encode_u8(wofs + 1, g)
+				rgba.encode_u8(wofs + 2, b)
+				rgba.encode_u8(wofs + 3, a)
+
+			var tile_img: Image = Image.create_from_data(tile_w, tile_h, false, Image.FORMAT_RGBA8, rgba)
+			if tile_output:
+				tile_img.save_png(path + "_%08d.PNG" % header_off)
+			tiles.append(tile_img)
+
+		header_off += header_size
+
+	# --- Final canvas ---
+	var final_img: Image = Image.create_empty(final_w, final_h, false, Image.FORMAT_RGBA8)
+	final_img.fill(Color(0,0,0,0))
+
+	# --- Float section for sub-tile placement ---
+	var slice_idx: int = 0
+	var slice_size: int = 64  # typical sub-tile size
+	var f_off: int = float_section_offset
+
+	while f_off + 36 <= palette_offset and f_off + 36 <= data.size():
+		f_off += 4  # skip 2x16-bit flags
+
+		# Read 8 floats for this slice
+		var coords: Array[float] = []
+		for j in range(8):
+			coords.append(data.decode_float(f_off))
+			f_off += 4
+
+		# Calculate destination rect
+		var min_x = int(floor(min(coords[0], coords[2], coords[4], coords[6])))
+		var min_y = int(floor(min(coords[1], coords[3], coords[5], coords[7])))
+		var max_x = int(ceil(max(coords[0], coords[2], coords[4], coords[6])))
+		var max_y = int(ceil(max(coords[1], coords[3], coords[5], coords[7])))
+		var dst_rect: Rect2i = Rect2i(min_x, min_y, max_x - min_x, max_y - min_y)
+
+		# Determine which PVRT tile this slice comes from
+		var slices_per_tile_x = tiles[0].get_width() / slice_size
+		var slices_per_tile_y = tiles[0].get_height() / slice_size
+		var slices_per_tile = slices_per_tile_x * slices_per_tile_y
+		var tile_idx = int(slice_idx / slices_per_tile)
+		tile_idx = clamp(tile_idx, 0, tiles.size() - 1)
+		var tile_img = tiles[tile_idx]
+
+		# Determine source rect within PVRT tile
+		var local_idx = slice_idx % slices_per_tile
+		var sx = (local_idx % slices_per_tile_x) * slice_size
+		var sy = int(local_idx / slices_per_tile_x) * slice_size
+		var src_rect = Rect2i(sx, sy, slice_size, slice_size)
+
+		# Blit slice to final image
+		final_img.blit_rect(tile_img, src_rect, dst_rect.position)
+
+		slice_idx += 1
+
+	return final_img
+	
+	
+func print_pvrt(data: PackedByteArray) -> void:
+	var off: int = 0
+
+	# --- Main header ---
+	var final_width: int = data.decode_u16(0x4)
+	var final_height: int = data.decode_u16(0x6)
+	var palette_offset: int = data.decode_u32(0xC)
+	var image_header_offset: int = data.decode_u32(0x10)
+	var unknown_14: int = data.decode_u32(0x14) # placeholder
+	var float_section_offset: int = data.decode_u32(0x1C)
+
+	print("Main Header:")
+	print("  Width: %d" % final_width)
+	print("  Height: %d" % final_height)
+	print("  Palette Offset:", palette_offset)
+	print("  Image Header Offset:", image_header_offset)
+	print("  Unknown @0x14:", unknown_14)
+	print("  Float Section Offset:", float_section_offset)
+
+	# --- Jump to image data header ---
+	off = image_header_offset
+	var magic: String = data.slice(off, off + 4).get_string_from_ascii()
+	print("Magic @", off, ":", magic)
+
+	# HTEX
+	if magic == "HTEX":
+		var image_data_size: int = data.decode_u32(off + 0x4)
+		print("HTEX found - Image data size + 0x10:", image_data_size)
+		off += 0x10
+		magic = data.slice(off, off + 4).get_string_from_ascii()
+		print("Next Magic @", off, ":", magic)
+
+	# HTSF
+	if magic == "HTSF":
+		var tile_size: int = data.decode_u32(off + 0x4)
+		print("HTSF found - Tile size + 0x10:", tile_size)
+		off += 0x10
+		magic = data.slice(off, off + 4).get_string_from_ascii()
+		print("Next Magic @", off, ":", magic)
+
+	# GBIX
+	if magic == "GBIX":
+		print("GBIX found")
+		off += 0x10
+		magic = data.slice(off, off + 4).get_string_from_ascii()
+		print("Next Magic @", off, ":", magic)
+
+	# PVRT
+	if magic == "PVRT":
+		var pixel_format: int = data.decode_u8(off + 0x8)
+		var image_type: int = data.decode_u8(off + 0x9)
+		var tile_width: int = data.decode_u16(off + 0xC)
+		var tile_height: int = data.decode_u16(off + 0xE)
+
+		print("PVRT found - Pixel format:", pixel_format)
+		print("PVRT Image Data Type:", image_type)
+		print("PVRT Tile Width:", tile_width)
+		print("PVRT Tile Height:", tile_height)
+
+		off += 0x10
+
+	print("Tile data starts at offset:", off)
+	return
 	
 func unswizzle8(data: PackedByteArray, w: int, h: int, swizz: bool = false) -> PackedByteArray:
 	# Original code from: https://github.com/leeao/PS2Textures/blob/583f68411b4f6cca491730fbb18cb064822f1017/PS2Textures.py#L266
