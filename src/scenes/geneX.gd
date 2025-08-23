@@ -99,64 +99,81 @@ func extractBin() -> void:
 						width = buff.decode_u16(0x10)
 						height = buff.decode_u16(0x12)
 						
-						var png: Image = ComFuncs.convert_rgb555_to_image(buff.slice(0x14), width, height, true)
+						var png: Image = convert_rgb555_to_image(buff.slice(0x14), width, height, true)
 						png.save_png(folder_path + "/%s" % f_name + "_%04d" % files + ".png")
 					elif image_type == 9:
 						# 16 bit palette 0x200 size
 						var pal: PackedByteArray = buff.slice(0x14, 0x214)
 						var img_dat: PackedByteArray = buff.slice(0x220)
-						var final_img: PackedByteArray
-						var swap: PackedByteArray
-						
-						pal = ComFuncs.convert_palette16_bgr_to_rgb(pal)
 						
 						var num_colors: int = buff.decode_u16(0x210)
 						width = buff.decode_u16(0x21C) * 2
 						height = buff.decode_u16(0x21E)
 						
-						var tga_hdr: PackedByteArray = ComFuncs.makeTGAHeader(true, 1, 16, 8, width, height)
+						# Create the image object
+						var image: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+						var palette: PackedByteArray
+						for i in range(0, pal.size(), 2):
+							var bgr555: int = pal.decode_u16(i)
+							var b: int = ((bgr555 >> 10) & 0x1F) * 8
+							var g: int = ((bgr555 >> 5) & 0x1F) * 8
+							var r: int = (bgr555 & 0x1F) * 8
+							palette.append(r)
+							palette.append(g)
+							palette.append(b)
+							palette.append(255)
+						for y in range(height):
+							for x in range(width):
+								var pixel_index: int = img_dat[x + y * width]
+								var r: int = palette[pixel_index * 4 + 0]
+								var g: int = palette[pixel_index * 4 + 1]
+								var b: int = palette[pixel_index * 4 + 2]
+								var a: int = palette[pixel_index * 4 + 3]
+								image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+						image.save_png(folder_path + "/%s" % f_name + "_%04d" % files + ".png")
+					elif image_type == 8:
+						var pal: PackedByteArray = buff.slice(0x14, 0x34)
+						var img_dat: PackedByteArray = buff.slice(0x40)
 						
-						final_img.append_array(tga_hdr)
-						final_img.append_array(pal)
-						final_img.append_array(img_dat)
+						width = buff.decode_u16(0x3C) * 4
+						height = buff.decode_u16(0x3E)
 						
-						out_file = FileAccess.open(folder_path + "/%s" % f_name + "_%04d" % files + ".TGA", FileAccess.WRITE)
-						out_file.store_buffer(final_img)
-						out_file.close()
-						
-						final_img.clear()
-						pal.clear()
-						img_dat.clear()
-						tga_hdr.clear()
-					#elif image_type == 8:
-						# 8 bit palette 0x20 size.
-						# TGA unsupported?
-						#
-						#var pal: PackedByteArray = buff.slice(0x14, 0x34)
-						#var img_dat: PackedByteArray = buff.slice(0x40)
-						#var final_img: PackedByteArray
-						#var swap: PackedByteArray
-						#
-						#pal = ComFuncs.convert_palette16_bgr_to_rgb(pal)
-						#
-						#var num_colors: int = buff.decode_u16(0x10)
-						#width = buff.decode_u16(0x3C) * 2
-						#height = buff.decode_u16(0x3E)
-						#
-						#var tga_hdr: PackedByteArray = makeTGAHeader(1, 1, 0, num_colors, 8, width, height, 8)
-						#
-						#final_img.append_array(tga_hdr)
-						#final_img.append_array(pal)
-						#final_img.append_array(img_dat)
-						#
-						#out_file = FileAccess.open(folder_path + "/%s" % f_name + "_%04d" % files + ".TGA", FileAccess.WRITE)
-						#out_file.store_buffer(final_img)
-						#out_file.close()
-						#
-						#final_img.clear()
-						#pal.clear()
-						#img_dat.clear()
-						#tga_hdr.clear()
+						# Create the image object
+						var image: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+						var palette: PackedByteArray
+						for i in range(0, pal.size(), 2):
+							var bgr555: int = pal.decode_u16(i)
+							var b: int = ((bgr555 >> 10) & 0x1F) * 8
+							var g: int = ((bgr555 >> 5) & 0x1F) * 8
+							var r: int = (bgr555 & 0x1F) * 8
+							palette.append(r)
+							palette.append(g)
+							palette.append(b)
+							palette.append(255)
+						for y in range(height):
+							for x in range(0, width, 2):  # Two pixels per byte
+								var byte_index: int  = (x + y * width) / 2
+								var byte_value: int  = img_dat[byte_index]
+
+								# Extract two 4-bit indices (little-endian order)
+								var pixel_index_1 = byte_value & 0xF  # Low nibble (left pixel)
+								var pixel_index_2 = (byte_value >> 4) & 0xF  # High nibble (right pixel)
+
+								# Set first pixel
+								var r1: int = palette[pixel_index_1 * 4 + 0]
+								var g1: int = palette[pixel_index_1 * 4 + 1]
+								var b1: int = palette[pixel_index_1 * 4 + 2]
+								var a1: int = palette[pixel_index_1 * 4 + 3]
+								image.set_pixel(x, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
+
+								# Set second pixel (only if within bounds)
+								if x + 1 < width:
+									var r2: int = palette[pixel_index_2 * 4 + 0]
+									var g2: int = palette[pixel_index_2 * 4 + 1]
+									var b2: int = palette[pixel_index_2 * 4 + 2]
+									var a2: int = palette[pixel_index_2 * 4 + 3]
+									image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
+						image.save_png(folder_path + "/%s" % f_name + "_%04d" % files + ".png")
 					else:
 						push_error("Unknown image type 0x%X in %s_%04d (size 0x%08X)." % [image_type, f_name, files, dec_size])
 				else:
@@ -169,7 +186,7 @@ func extractBin() -> void:
 					out_file.close()
 					
 				buff.clear()
-				print("0x%08X " % f_offset + "0x%08X " % dec_size + folder_path + "/%s" % f_name + "_%04d" % files)
+				print("%08X " % f_offset + "%08X " % dec_size + folder_path + "/%s" % f_name + "_%04d" % files)
 			elif f_name.contains("SCRIPT"):
 				in_file.seek((files * 4) + pos)
 				
@@ -194,7 +211,7 @@ func extractBin() -> void:
 					
 				buff.clear()
 				print("0x%08X " % f_offset + "0x%08X " % dec_size + folder_path + "/%s" % f_name + "_%04d" % files)
-			elif f_name.contains("SONG") or f_name.contains("SOUND") or f_name.contains("VOICE") or f_name.contains("MU_") or f_name.contains("SE_") or f_name.contains("BGM") or f_name.contains("_V"):
+			elif f_name.contains("SONG") or f_name.contains("SOUND") or f_name.contains("VOICE") or f_name.contains("MU_") or f_name.contains("SE_") or f_name.contains("BGM") or f_name.contains("_V") or f_name.contains("_S"):
 				in_file.seek((files * 4) + pos)
 				
 				f_offset = in_file.get_32()
@@ -217,6 +234,7 @@ func extractBin() -> void:
 				
 				f_offset = in_file.get_32()
 				f_size = in_file.get_32()
+				if f_size > 0x200000: break
 				
 				in_file.seek(f_offset)
 				
@@ -240,94 +258,41 @@ func extractBin() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
-func makeTGAHeader(color_map_type: int, image_type: int, color_entry_start:int, num_colors: int, color_map_depth: int, width: int, height: int, pixel_depth: int) -> PackedByteArray:
-	# https://en.wikipedia.org/wiki/Truevision_TGA#Header
+func convert_rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, swap_color_order: bool) -> Image: ## RGBA5551
+	# Create a blank Image object
+	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
 	
-	var header: PackedByteArray
+	# Ensure the input buffer size matches the image dimensions
+	if input_buffer.size() != width * height * 2:
+		push_error("Input buffer size does not match image dimensions!")
+		return img
 	
-	header.resize(0x12)
-	
-	header.encode_u8(1, image_type)
-	header.encode_u8(2, image_type)
-	header.encode_u16(3, color_entry_start)
-	header.encode_u16(5, num_colors)
-	header.encode_u8(7, color_map_depth)
-	header.encode_u16(0xC, width)
-	header.encode_u16(0xE, height)
-	header.encode_u8(0x10, pixel_depth)
-	header.encode_u8(0x11, 0x28)
-	return header
-	
-	
-func rgb555_to_image(input_buffer: PackedByteArray, width: int, height: int, palette_type: String) -> Image:
-	# Define palette properties based on the type
-	var palette_offset: int = 0
-	var palette_size: int = 0x200  # Default size (512 bytes for 32 entries)
-	var data_offset: int = palette_offset + palette_size
-
-	if input_buffer.size() < data_offset:
-		push_error("Input buffer size too small for palette and image data.")
-		return null
-
-	# Decode the palette
-	var palette: Array = []
-	if palette_type == "16bit":
-		# 16-bit palette (RGB555 format)
-		for i in range(256):  # 256 entries in the palette
-			var idx: int = palette_offset + i * 2
-			if idx + 1 >= input_buffer.size():
-				push_error("Palette index out of bounds for 16-bit palette.")
-				return null
-
-			# Decode RGB555 to RGBA8
-			var rgb555: int = input_buffer.decode_u16(idx)
-			var r: float = ((rgb555 >> 10) & 0x1F) * 255.0 / 31.0
-			var g: float = ((rgb555 >> 5) & 0x1F) * 255.0 / 31.0
-			var b: float = (rgb555 & 0x1F) * 255.0 / 31.0
-			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, 1.0)  # Opaque
-			palette.append(color)
-
-	elif palette_type == "32bit":
-		# 32-bit palette (BGRA format)
-		for i in range(32):  # 32 entries in the palette
-			var idx: int = palette_offset + i * 4
-			if idx + 3 >= input_buffer.size():
-				push_error("Palette index out of bounds for 32-bit palette.")
-				return null
-
-			# Decode BGRA to RGBA
-			var color: Color
-			color.r = input_buffer[idx + 2] / 255.0
-			color.g = input_buffer[idx + 1] / 255.0
-			color.b = input_buffer[idx] / 255.0
-			color.a = input_buffer[idx + 3] / 255.0
-			palette.append(color)
-
-	else:
-		push_error("Unsupported palette type: " + palette_type)
-		return null
-
-	# Create the image and load raw data
-	var image: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
-
-	# Decode the RGB555 data using the palette
+	# Loop through the input buffer and set pixels
+	var idx: int = 0
 	for y in range(height):
 		for x in range(width):
-			var pixel_idx: int = y * width + x
-			var data_idx: int = data_offset + pixel_idx * 2
-			if data_idx + 1 >= input_buffer.size():
-				push_error("Data index out of bounds while reading image data.")
-				return null
+			# Read a 16-bit value (2 bytes per pixel)
+			var pixel_16: int = input_buffer.decode_u16(idx)
+			idx += 2
 
-			# Get RGB555 value
-			var rgb555: int = input_buffer.decode_u16(data_idx)
-			var palette_idx: int = (rgb555 >> 10) & 0x1F  # Top 5 bits for the palette index
-			if palette_idx < palette.size():
-				image.set_pixel(x, y, palette[palette_idx])
+			# Extract RGBA values from RGBA5551 format
+			var r: int = ((pixel_16 >> 10) & 0x1F) * 8
+			var g: int = ((pixel_16 >> 5) & 0x1F) * 8
+			var b: int = (pixel_16 & 0x1F) * 8
 
-	return image
+			# Swap color order if requested
+			if swap_color_order:
+				var temp: int = r
+				r = b
+				b = temp
 
+			# Set pixel color
+			var color: Color = Color(r / 255.0, g / 255.0, b / 255.0, 255.0)
+			img.set_pixel(x, y, color)
 
+	return img
+	
+	
 func decompLZSS2(buffer: PackedByteArray, zsize: int, size: int) -> PackedByteArray:
 	var dec: PackedByteArray
 	var dict: PackedByteArray
