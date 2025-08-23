@@ -86,6 +86,360 @@ func find_end_bytes_file(file: FileAccess, end_byte: int) -> Array:
 	return arr
 	
 	
+func gim_to_image(data: PackedByteArray, file_name: String, ps2_mode: bool = false) -> Image:
+	var read_u16: Callable = func(d: PackedByteArray, o: int, le: bool) -> int:
+		if le:
+			return d[o] | (d[o + 1] << 8)
+		else:
+			return (d[o] << 8) | d[o + 1]
+
+	var read_u32: Callable = func(d: PackedByteArray, o: int, le: bool) -> int:
+		if le:
+			return read_u16.call(d, o, true) | (read_u16.call(d, o + 2, true) << 16)
+		else:
+			return (read_u16.call(d, o, false) << 16) | read_u16.call(d, o + 2, false)
+
+	var expand5: Callable = func(v: int) -> int:
+		return (v << 3) | (v >> 2)
+
+	var expand6: Callable = func(v: int) -> int:
+		return (v << 2) | (v >> 4)
+
+	var expand4: Callable = func(v: int) -> int:
+		return (v << 4) | v
+
+	var unswizzle: Callable = func(src: PackedByteArray, w: int, h: int, bpp: int) -> PackedByteArray:
+		var bytes_pp: int = bpp / 8
+		var dst: PackedByteArray = PackedByteArray()
+		dst.resize(src.size())
+
+		var row_blocks: int = w / 16
+		var col_blocks: int = h / 8
+		var src_index: int = 0
+
+		for block_y in range(col_blocks):
+			for block_x in range(row_blocks):
+				for row in range(8):
+					for col in range(16):
+						var x: int = block_x * 16 + col
+						var y: int = block_y * 8 + row
+						if x < w and y < h:
+							var dst_index: int = (y * w + x) * bytes_pp
+							for b in range(bytes_pp):
+								dst[dst_index + b] = src[src_index]
+								src_index += 1
+		return dst
+
+	# ---- Endianness check ----
+	var little_endian: bool = true
+	if data.slice(0, 3).get_string_from_ascii() == "MIG":
+		little_endian = true
+	elif data.slice(0, 3).get_string_from_ascii() == "GIM":
+		little_endian = false
+	else:
+		print_rich("[color=red]Unknown header in GIM from %s!" % file_name)
+		push_error("Unknown header in GIM from %s!" % file_name)
+		return Image.create_empty(1, 1, false, Image.FORMAT_RGBA8)
+		
+
+	# ---- Walk blocks ----
+	var offset: int = 0x10
+	var palette: PackedByteArray = PackedByteArray()
+	var image_bytes: PackedByteArray = PackedByteArray()
+	var width: int = 0
+	var height: int = 0
+	var img_format: int = -1
+	var bpp: int = 0
+	var pixel_order: int = 0
+	var block_header_next: int = 0
+	var block_header_size: int = 0
+	var gim_size: int = 0
+	var pal_offset: int = 0
+	var info_off: int = 0
+	var total_block_size: int = 0
+	var pitch_align: int = 0
+	var height_align: int = 0
+	var img_off: int = 0
+	#var file_info_block_offset: int = -1
+	#var picture_block_offset: int = -1
+	var image_block_offset: int = -1
+	var palette_block_offset: int = -1
+	var img_dat_size: int = 0
+	var image_block_size: int = 0
+	var pal_block_size: int = 0
+	var loop_counter: int = 0
+	
+	while offset < data.size():
+		if loop_counter > 10:
+			print_rich("[color=red]Parsing blocks for too long in GIM from %s! Ending." % file_name)
+			push_error("Parsing blocks for too long in GIM from %s! Ending." % file_name)
+			return Image.create_empty(1, 1, false, Image.FORMAT_RGBA8)
+			
+		var id: int = read_u16.call(data, offset, little_endian)
+		
+		if id == 2:
+			gim_size = read_u32.call(data, offset + 4, little_endian)
+			block_header_next = read_u32.call(data, offset + 8, little_endian)
+			block_header_size = read_u32.call(data, offset + 0xC, little_endian)
+			total_block_size += block_header_size
+			offset += block_header_next
+			gim_size += block_header_size
+		elif id == 3:
+			info_off = read_u32.call(data, offset + 4, little_endian)
+			block_header_next = read_u32.call(data, offset + 8, little_endian)
+			block_header_size = read_u32.call(data, offset + 0xC, little_endian)
+			total_block_size += block_header_size
+			info_off += total_block_size
+			offset += block_header_next
+		elif id == 4: # Image
+			image_block_size = read_u32.call(data, offset + 4, little_endian) + offset
+			block_header_next = read_u32.call(data, offset + 8, little_endian)
+			block_header_size = read_u32.call(data, offset + 0xC, little_endian)
+			total_block_size += block_header_size
+			image_block_offset = offset + block_header_size
+			offset += block_header_next
+		elif id == 5: # Palette
+			pal_block_size = read_u32.call(data, offset + 4, little_endian) + offset
+			block_header_next = read_u32.call(data, offset + 8, little_endian)
+			block_header_size = read_u32.call(data, offset + 0xC, little_endian)
+			total_block_size += block_header_size
+			palette_block_offset = offset + block_header_size
+			offset += block_header_next
+		elif id == 0xFF:
+			break
+			
+		loop_counter += 1
+		
+	if image_block_offset != -1:
+		var block_len: int = read_u16.call(data, image_block_offset, little_endian)
+		img_format = read_u16.call(data, image_block_offset + 4, little_endian)
+		pixel_order = read_u16.call(data, image_block_offset + 6, little_endian)
+		width = read_u16.call(data, image_block_offset + 0x8, little_endian)
+		height = read_u16.call(data, image_block_offset + 0xA, little_endian)
+		bpp = read_u16.call(data, image_block_offset + 0xC, little_endian)
+		pitch_align = read_u16.call(data, image_block_offset + 0xE, little_endian)
+		height_align = read_u16.call(data, image_block_offset + 0x10, little_endian)
+		img_off = read_u32.call(data, image_block_offset + 0x1C, little_endian) + image_block_offset
+		image_bytes = data.slice(img_off, img_off + image_block_size)
+	if palette_block_offset != -1:
+		var block_len: int = read_u16.call(data, palette_block_offset, little_endian)
+		pal_offset = read_u32.call(data, palette_block_offset + 0x1C, little_endian) + palette_block_offset
+		palette = data.slice(pal_offset, pal_offset + pal_block_size)
+		
+	# ---- Apply PS2 width adjustment ----
+	if ps2_mode:
+		width = (((width * bpp) + 0x7F) & 0xFFFFFF80) >> 3
+
+	# ---- Unswizzle if needed ----
+	if pixel_order == 1:
+		image_bytes = unswizzle.call(image_bytes, width, height, bpp)
+
+	# ---- Convert to Godot Image ----
+	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+
+	if img_format == 0x00: # RGBA5650
+		for y in range(height):
+			for x in range(width):
+				var px_index: int = (y * width + x) * 2
+				var raw: int = image_bytes[px_index] | (image_bytes[px_index + 1] << 8)
+				var r: int = expand5.call(raw & 0x1F)
+				var g: int = expand6.call((raw >> 5) & 0x3F)
+				var b: int = expand5.call((raw >> 11) & 0x1F)
+				img.set_pixel(x, y, Color8(r, g, b, 255))
+
+	elif img_format == 0x01: # RGBA5551
+		for y in range(height):
+			for x in range(width):
+				var px_index: int = (y * width + x) * 2
+				var raw: int = image_bytes[px_index] | (image_bytes[px_index + 1] << 8)
+				var r: int = expand5.call(raw & 0x1F)
+				var g: int = expand5.call((raw >> 5) & 0x1F)
+				var b: int = expand5.call((raw >> 10) & 0x1F)
+				var a: int = 255 if ((raw >> 15) & 1) else 0
+				img.set_pixel(x, y, Color8(r, g, b, a))
+
+	elif img_format == 0x02: # RGBA4444
+		for y in range(height):
+			for x in range(width):
+				var px_index: int = (y * width + x) * 2
+				var raw: int = image_bytes[px_index] | (image_bytes[px_index + 1] << 8)
+				var r: int = expand4.call(raw & 0xF)
+				var g: int = expand4.call((raw >> 4) & 0xF)
+				var b: int = expand4.call((raw >> 8) & 0xF)
+				var a: int = expand4.call((raw >> 12) & 0xF)
+				img.set_pixel(x, y, Color8(r, g, b, a))
+
+	elif img_format == 0x03: # RGBA8888
+		for y in range(height):
+			for x in range(width):
+				var px_index: int = (y * width + x) * 4
+				var r: int = image_bytes[px_index]
+				var g: int = image_bytes[px_index + 1]
+				var b: int = image_bytes[px_index + 2]
+				var a: int = image_bytes[px_index + 3]
+				img.set_pixel(x, y, Color8(r, g, b, a))
+
+	elif img_format == 0x04: # INDEX4
+		var colors: Array[Color] = []
+		for i in range(palette.size() / 4):
+			colors.append(Color8(palette[i * 4], palette[i * 4 + 1], palette[i * 4 + 2], palette[i * 4 + 3]))
+		var bit_index: int = 0
+		for y in range(height):
+			for x in range(width):
+				var byte_val: int = image_bytes[bit_index >> 1]
+				var idx: int= (byte_val >> 4) & 0xF if (bit_index & 1) == 0 else byte_val & 0xF
+				img.set_pixel(x, y, colors[idx])
+				bit_index += 1
+
+	elif img_format == 0x05: # INDEX8
+		var colors: Array[Color] = []
+		for i in range(palette.size() / 4):
+			colors.append(Color8(palette[i * 4], palette[i * 4 + 1], palette[i * 4 + 2], palette[i * 4 + 3]))
+		for y in range(height):
+			for x in range(width):
+				var idx: int = image_bytes[y * width + x]
+				img.set_pixel(x, y, colors[idx])
+
+	else:
+		print_rich(("[color=red]Unsupported GIM image format: %04d from %s!" % [img_format, file_name]))
+		push_error("Unsupported GIM image format: %04d from %s!" % [img_format, file_name])
+
+	return img
+	
+	
+func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true, swap_rb: bool = true) -> Array[Image]:
+	var images: Array[Image] = []
+
+	# Check magic
+	if data.slice(0, 4).get_string_from_ascii() != "TIM2":
+		push_error("Not a TIM2 file")
+		return images
+
+	var picture_count: int = data.decode_u16(6)
+	if picture_count <= 0:
+		push_error("No pictures found")
+		return images
+
+	var pic_offset: int = 0x10
+	for p in range(picture_count):
+		var total_size: int = data.decode_u32(pic_offset)
+		var clut_size: int = data.decode_u32(pic_offset + 4)
+		var img_size: int = data.decode_u32(pic_offset + 8)
+		var header_size: int = data.decode_u16(pic_offset + 0x0C)
+		var clut_colors: int = data.decode_u16(pic_offset + 0x0E)
+		var pic_format: int = data.decode_u8(pic_offset + 0x10)
+		var mipmap_count: int = data.decode_u8(pic_offset + 0x11)
+		var clut_color_type: int = data.decode_u8(pic_offset + 0x12)
+		var img_color_type: int = data.decode_u8(pic_offset + 0x13)
+		var width: int = data.decode_u16(pic_offset + 0x14)
+		var height: int = data.decode_u16(pic_offset + 0x16)
+
+		var img_data_offset: int = pic_offset + header_size
+		var clut_data_offset: int = img_data_offset + img_size
+
+		# --- Palette (CLUT) ---
+		var palette: Array[Color] = []
+		if clut_size > 0:
+			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
+			if is_swizzled and clut_colors == 256:
+				pal_bytes = ComFuncs.unswizzle_palette(pal_bytes, 32)
+				
+			# Apply alpha correction ONLY for indexed formats
+			if fix_alpha:
+				match img_color_type:
+					3, 5:
+						for j in range(3, pal_bytes.size(), 4):
+							var a: int = int((pal_bytes.decode_u8(j) / 128.0) * 255.0)
+							pal_bytes.encode_u8(j, a)
+							
+			for i in range(clut_colors):
+				var col: int = pal_bytes.decode_u32(i * 4)
+				var a: int = (col >> 24) & 0xFF
+				var r: int = (col >> 16) & 0xFF
+				var g: int = (col >> 8) & 0xFF
+				var b: int = col & 0xFF
+				if swap_rb:
+					var tmp: int = r
+					r = b
+					b = tmp
+				palette.append(Color8(r, g, b, a))
+
+		# --- Image decode ---
+		var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+
+		match img_color_type:
+			1:  # 16-bit A1B5G5R5
+				for y in range(height):
+					for x in range(width):
+						var idx: int = (y * width + x) * 2
+						var px: int = data.decode_u16(img_data_offset + idx)
+						var a: int = (px >> 15) & 1
+						var r: int = (px >> 10) & 0x1F
+						var g: int = (px >> 5) & 0x1F
+						var b: int = px & 0x1F
+						var alpha: int = 255 if a else 0
+						r = r << 3
+						g = g << 3
+						b = b << 3
+						if swap_rb:
+							var tmp: int = r
+							r = b
+							b = tmp
+						img.set_pixel(x, y, Color8(r, g, b, alpha))
+			2:  # 32-bit RGB (X8B8G8R8)
+				for y in range(height):
+					for x in range(width):
+						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
+						var r: int = col & 0xFF
+						var g: int = (col >> 8) & 0xFF
+						var b: int = (col >> 16) & 0xFF
+						var a: int = 255
+						if swap_rb:
+							var tmp: int = r
+							r = b
+							b = tmp
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			3:  # 32-bit RGBA (A8B8G8R8)
+				for y in range(height):
+					for x in range(width):
+						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
+						var r: int = col & 0xFF
+						var g: int = (col >> 8) & 0xFF
+						var b: int = (col >> 16) & 0xFF
+						var a: int = (col >> 24) & 0xFF
+						if swap_rb:
+							var tmp: int = r
+							r = b
+							b = tmp
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			4:  # 4-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var byte: int = data.decode_u8(img_data_offset + ((y * width + x) >> 1))
+						var idx: int = (byte & 0x0F) if (x & 1) == 0 else ((byte >> 4) & 0x0F)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			5:  # 8-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var idx: int = data.decode_u8(img_data_offset + y * width + x)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			_:
+				push_error("Unsupported TIM2 image color type: %d" % img_color_type)
+
+		images.append(img)
+
+		# Move to next picture block
+		pic_offset += total_size
+
+	return images
+	
+	
 func convert_rgba_5551_to_rgba8(image_data: PackedByteArray, palette_data: PackedByteArray, image_width: int, image_height: int) -> Image:
 	var pixel_count: int = image_width * image_height
 
