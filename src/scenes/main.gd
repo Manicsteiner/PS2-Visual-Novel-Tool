@@ -227,6 +227,7 @@ enum {
 	SEIKAINOSENKI,
 	SEGAAGESVOL12,
 	SEKIREI,
+	SENGOKUHIME,
 	SENGOKUHIME2,
 	SENTIMENTALPRELUDE,
 	SEPARATEHEARTS,
@@ -384,6 +385,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(KIDOUSHINSENGUMI)
 		game_type = KIDOUSHINSENGUMI
 		var next_scene: PackedScene = load("res://src/scenes/Quintet.tscn")
+		sceneChanger(next_scene)
+	elif index == SENGOKUHIME:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(SENGOKUHIME)
+		game_type = SENGOKUHIME
+		var next_scene: PackedScene = load("res://src/scenes/SystemSoftAlpha.tscn")
 		sceneChanger(next_scene)
 	elif index == SENGOKUHIME2:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
@@ -2294,7 +2301,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Seikai no Senki", SEIKAINOSENKI)
 	game_type_selector.add_item("Sega Ages 2500 Series Vol. 12: Puyo Puyo Tsuu Perfect Set", SEGAAGESVOL12)
 	game_type_selector.add_item("Sekirei: Mirai kara no Okurimono", SEKIREI)
-	game_type_selector.add_item("Sengoku-hime 2: En - Hyakka, Senran Tatsukaze no Gotoku")
+	game_type_selector.add_item("Sengoku Hime: Senran ni Mau Otometachi", SENGOKUHIME)
+	game_type_selector.add_item("Sengoku Hime 2: En - Hyakka, Senran Tatsukaze no Gotoku", SENGOKUHIME2)
 	game_type_selector.add_item("Sentimental Prelude", SENTIMENTALPRELUDE)
 	game_type_selector.add_item("Separate Hearts", SEPARATEHEARTS)
 	game_type_selector.add_item("Shakugan no Shana", SHAKUGAN)

@@ -1,0 +1,91 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqgi022r2l1by"]
+
+[ext_resource type="Script" path="res://src/scenes/systemSoftAlpha.gd" id="1_q3xcs"]
+
+[node name="SystemSoftAlpha" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_q3xcs")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.5
+offset_top = -15.5
+offset_right = 51.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+
+[node name="LoadEXE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Load EXE"
+
+[node name="LoadBIN" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Load .BIN"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -124.0
+offset_top = 44.0
+offset_right = 139.0
+offset_bottom = 145.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="outputImages" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Original Images"
+
+[node name="FILELoadEXE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+use_native_dialog = true
+
+[node name="FILELoadBIN" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+use_native_dialog = true
+
+[node name="FILELoadFOLDER" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadBIN" to="." method="_on_load_bin_pressed"]
+[connection signal="toggled" from="VBoxContainer/outputImages" to="." method="_on_output_images_toggled"]
+[connection signal="file_selected" from="FILELoadEXE" to="." method="_on_file_load_exe_file_selected"]
+[connection signal="files_selected" from="FILELoadBIN" to="." method="_on_file_load_bin_files_selected"]
+[connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]
