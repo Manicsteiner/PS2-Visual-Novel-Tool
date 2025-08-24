@@ -1,149 +1,130 @@
 extends Control
 
+@onready var file_load_folder: FileDialog = $FILELoadFolder
+@onready var file_load_tm_2: FileDialog = $FILELoadTM2
+@onready var file_load_gim: FileDialog = $FILELoadGIM
+@onready var file_load_search: FileDialog = $FILELoadSearch
+
 var selected_files: PackedStringArray
+var selected_tm2s: PackedStringArray
+var selected_gims: PackedStringArray
 var folder_path: String
-var tm2_toggle: bool = false
+var tm2_toggle: bool = true
 var bmp_toggle: bool = false
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
+var tm2_fix_alpha: bool = true
+var tm2_swizzle: bool = true
+var tm2_swap_rgb: bool = true
+
+var gim_ps2_mode: bool = false
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _process(_delta: float) -> void:
+	if selected_tm2s and folder_path:
+		parse_tm2()
+		selected_tm2s.clear()
+		folder_path = ""
+	elif selected_gims and folder_path:
+		parse_gim()
+		selected_gims.clear()
+		folder_path = ""
+	elif selected_files:
+		search_extract()
+		selected_files.clear()
+		folder_path = ""
 	
 	
-func searchAndExtract() -> void:
-	var pos: int
-	var last_pos: int
-	var in_file: FileAccess
-	var out_file: FileAccess
-	var buff: PackedByteArray
-	var lz77_bytes: int = 0x37375A4C
-	var tim2_bytes: int = 0x324D4954
-	var dec_size: int
-	var f_size: int
-	var bytes: int
-	var file_name: String
-	var search_results: PackedInt32Array
-	var f_id: int
-	var entry_count: int
-	var color: String
-	
-	for i in range(0, selected_files.size()):
-		in_file = FileAccess.open(selected_files[i], FileAccess.READ)
-		file_name = selected_files[i].get_file()
+func parse_tm2() -> void:
+	for file in selected_tm2s.size():
+		var in_file: FileAccess = FileAccess.open(selected_tm2s[file], FileAccess.READ)
+		var f_name: String = selected_tm2s[file].get_file()
 		
-		# TIM2 search
-		if tm2_toggle:
-			search_results.clear()
+		in_file.seek(0)
+		var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
+		
+		var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, tm2_fix_alpha, tm2_swizzle, tm2_swap_rgb)
+		for i in range(pngs.size()):
+			var png: Image = pngs[i]
+			png.save_png(folder_path + "/%s" % f_name + "_%04d_%04d.PNG" % [file, i])
+			print("%s" % folder_path + "/%s" % f_name + "_%04d_%04d.PNG" % [file, i])
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func parse_gim() -> void:
+	for file in selected_gims.size():
+		var in_file: FileAccess = FileAccess.open(selected_gims[file], FileAccess.READ)
+		var f_name: String = selected_gims[file].get_file()
+		
+		in_file.seek(0)
+		var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
+		
+		var png: Image = ComFuncs.gim_to_image(buff, f_name, gim_ps2_mode)
+		png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" % file)
+		print("%s" % folder_path + "/%s" % f_name + "_%04d.PNG" % file)
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func search_extract() -> void:
+	if tm2_toggle:
+		for file in selected_files.size():
+			var in_file: FileAccess = FileAccess.open(selected_files[file], FileAccess.READ)
+			var f_name: String = selected_files[file].get_file()
 			
-			pos = 0
-			last_pos = 0
-			f_id = 0
-			entry_count = 0
-			in_file.seek(pos)
+			in_file.seek(0)
+			ComFuncs.tim2_scan_file(in_file)
 			
-			while in_file.get_position() < in_file.get_length():
-				in_file.seek(pos)
-				if in_file.eof_reached():
-					break
-					
-				bytes = in_file.get_32()
-				last_pos = in_file.get_position()
-				if bytes == tim2_bytes:
-					search_results.append(last_pos - 4)
-					
-					in_file.seek(last_pos + 0xC) #TIM2 size at 0x10
-					f_size = in_file.get_32()
-						
-					in_file.seek(search_results[entry_count]) #Go back to TIM2 header
-					buff = in_file.get_buffer(f_size + 0x10)
-					
-					last_pos = in_file.get_position()
-					if !last_pos % 16 == 0: #align to 0x10 boundary
-						last_pos = (last_pos + 15) & ~15
-						
-					out_file = FileAccess.open(folder_path + "/%s" % file_name + "_%04d" % entry_count + ".TM2", FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					buff.clear()
-					
-					print("0x%08X " % search_results[entry_count], "0x%08X " % f_size + "%s" % folder_path + "/%s" % file_name + "_%04d" % f_id + ".TM2")
-					entry_count += 1
-				else:
-					if !last_pos % 16 == 0: #align to 0x10 boundary
-						last_pos = (last_pos + 15) & ~15
-						
-				pos = last_pos
-				f_id += 1
-			
-			if entry_count > 0:
-				color = "green"
-			else:
-				color = "red"
-				
-			print_rich("[color=%s]Found %d TIM2 entries in %s[/color]" % [color, search_results.size(), file_name])
-			
-		# BMP search
-		if bmp_toggle:
-			search_results.clear()
-			
-			pos = 0
-			last_pos = 0
-			f_id = 0
-			entry_count = 0
-			in_file.seek(pos)
-			
-			while in_file.get_position() < in_file.get_length():
-				in_file.seek(pos)
-				if in_file.eof_reached():
-					break
-					
-				bytes = in_file.get_32()
-				last_pos = in_file.get_position()
-				if bytes == tim2_bytes:
-					search_results.append(last_pos - 4)
-					
-					in_file.seek(last_pos + 0xC) #TIM2 size at 0x10
-					f_size = in_file.get_32()
-						
-					in_file.seek(search_results[entry_count]) #Go back to TIM2 header
-					buff = in_file.get_buffer(f_size + 0x10)
-					
-					last_pos = in_file.get_position()
-					if !last_pos % 16 == 0: #align to 0x10 boundary
-						last_pos = (last_pos + 15) & ~15
-						
-					out_file = FileAccess.open(folder_path + "/%s" % file_name + "_%04d" % entry_count + ".TM2", FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
-					buff.clear()
-					
-					print("0x%08X " % search_results[entry_count], "0x%08X " % f_size + "%s" % folder_path + "/%s" % file_name + "_%04d" % f_id + ".TM2")
-					entry_count += 1
-				else:
-					if !last_pos % 16 == 0: #align to 0x10 boundary
-						last_pos = (last_pos + 15) & ~15
-						
-				pos = last_pos
-				f_id += 1
-			
-			if entry_count > 0:
-				color = "green"
-			else:
-				color = "red"
-				
-			print_rich("[color=%s]Found %d TIM2 entries in %s[/color]" % [color, search_results.size(), file_name])
-			
-		print_rich("[color=green]Finished searching in %s[/color]" % file_name)
-
-
+			print_rich("[color=green]Finished searching in %s[/color]" % f_name)
+	print_rich("[color=green]Finished![/color]")
+	
 func _on_tm_2_toggle_toggled(_toggled_on: bool) -> void:
 	tm2_toggle = !tm2_toggle
 
 
 func _on_bmp_toggle_toggled(_toggled_on: bool) -> void:
 	bmp_toggle = !bmp_toggle
+
+
+func _on_load_tm_2_pressed() -> void:
+	file_load_tm_2.show()
+
+
+func _on_file_load_tm_2_files_selected(paths: PackedStringArray) -> void:
+	selected_tm2s = paths
+	file_load_folder.show()
+
+
+func _on_file_load_folder_dir_selected(dir: String) -> void:
+	folder_path = dir
+
+
+func _on_tm_2_fix_alpha_toggled(_toggled_on: bool) -> void:
+	tm2_fix_alpha = !tm2_fix_alpha
+
+
+func _on_tm_2_swizzle_toggled(_toggled_on: bool) -> void:
+	tm2_swizzle = !tm2_swizzle
+
+
+func _on_tm_2rg_bswap_toggled(_toggled_on: bool) -> void:
+	tm2_swap_rgb = !tm2_swap_rgb
+
+
+func _on_gimps_2_width_toggled(_toggled_on: bool) -> void:
+	gim_ps2_mode = !gim_ps2_mode
+
+
+func _on_file_load_gim_files_selected(paths: PackedStringArray) -> void:
+	selected_gims = paths
+	file_load_folder.show()
+
+
+func _on_load_gim_pressed() -> void:
+	file_load_gim.show()
+
+
+func _on_search_in_files_button_pressed() -> void:
+	file_load_search.show()
+
+
+func _on_file_load_search_files_selected(paths: PackedStringArray) -> void:
+	selected_files = paths

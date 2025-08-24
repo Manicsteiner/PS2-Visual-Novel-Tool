@@ -2,24 +2,115 @@ extends Control
 
 @onready var gene_load_bin: FileDialog = $GENELoadBIN
 @onready var gene_load_folder: FileDialog = $GENELoadFOLDER
+@onready var gene_load_dat: FileDialog = $GENELoadDAT
+@onready var load_dat: Button = $HBoxContainer/LoadDAT
+@onready var load_bin: Button = $HBoxContainer/LoadBIN
+@onready var decomp_button: CheckBox = $VBoxContainer/decompButton
+@onready var tim_2_out: CheckBox = $VBoxContainer/tim2out
 
 var chose_folder:bool = false
 var folder_path:String
 
 var chose_bin:bool = false
 var selected_files: PackedStringArray
+var selected_file_kyuu: String
 
 var out_decomp: bool = false
+var out_tm2: bool = false
 
-
+func  _ready() -> void:
+	if Main.game_type != Main.KYUUKESTUHIME:
+		load_dat.hide()
+		tim_2_out.hide()
+	elif Main.game_type == Main.KYUUKESTUHIME:
+		load_bin.hide()
+		decomp_button.hide()
+		
 func _process(_delta: float) -> void:
 	if chose_bin and chose_folder:
 		extractBin()
 		chose_folder = false
 		chose_bin = false
 		selected_files.clear()
+	elif selected_file_kyuu and folder_path:
+		kyuuketsu_extract()
+		selected_file_kyuu = ""
+		folder_path = ""
 		
 		
+func kyuuketsu_extract() -> void:
+	var in_file: FileAccess = FileAccess.open(selected_file_kyuu, FileAccess.READ)
+	var arc_name: String = selected_file_kyuu.get_file().get_basename()
+	
+	in_file.seek(0)
+	var hdr: String = in_file.get_buffer(4).get_string_from_ascii()
+	if hdr == "DAT1":
+		var arc_size: int = in_file.get_32()
+		var file_tbl_end: int = (in_file.get_32() >> 12) + 16
+		
+		var id: int = 0
+		var pos: int = 16
+		while pos < file_tbl_end:
+			in_file.seek(pos)
+			var f_size: int = in_file.get_32()
+			if f_size == 0:
+				id += 1
+				pos += 16
+				continue
+			var f_offset: int = in_file.get_32()
+			var crc: int = in_file.get_32()
+			var f_dec_size = in_file.get_32() #?
+			#if f_size != f_dec_size: print("Sizes aren't equal! %08X %08X" %[f_size, f_dec_size])
+			
+			var f_name: String = "%04d" % id
+			
+			print("%08X %08X %08X %s" % [f_offset, f_size, f_dec_size, folder_path + "/%s" % f_name])
+			
+			in_file.seek(f_offset)
+			var buff: PackedByteArray = in_file.get_buffer(f_size)
+			if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+				if out_tm2:
+					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".TM2", FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+				var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true, true)
+				for png_i in range(pngs.size()):
+					var png: Image = pngs[png_i]
+					png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" % png_i)
+			else:
+				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".BIN", FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+			id += 1
+			pos += 16
+	elif hdr == "PKFs":
+		var table_start: int = in_file.get_32()
+		var isize: int = in_file.get_32()
+		var num_files: int = in_file.get_32()
+		var dir: DirAccess = DirAccess.open(folder_path)
+		if arc_name != "SYS_SE": table_start += 16
+		for i in range(num_files):
+			in_file.seek((i * 0x20) + table_start)
+			
+			var f_name: String = in_file.get_buffer(16).get_string_from_ascii()
+			var f_offset: int = in_file.get_32() * 0x800
+			var f_sector_size: int = in_file.get_32() * 0x800
+			var f_size: int = in_file.get_32()
+			
+			print("%08X %08X %s" % [f_offset, f_size, folder_path + "/%s" % arc_name + "/%s" % f_name])
+			
+			in_file.seek(f_offset)
+			var buff: PackedByteArray = in_file.get_buffer(f_size)
+			
+			dir.make_dir_recursive(folder_path + "/%s" % arc_name + "/%s" % f_name.get_base_dir())
+			
+			var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name, FileAccess.WRITE)
+			out_file.store_buffer(buff)
+			out_file.close()
+			
+	print_rich("[color=green]Finished![/color]")
+	
+	
 func extractBin() -> void:
 	var f_name: String
 	var f_offset: int
@@ -370,3 +461,16 @@ func _on_gene_load_folder_dir_selected(dir: String) -> void:
 	
 func _on_decomp_button_toggled(_toggled_on: bool) -> void:
 	out_decomp = !out_decomp
+
+
+func _on_load_dat_pressed() -> void:
+	gene_load_dat.show()
+
+
+func _on_gene_load_dat_file_selected(path: String) -> void:
+	selected_file_kyuu = path
+	gene_load_folder.show()
+
+
+func _on_tim_2_out_toggled(_toggled_on: bool) -> void:
+	out_tm2 = !out_tm2
