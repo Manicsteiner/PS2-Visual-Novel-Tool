@@ -130,6 +130,7 @@ enum {
 	KONOAOZORA,
 	KONOHARETA,
 	KOUENJIJOSHI,
+	KYUUKESTUHIME,
 	LITTLEAID,
 	LITTLEBUSTERS,
 	LNOKISETSU,
@@ -299,7 +300,8 @@ enum {
 	YUMEMISHI,
 	ZNTKOAKUMA,
 	ZNTMAIGO,
-	ZNTMUMA
+	ZNTMUMA,
+	TOOLS
 	}
 	
 var game_type: int = FUTAKOI
@@ -1316,6 +1318,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = KOKORONOTOBIRA
 		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
 		sceneChanger(next_scene)
+	elif index == KYUUKESTUHIME:
+		game_type_sub_text.text = "Supports:\nExtraction, Images (PNG/TM2)"
+		game_type_selector.select(KYUUKESTUHIME)
+		game_type = KYUUKESTUHIME
+		var next_scene: PackedScene = load("res://src/scenes/GeneX.tscn")
+		sceneChanger(next_scene)
 	elif index == HOOLIGAN:
 		game_type_sub_text.text = "Supports 'Hooligan: Kimi no Naka no Yuuki' (most images)."
 		game_type_selector.select(HOOLIGAN)
@@ -2072,6 +2080,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = ZNTMUMA
 		var next_scene: PackedScene = load("res://src/scenes/SocioArtLogic.tscn")
 		sceneChanger(next_scene)
+	elif index == TOOLS:
+		game_type_sub_text.text = "Extract TIM2 images from files, TIM2 / GIM converter."
+		game_type_selector.select(TOOLS)
+		game_type = TOOLS
+		var next_scene: PackedScene = load("res://src/scenes/Tools.tscn")
+		sceneChanger(next_scene)
 		
 		
 func sceneChanger(scene: PackedScene) -> void:
@@ -2204,6 +2218,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea", KONOAOZORA)
 	game_type_selector.add_item("Kono Hareta Sora no Shita de", KONOHARETA)
 	game_type_selector.add_item("Kouenji Joshi Soccer", KOUENJIJOSHI)
+	game_type_selector.add_item("Kyuuketsu Hime Yui: Sen'yashou", KYUUKESTUHIME)
 	game_type_selector.add_item("Little Aid", LITTLEAID)
 	game_type_selector.add_item("Little Busters! Converted Edition", LITTLEBUSTERS)
 	game_type_selector.add_item("L no Kisetsu 2: Invisible Memories", LNOKISETSU)
@@ -2374,6 +2389,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Zero no Tsukaima: Koakuma to Harukaze no Concerto", ZNTKOAKUMA)
 	game_type_selector.add_item("Zero no Tsukaima: Maigo no Period to Ikusen no Symphony", ZNTMAIGO)
 	game_type_selector.add_item("Zero no Tsukaima: Muma ga Tsumugu Yokaze no Fantasy", ZNTMUMA)
+	game_type_selector.add_item("TOOLS")
 	#print(game_type_selector.item_count)
 	#for i in range(game_type_selector.item_count):
 		#print("* %s" % game_type_selector.get_item_text(i))

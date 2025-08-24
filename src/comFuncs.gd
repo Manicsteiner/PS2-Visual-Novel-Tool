@@ -407,6 +407,7 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 						var g: int = (col >> 8) & 0xFF
 						var b: int = (col >> 16) & 0xFF
 						var a: int = (col >> 24) & 0xFF
+						if fix_alpha: a = int((a / 128.0) * 255.0)
 						if swap_rb:
 							var tmp: int = r
 							r = b
@@ -1453,9 +1454,13 @@ func tim2_scan_file(in_file: FileAccess) -> void:
 				last_pos = (last_pos + 15) & ~15
 				
 			var out_file: FileAccess = FileAccess.open(in_file_path + "_%04d" % entry_count + ".TM2", FileAccess.WRITE)
-			out_file.store_buffer(tm2_buff)
-			out_file.close()
-			tm2_buff.clear()
+			if out_file == null:
+				print_rich("[color=red]Could not open %s for writting![/color]" % [in_file_path + "_%04d" % entry_count + ".TM2"])
+				return
+			else:
+				out_file.store_buffer(tm2_buff)
+				out_file.close()
+				tm2_buff.clear()
 			
 			entry_count += 1
 		else:
@@ -1465,13 +1470,13 @@ func tim2_scan_file(in_file: FileAccess) -> void:
 		pos = last_pos
 		f_id += 1
 	
-	#var color: String
-	#if entry_count > 0:
-		#color = "green"
-	#else:
-		#color = "red"
+	var color: String
+	if entry_count > 0:
+		color = "green"
+	else:
+		color = "red"
 		
-	#print_rich("[color=%s]Found %d TIM2 entries[/color]" % [color, search_results.size()])
+	print_rich("[color=%s]Found %d TIM2 entries[/color]" % [color, search_results.size()])
 	return
 	
 	
