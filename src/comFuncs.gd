@@ -307,7 +307,7 @@ func gim_to_image(data: PackedByteArray, file_name: String, ps2_mode: bool = fal
 	return img
 	
 	
-func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true, swap_rb: bool = true) -> Array[Image]:
+func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true) -> Array[Image]:
 	var images: Array[Image] = []
 
 	# Check magic
@@ -354,64 +354,51 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 							
 			for i in range(clut_colors):
 				var col: int = pal_bytes.decode_u32(i * 4)
+				var r: int =  col        & 0xFF
+				var g: int = (col >> 8)  & 0xFF
+				var b: int = (col >> 16) & 0xFF
 				var a: int = (col >> 24) & 0xFF
-				var r: int = (col >> 16) & 0xFF
-				var g: int = (col >> 8) & 0xFF
-				var b: int = col & 0xFF
-				if swap_rb:
-					var tmp: int = r
-					r = b
-					b = tmp
 				palette.append(Color8(r, g, b, a))
 
 		# --- Image decode ---
 		var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
 
 		match img_color_type:
-			1:  # 16-bit A1B5G5R5
+			1: 
+				# 1: 16-bit A1B5G5R5  (bits: R=0..4, G=5..9, B=10..14, A=15)
 				for y in range(height):
 					for x in range(width):
 						var idx: int = (y * width + x) * 2
 						var px: int = data.decode_u16(img_data_offset + idx)
-						var a: int = (px >> 15) & 1
-						var r: int = (px >> 10) & 0x1F
-						var g: int = (px >> 5) & 0x1F
-						var b: int = px & 0x1F
-						var alpha: int = 255 if a else 0
-						r = r << 3
-						g = g << 3
-						b = b << 3
-						if swap_rb:
-							var tmp: int = r
-							r = b
-							b = tmp
-						img.set_pixel(x, y, Color8(r, g, b, alpha))
-			2:  # 32-bit RGB (X8B8G8R8)
+						var a1: int = (px >> 15) & 1
+						var r5: int = (px >> 0) & 0x1F
+						var g5: int = (px >> 5) & 0x1F
+						var b5: int = (px >> 10) & 0x1F
+						# expand 5->8 bits (better than <<3):
+						var r: int = (r5 << 3) | (r5 >> 2)
+						var g: int = (g5 << 3) | (g5 >> 2)
+						var b: int = (b5 << 3) | (b5 >> 2)
+						var a: int = 255 if a1 else 0
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			2:  # 32-bit X8B8G8R8  -> bytes [R, G, B, X] in stream (little-endian)
 				for y in range(height):
 					for x in range(width):
 						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
-						var r: int = col & 0xFF
-						var g: int = (col >> 8) & 0xFF
+						var r: int =  col        & 0xFF
+						var g: int = (col >> 8)  & 0xFF
 						var b: int = (col >> 16) & 0xFF
 						var a: int = 255
-						if swap_rb:
-							var tmp: int = r
-							r = b
-							b = tmp
 						img.set_pixel(x, y, Color8(r, g, b, a))
-			3:  # 32-bit RGBA (A8B8G8R8)
+			3:  # 32-bit A8B8G8R8  -> bytes [R, G, B, A] in stream (little-endian)
 				for y in range(height):
 					for x in range(width):
 						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
-						var r: int = col & 0xFF
-						var g: int = (col >> 8) & 0xFF
+						var r: int =  col        & 0xFF
+						var g: int = (col >> 8)  & 0xFF
 						var b: int = (col >> 16) & 0xFF
 						var a: int = (col >> 24) & 0xFF
-						if fix_alpha: a = int((a / 128.0) * 255.0)
-						if swap_rb:
-							var tmp: int = r
-							r = b
-							b = tmp
+						if fix_alpha: 
+							a = int((a / 128.0) * 255.0)
 						img.set_pixel(x, y, Color8(r, g, b, a))
 			4:  # 4-bit indexed
 				for y in range(height):
@@ -436,7 +423,7 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 		images.append(img)
 
 		# Move to next picture block
-		pic_offset += total_size
+		pic_offset += total_size + 16
 
 	return images
 	
