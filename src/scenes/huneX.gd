@@ -39,7 +39,7 @@ var type2_game_types: PackedInt32Array = [
 	Main.KOMOREBI
 	]
 var type3_game_types: PackedInt32Array = [
-	Main.IZUMO2TAKEKI
+	Main.IZUMO2TAKEKI, Main.IZAYOI
 	]
 var type4_game_types: PackedInt32Array = [
 	Main.CANARIA, Main.MIZUIRO, Main.THREADCOLORS, 
@@ -50,7 +50,7 @@ var type4_game_types: PackedInt32Array = [
 
 func _ready() -> void:
 	load_exe.filters = [
-		"SLPM_657.17, SLPM_655.85, SLPM_550.98, SLPM_661.65, SLPM_664.37, SLPM_661.92, MAIN.ELF"
+		"SLPM_657.17, SLPM_655.85, SLPM_655.45, SLPM_550.98, SLPM_661.65, SLPM_664.37, SLPM_661.92, MAIN.ELF"
 		]
 		
 	if Main.game_type in type2_game_types:
@@ -506,10 +506,19 @@ func extract_biz() -> void:
 			tbl_start = 0x279140
 			tbl_end = 0x27A120
 			compressed_arc = true
-		elif arc_name == "PACK_BUP":
-			tbl_start = 0x27A120
-			tbl_end = 0x27B200
+		elif arc_name == "PACK_BGE":
+			tbl_start = 0x523000
+			tbl_end = 0x523CB0
 			compressed_arc = true
+		elif arc_name == "PACK_BUP":
+			if Main.game_type == Main.IZUMO2TAKEKI:
+				tbl_start = 0x27A120
+				tbl_end = 0x27B200
+				compressed_arc = true
+			elif Main.game_type == Main.IZAYOI:
+				tbl_start = 0x523CB0
+				tbl_end = 0x524A88
+				compressed_arc = true
 		elif arc_name == "PACK_BTL":
 			tbl_start = 0x27B200
 			tbl_end = 0x27B390
@@ -520,14 +529,30 @@ func extract_biz() -> void:
 			compressed_arc = true
 			
 		var id: int = 0
-		for i in range(tbl_start, tbl_end, 16):
+		var step_mod: int = 16
+		if Main.game_type == Main.IZAYOI:
+			step_mod == 8
+			
+		for i in range(tbl_start, tbl_end, step_mod):
 			exe_file.seek(i)
+			
+			#if id != 71:
+				#id += 1
+				#continue
 			
 			var f_name: String = "%s_%04d.BIN" % [arc_name, id]
 			var f_off: int = exe_file.get_32()
-			var f_sec_off: int = exe_file.get_32() * 0x800
-			var f_dec_size: int = exe_file.get_32()
-			var f_size: int = exe_file.get_32()
+			var f_sec_off: int 
+			var f_dec_size: int
+			var f_size: int
+			
+			if Main.game_type == Main.IZUMO2TAKEKI:
+				f_sec_off = exe_file.get_32() * 0x800
+				f_dec_size = exe_file.get_32()
+				f_size = exe_file.get_32()
+			elif Main.game_type == Main.IZAYOI:
+				f_off *= 0x800
+				f_size = exe_file.get_32()
 			
 			in_file.seek(f_off)
 			var buff: PackedByteArray = in_file.get_buffer(f_size)
@@ -546,9 +571,14 @@ func extract_biz() -> void:
 			
 			if compressed_arc:
 				buff_dec_size = buff.decode_u32(0)
-				if buff_dec_size != f_dec_size:
+				if Main.game_type != Main.IZAYOI and (buff_dec_size != f_dec_size):
 					push_error("Decompressed sizes don't match!")
-				buff = decompress_lz(buff, f_dec_size)
+					
+				if Main.game_type == Main.IZAYOI:
+					buff = decompress_lz(buff, buff_dec_size)
+				else:
+					buff = decompress_lz(buff, f_dec_size)
+					
 				if debug_output:
 					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 					out_file.store_buffer(buff)
@@ -617,6 +647,10 @@ func extract_biz() -> void:
 						out_file.store_buffer(t_buff)
 						out_file.close()
 					pos += 4
+			elif buff.slice(0, 4).get_string_from_ascii() == "MGrp":
+				if tile_output:
+					var png: Image = make_img_biz_izayoi(buff)
+					png.save_png(folder_path + "/%s" % f_name + ".PNG")
 			else:
 				var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 				out_file.store_buffer(buff)
@@ -941,6 +975,76 @@ func make_img_biz(data: PackedByteArray) -> Array[Image]:
 		imgs.append(image)
 		off = img_size
 	return imgs
+	
+	
+func make_img_biz_izayoi(data: PackedByteArray) -> Image:
+	var data_size: int = data.size()
+	#var off: int = 0x20
+	var img_dat_off: int = data.decode_u32(0x18)
+	var pal_off: int = data.decode_u32(0x10)
+	var w: int = data.decode_u16(0x20) << 2 #((data.decode_u8(0x28) - 1) * data.decode_u16(0xA)) + data.decode_u16(0x20) # also valid by the game
+	var h: int = data.decode_u16(0x22) << 2 #((data.decode_u8(0x29) - 1) * data.decode_u16(0xC)) + data.decode_u16(0x22) # also valid by the game
+	var img_size: int = (w * h) + img_dat_off
+	var pal: PackedByteArray = ComFuncs.unswizzle_palette(data.slice(pal_off, img_dat_off), 32)
+	var img_data: PackedByteArray = unswizzle8(data.slice(img_dat_off, img_size + img_dat_off), w, h) #unswizzle_ps2_psmt8(data.slice(img_dat_off, img_size + img_dat_off), w, h, 0)
+	var image: Image = Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+	for y in range(h):
+		for x in range(w):
+			var pixel_index: int = img_data[x + y * w]
+			var r: int = pal[pixel_index * 4 + 0]
+			var g: int = pal[pixel_index * 4 + 1]
+			var b: int = pal[pixel_index * 4 + 2]
+			var a: int = pal[pixel_index * 4 + 3]
+			a = int((a / 128.0) * 255.0)
+			
+			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+	return image
+	
+	
+func unswizzle_ps2_psmt8(data: PackedByteArray, w: int, h: int, pitch: int = 0) -> PackedByteArray:
+	var out: PackedByteArray = PackedByteArray()
+	out.resize(w * h)
+
+	# Align pitch to GS requirement if not given
+	var p: int = pitch
+	if p <= 0:
+		p = int(ceil(float(w) / 64.0)) * 64
+
+	for y in range(h):
+		for x in range(w):
+			# --- page base (128x64 pixels) ---
+			var page_x: int = (x & ~127)
+			var page_y: int = (y & ~63)
+			var page_index: int = (page_y * p + page_x * 64)
+
+			# --- block base inside page (16x8) ---
+			var bx: int = (x & 127) >> 4  # block X index (0..7)
+			var by: int = (y & 63) >> 3   # block Y index (0..7)
+			var block_index: int = by * 8 + bx
+			var block_base: int = block_index * 128  # 128 bytes per block
+
+			# --- position inside block (16x8) ---
+			var ix: int = x & 15
+			var iy: int = y & 7
+
+			# GS bank swap pattern
+			var bs: int = ((iy >> 1) & 1) * 4
+			var cell: int = (((ix + bs) & 7) << 2) + ((iy & 1) + ((ix >> 2) & 2))
+
+			# right half of block (ix >= 8) offset
+			if ix >= 8:
+				cell += 32
+			# row offset inside block (iy >> 1) * 16
+			cell += (iy >> 1) * 16
+
+			# final source address
+			var src_index: int = page_index + block_base + cell
+			var dst_index: int = y * w + x
+
+			if src_index < data.size() and dst_index < out.size():
+				out[dst_index] = data[src_index]
+
+	return out
 	
 	
 func unswizzle8(data: PackedByteArray, w: int, h: int, swizz: bool = false) -> PackedByteArray:
