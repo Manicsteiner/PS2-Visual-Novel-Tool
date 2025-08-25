@@ -14,7 +14,6 @@ var bmp_toggle: bool = false
 
 var tm2_fix_alpha: bool = true
 var tm2_swizzle: bool = true
-var tm2_swap_rgb: bool = true
 
 var gim_ps2_mode: bool = false
 
@@ -42,7 +41,7 @@ func parse_tm2() -> void:
 		in_file.seek(0)
 		var buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
 		
-		var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, tm2_fix_alpha, tm2_swizzle, tm2_swap_rgb)
+		var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, tm2_fix_alpha, tm2_swizzle)
 		for i in range(pngs.size()):
 			var png: Image = pngs[i]
 			png.save_png(folder_path + "/%s" % f_name + "_%04d_%04d.PNG" % [file, i])
@@ -76,6 +75,100 @@ func search_extract() -> void:
 			print_rich("[color=green]Finished searching in %s[/color]" % f_name)
 	print_rich("[color=green]Finished![/color]")
 	
+	
+func unswizzle_ps2_8bpp(data: PackedByteArray, w: int, h: int, pitch: int = 0, phase: int = 2) -> PackedByteArray:
+	var out: PackedByteArray = PackedByteArray()
+	out.resize(w * h)
+
+	# If pitch not provided, align to 128 (bytes) as GS pages expect.
+	var p: int = pitch
+	if p <= 0:
+		var pages_w: int = (w + 127) / 128  # number of 128-wide pages
+		p = pages_w * 128                    # bytes per scanline in VRAM terms
+
+	for y in range(h):
+		for x in range(w):
+			# ---- Page (128x64) base ----
+			var page_y: int = y & ~63       # multiples of 64
+			var page_x: int = x & ~127      # multiples of 128
+			var page_base: int = page_y * p + page_x * 64  # 128*64 bytes per page
+
+			# ---- Block (16x8) inside page ----
+			var blk_y: int = y & 63
+			var blk_x: int = x & 127
+			# block origin in bytes: (blk_y/8)* (16x8 bytes * blocks_per_row) + (blk_x/16)* (16x8)
+			var blocks_per_row: int = 128 / 16 # 8
+			var block_index: int = (blk_y / 8) * blocks_per_row + (blk_x / 16)
+			var block_base: int = block_index * (16 * 8)  # 128 bytes per 16x8 block
+
+			# ---- Intra-block address (the PS2 bank-swap bit) ----
+			var iy: int = blk_y & 7          # 0..7 within 8 rows
+			var ix: int = blk_x & 15         # 0..15 within 16 columns
+
+			# Bank swap phase tweak: some games shift this by 0..3; default 2 matches many titles.
+			var bs: int = (((iy + phase) >> 2) & 1) * 4
+			# Map 16x8 to byte within block (0..127)
+			# Left half and right half interleave a bit; this pattern mirrors common GS wiring.
+			var cell: int = (((ix + bs) & 7) * 4) + ((iy >> 1) & 1) + ((ix >> 2) & 2)
+
+			# The other 8 columns (ix 8..15) are offset by 32 within the block.
+			if ix >= 8:
+				cell += 32
+
+			var src_index: int = page_base + block_base + cell
+			var dst_index: int = y * w + x
+
+			# Bounds guard (in case data is tightly sized)
+			if src_index >= 0 and src_index < data.size():
+				out[dst_index] = data[src_index]
+	return out
+	
+	
+func morton_unswizzle(data: PackedByteArray, w: int, h: int) -> PackedByteArray:
+	var out: PackedByteArray = data.duplicate()
+	for y in range(h):
+		for x in range(w):
+			# Interleave bits of x and y
+			var idx: int = 0
+			var bit: int = 1
+			var i: int = 0
+			while (1 << i) <= max(w, h):
+				if x & (1 << i):
+					idx |= bit
+				bit <<= 1
+				if y & (1 << i):
+					idx |= bit
+				bit <<= 1
+				i += 1
+			if idx < data.size():
+				out[y * w + x] = data[idx]
+	return out
+	
+	
+func unswizzle8x8(data: PackedByteArray, w: int, h: int) -> PackedByteArray:
+	var out: PackedByteArray = PackedByteArray()
+	out.resize(data.size())
+	
+	var pitch: int = w  # width in pixels
+	var blocks_w: int = w / 8
+	var blocks_h: int = h / 8
+	var src_index: int = 0
+	
+	for by in range(blocks_h):         # block row
+		for bx in range(blocks_w):     # block col
+			for iy in range(8):        # inside block Y
+				for ix in range(8):    # inside block X
+					var dst_x: int = bx * 8 + ix
+					var dst_y: int = by * 8 + iy
+					var dst_index: int = dst_y * pitch + dst_x
+					
+					if src_index < data.size() and dst_index < out.size():
+						out[dst_index] = data[src_index]
+					src_index += 1
+					
+	return out
+	
+	
 func _on_tm_2_toggle_toggled(_toggled_on: bool) -> void:
 	tm2_toggle = !tm2_toggle
 
@@ -103,10 +196,6 @@ func _on_tm_2_fix_alpha_toggled(_toggled_on: bool) -> void:
 
 func _on_tm_2_swizzle_toggled(_toggled_on: bool) -> void:
 	tm2_swizzle = !tm2_swizzle
-
-
-func _on_tm_2rg_bswap_toggled(_toggled_on: bool) -> void:
-	tm2_swap_rgb = !tm2_swap_rgb
 
 
 func _on_gimps_2_width_toggled(_toggled_on: bool) -> void:

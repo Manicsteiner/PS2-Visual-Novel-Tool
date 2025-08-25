@@ -73,7 +73,7 @@ func kyuuketsu_extract() -> void:
 					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % f_name + ".TM2", FileAccess.WRITE)
 					out_file.store_buffer(buff)
 					out_file.close()
-				var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true, true)
+				var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true)
 				for png_i in range(pngs.size()):
 					var png: Image = pngs[png_i]
 					png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" % png_i)

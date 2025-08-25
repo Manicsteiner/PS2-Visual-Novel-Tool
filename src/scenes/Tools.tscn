@@ -89,11 +89,6 @@ layout_mode = 2
 button_pressed = true
 text = "Unswizzle Palettes"
 
-[node name="TM2RGBswap" type="CheckBox" parent="VBoxContainer3"]
-layout_mode = 2
-button_pressed = true
-text = "Swap RGB Channels"
-
 [node name="VBoxContainer4" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 7
@@ -162,7 +157,6 @@ use_native_dialog = true
 [connection signal="toggled" from="HBoxContainer2/BMPToggle" to="." method="_on_bmp_toggle_toggled"]
 [connection signal="toggled" from="VBoxContainer3/TM2FixAlpha" to="." method="_on_tm_2_fix_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer3/TM2Swizzle" to="." method="_on_tm_2_swizzle_toggled"]
-[connection signal="toggled" from="VBoxContainer3/TM2RGBswap" to="." method="_on_tm_2rg_bswap_toggled"]
 [connection signal="toggled" from="VBoxContainer4/GIMPS2Width" to="." method="_on_gimps_2_width_toggled"]
 [connection signal="dir_selected" from="FILELoadFolder" to="." method="_on_file_load_folder_dir_selected"]
 [connection signal="files_selected" from="FILELoadTM2" to="." method="_on_file_load_tm_2_files_selected"]
