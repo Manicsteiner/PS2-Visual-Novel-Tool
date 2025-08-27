@@ -936,6 +936,7 @@ func decompress_lz_variant(input: PackedByteArray) -> PackedByteArray:
 	var wpos := 0
 	var mask := 0x1FFF
 
+
 	while true:
 		# Literal if first control bit is 1.
 		var r: Array = _get_bit(input, ip, bitbuf, bits_left)
@@ -1048,6 +1049,7 @@ func _on_file_load_cvm_dir_selected(dir: String) -> void:
 	print_rich("[color=yellow]Converting CVM...")
 	
 	var password: String = "tinaandluckandru"
+	if Main.game_type == Main.SAKURATAISEN5: password = "itinenmotanai"
 	
 	var args: PackedStringArray = ["split", "-p", password, input_path, output_path]
 	var output: Array = []
