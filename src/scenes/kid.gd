@@ -332,7 +332,7 @@ func extract_arcs() -> void:
 					f_ext = f_name.get_extension()
 				else:
 					f_name = "%04d" % files
-					
+				
 				in_file.seek(f_offset)
 				buff = in_file.get_buffer(f_size)
 				
@@ -357,9 +357,18 @@ func extract_arcs() -> void:
 						continue
 					else:
 						f_name += ".BIN"
-				
-				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-				out_file.store_buffer(buff)
+				if f_ext == "TM2":
+					if debug_out:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+					
+					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true)
+					for i in range(pngs.size()):
+						var png: Image = pngs[i]
+						png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  i)
+				else:
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
 				
 				print("%08X %08X %s/%s" % [f_offset, f_size, folder_path, f_name])
 		elif selected_files[file].get_extension().to_lower() == "dat":
