@@ -3,16 +3,21 @@ extends Control
 @onready var file_load_grd: FileDialog = $FILELoadGRD
 @onready var file_load_folder: FileDialog = $FILELoadFOLDER
 @onready var file_load_cvm: FileDialog = $FILELoadCVM
+@onready var file_load_mov: FileDialog = $FILELoadMOV
+@onready var file_load_exe: FileDialog = $FILELoadEXE
 
 var selected_grds: PackedStringArray
+var selected_movs: PackedStringArray
 var selected_exe: String = ""
 var folder_path: String = ""
-var tile_output: bool = true
+var tile_output: bool = false
+var debug_out: bool = false
 
-#TODO: Images are an unknown custom Dreamcast PVRT format with swizzeled image data. Header at 0x1C contains a bunch of Vector4 floats for tile positions.
 
 func _ready() -> void:
-	file_load_grd.filters = ["*.GRD"]
+	file_load_grd.filters = ["*.BX, *.GRD, *.DMY"]
+	file_load_mov.filters = ["*.MOV"]
+	file_load_exe.filters = ["SLPM_670.03"]
 	
 
 func _process(_delta: float) -> void:
@@ -20,21 +25,81 @@ func _process(_delta: float) -> void:
 		create_grd()
 		selected_grds.clear()
 		folder_path
+	elif selected_movs and folder_path:
+		create_mov()
+		selected_movs.clear()
 		
 		
+func create_mov() -> void:
+	var exe_file: FileAccess = FileAccess.open(selected_exe, FileAccess.READ)
+	if exe_file == null:
+		OS.alert("Could not load EXE")
+		return
+		
+	exe_file.seek(0x31CCDC)
+	var keys: PackedByteArray = exe_file.get_buffer(0x604)
+	
+	for mov: int in selected_movs.size():
+		var in_file: FileAccess = FileAccess.open(selected_movs[mov], FileAccess.READ)
+		var mov_name: String = selected_movs[mov].get_file()
+		var mov_id: int = mov_name.to_int() / 10
+		if mov_id == -1 or mov_id == 0:
+			print("Invalid MOV id! Skipping %s" % mov_name)
+			continue
+		
+		var mov_buff: PackedByteArray = in_file.get_buffer(in_file.get_length())
+		var mov_size: int = mov_buff.decode_u32(0x1C) / 0x2000
+		var key_offset: int = 0x304
+		var mov_offset: int = 0x4000
+		mov_id = ((mov_id << 32) << 24) >> 56
+		
+		var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % mov_name + ".MPG", FileAccess.WRITE)
+		
+		for _frame in range(mov_size):
+			if Performance.get_monitor(Performance.MEMORY_STATIC) == 0x3B9ACA00:
+				print("Memory exceeding 1GB, stopping (shouldn't happen).")
+				break
+			# Pass 1 (0x1F8 forward)
+			var result: Array = _decrypt_block(mov_buff, keys, mov_offset, 0x1F8, key_offset, mov_id, true)
+			mov_buff = result[0]
+			mov_offset = result[1]
+			# Pass 2 (0x8 forward)
+			result = _decrypt_block(mov_buff, keys, mov_offset, 8, key_offset, mov_id, true)
+			mov_buff = result[0]
+			mov_offset = result[1]
+			# Pass 3 (0x1FF reverse, with movie_id adjustment)
+			result = _decrypt_block(mov_buff, keys, mov_offset, 0x1FF, key_offset, mov_id, false)
+			mov_buff = result[0]
+			mov_offset = result[1]
+			mov_id += 1
+		out_file.store_buffer(mov_buff)
+		print("%s" % folder_path + "/%s" % mov_name + ".MPG")
+		
+	print_rich("[color=green]Finished![/color]")
+	
+	
 func create_grd() -> void:
 	for grd: int in selected_grds.size():
 		var in_file: FileAccess = FileAccess.open(selected_grds[grd], FileAccess.READ)
 		var arc_name: String = selected_grds[grd].get_file().get_basename()
+		var file_name: String = selected_grds[grd].get_file()
 		
-		var buff: PackedByteArray = decompress_lz_variant(in_file.get_buffer(in_file.get_length()))
-		print("%08X %s" % [buff.size(), folder_path + "/%s" % arc_name + ".DEC"])
+		var buff: PackedByteArray
+		if arc_name == "ADV_BG4138":
+			buff = in_file.get_buffer(in_file.get_length())
+			buff = buff.slice(0x38) # slice to known header information
+		else:
+			buff = decompress_lz_variant(in_file.get_buffer(in_file.get_length()))
+			
+		print("%08X %s" % [buff.size(), folder_path + "/%s" % file_name + ".DEC"])
 		
-		var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + ".DEC", FileAccess.WRITE)
-		out_file.store_buffer(buff)
-		
-		var png: Image = load_htx_tiles_to_image(buff, folder_path + "/%s" % arc_name)
-		png.save_png(folder_path + "/%s" % arc_name + ".PNG")
+		if debug_out:
+			var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % file_name + ".DEC", FileAccess.WRITE)
+			out_file.store_buffer(buff)
+		if buff.size() > 0 and (not file_name.get_extension().to_lower() == "bx" or not file_name.contains("kao")):
+			var png: Image = load_htx_tiles_to_image(buff, folder_path + "/%s" % file_name)
+			png.save_png(folder_path + "/%s" % file_name + ".PNG")
+			
 	print_rich("[color=green]Finished![/color]")
 	
 	
@@ -48,11 +113,32 @@ func load_htx_tiles_to_image(data: PackedByteArray, path: String) -> Image:
 
 	# --- Global palette ---
 	var pal_buf: PackedByteArray = PackedByteArray()
+	var pal_entries: int
 	if palette_offset < image_header_offset:
 		pal_buf = data.slice(palette_offset, image_header_offset)
-	if pal_buf.size() > 0:
+
+	if pal_buf.size() == 0x400:
 		pal_buf = ComFuncs.unswizzle_palette(pal_buf, 32)
-	var pal_entries: int = max(1, pal_buf.size() / 4)
+		pal_entries = pal_buf.size() / 4
+	elif pal_buf.size() == 0x200:
+		# 16-bit BGR5551 palette
+		var converted: PackedByteArray = PackedByteArray()
+		converted.resize(256 * 4)
+		for i in range(256):
+			var pixel_16: int = pal_buf.decode_u16(i * 2)
+			var b: int = ((pixel_16 >> 10) & 0x1F) * 8
+			var g: int = ((pixel_16 >> 5) & 0x1F) * 8
+			var r: int = (pixel_16 & 0x1F) * 8
+			var a: int = ((pixel_16 >> 15) & 0x1) * 255
+			var pofs: int = i * 4
+			converted.encode_u8(pofs + 0, r)
+			converted.encode_u8(pofs + 1, g)
+			converted.encode_u8(pofs + 2, b)
+			converted.encode_u8(pofs + 3, a)
+		pal_buf = converted
+		pal_entries = pal_buf.size() / 4
+	else:
+		pal_entries = max(1, pal_buf.size() / 4)
 
 	# --- Read PVRT tiles ---
 	var tiles: Array[Image] = []
@@ -78,13 +164,14 @@ func load_htx_tiles_to_image(data: PackedByteArray, path: String) -> Image:
 			if read_size <= 0:
 				header_off += header_size
 				continue
-			
+
 			header_off += read_size
 			var idx_buf: PackedByteArray = data.slice(tile_data_off, tile_data_off + read_size)
 			idx_buf = unswizzle8(idx_buf, tile_w, tile_h)
 
 			var rgba: PackedByteArray = PackedByteArray()
 			rgba.resize(tile_w * tile_h * 4)
+
 			for i in range(tile_w * tile_h):
 				var pi: int = 0
 				if i < idx_buf.size():
@@ -92,13 +179,12 @@ func load_htx_tiles_to_image(data: PackedByteArray, path: String) -> Image:
 				if pi >= pal_entries:
 					pi = pal_entries - 1
 				var pofs: int = pi * 4
-				var r:int = 0; var g:int = 0; var b:int = 0; var a:int = 0
-				if pofs + 4 <= pal_buf.size():
-					r = pal_buf.decode_u8(pofs + 0)
-					g = pal_buf.decode_u8(pofs + 1)
-					b = pal_buf.decode_u8(pofs + 2)
-					a = pal_buf.decode_u8(pofs + 3)
-					a = int((a / 128.0) * 255.0)
+				var r:int = pal_buf.decode_u8(pofs + 0)
+				var g:int = pal_buf.decode_u8(pofs + 1)
+				var b:int = pal_buf.decode_u8(pofs + 2)
+				var a:int = pal_buf.decode_u8(pofs + 3)
+				a = int((a / 128.0) * 255.0)
+				
 				var wofs: int = i * 4
 				rgba.encode_u8(wofs + 0, r)
 				rgba.encode_u8(wofs + 1, g)
@@ -114,114 +200,89 @@ func load_htx_tiles_to_image(data: PackedByteArray, path: String) -> Image:
 
 	# --- Final canvas ---
 	var final_img: Image = Image.create_empty(final_w, final_h, false, Image.FORMAT_RGBA8)
-	final_img.fill(Color(0,0,0,0))
+	final_img.fill(Color(0, 0, 0, 0))
 
-	# --- Float section for sub-tile placement ---
-	var slice_idx: int = 0
-	var slice_size: int = 64  # typical sub-tile size
-	var f_off: int = float_section_offset
-
-	while f_off + 36 <= palette_offset and f_off + 36 <= data.size():
-		f_off += 4  # skip 2x16-bit flags
-
-		# Read 8 floats for this slice
-		var coords: Array[float] = []
-		for j in range(8):
-			coords.append(data.decode_float(f_off))
-			f_off += 4
-
-		# Calculate destination rect
-		var min_x = int(floor(min(coords[0], coords[2], coords[4], coords[6])))
-		var min_y = int(floor(min(coords[1], coords[3], coords[5], coords[7])))
-		var max_x = int(ceil(max(coords[0], coords[2], coords[4], coords[6])))
-		var max_y = int(ceil(max(coords[1], coords[3], coords[5], coords[7])))
-		var dst_rect: Rect2i = Rect2i(min_x, min_y, max_x - min_x, max_y - min_y)
-
-		# Determine which PVRT tile this slice comes from
-		var slices_per_tile_x = tiles[0].get_width() / slice_size
-		var slices_per_tile_y = tiles[0].get_height() / slice_size
-		var slices_per_tile = slices_per_tile_x * slices_per_tile_y
-		var tile_idx = int(slice_idx / slices_per_tile)
-		tile_idx = clamp(tile_idx, 0, tiles.size() - 1)
-		var tile_img = tiles[tile_idx]
-
-		# Determine source rect within PVRT tile
-		var local_idx = slice_idx % slices_per_tile
-		var sx = (local_idx % slices_per_tile_x) * slice_size
-		var sy = int(local_idx / slices_per_tile_x) * slice_size
-		var src_rect = Rect2i(sx, sy, slice_size, slice_size)
-
-		# Blit slice to final image
-		final_img.blit_rect(tile_img, src_rect, dst_rect.position)
-
-		slice_idx += 1
-
+	final_img = compose_tile_from_floats(tiles, data.slice(float_section_offset, palette_offset))
 	return final_img
 	
 	
-func print_pvrt(data: PackedByteArray) -> void:
-	var off: int = 0
+func compose_tile_from_floats(tiles: Array[Image], float_data: PackedByteArray) -> Image:
+	var entries: Array = []
+	var min_x: float = INF
+	var min_y: float = INF
+	var max_x: float = -INF
+	var max_y: float = -INF
 
-	# --- Main header ---
-	var final_width: int = data.decode_u16(0x4)
-	var final_height: int = data.decode_u16(0x6)
-	var palette_offset: int = data.decode_u32(0xC)
-	var image_header_offset: int = data.decode_u32(0x10)
-	var unknown_14: int = data.decode_u32(0x14) # placeholder
-	var float_section_offset: int = data.decode_u32(0x1C)
+	# --- Parse float entries ---
+	var f_off: int = 0
+	while f_off + 0x24 <= float_data.size():
+		var tile_id: int = float_data.decode_u16(f_off + 0)
+		var flags: int = float_data.decode_u16(f_off + 2)
+		var x: float = float_data.decode_float(f_off + 4)
+		var y: float = float_data.decode_float(f_off + 8)
+		var offset_x: float = float_data.decode_float(f_off + 0x0C)
+		var offset_y: float = float_data.decode_float(f_off + 0x10)
+		var u0: float = float_data.decode_float(f_off + 0x14)
+		var v0: float = float_data.decode_float(f_off + 0x18)
+		var u1: float = float_data.decode_float(f_off + 0x1C)
+		var v1: float = float_data.decode_float(f_off + 0x20)
+		f_off += 0x24
 
-	print("Main Header:")
-	print("  Width: %d" % final_width)
-	print("  Height: %d" % final_height)
-	print("  Palette Offset:", palette_offset)
-	print("  Image Header Offset:", image_header_offset)
-	print("  Unknown @0x14:", unknown_14)
-	print("  Float Section Offset:", float_section_offset)
+		entries.append({
+			"id": tile_id, "x": x, "y": y,
+			"offset_x": offset_x, "offset_y": offset_y,
+			"u0": u0, "v0": v0, "u1": u1, "v1": v1
+		})
 
-	# --- Jump to image data header ---
-	off = image_header_offset
-	var magic: String = data.slice(off, off + 4).get_string_from_ascii()
-	print("Magic @", off, ":", magic)
+		# track min/max for final image bounds
+		min_x = min(min_x, x)
+		min_y = min(min_y, y)
+		max_x = max(max_x, x + offset_x)
+		max_y = max(max_y, y + offset_y)
 
-	# HTEX
-	if magic == "HTEX":
-		var image_data_size: int = data.decode_u32(off + 0x4)
-		print("HTEX found - Image data size + 0x10:", image_data_size)
-		off += 0x10
-		magic = data.slice(off, off + 4).get_string_from_ascii()
-		print("Next Magic @", off, ":", magic)
+	# --- Final canvas size ---
+	var final_w: int = int(max(1.0, max_x - min_x))
+	var final_h: int = int(max(1.0, max_y - min_y))
+	var final_img: Image = Image.create_empty(final_w, final_h, false, Image.FORMAT_RGBA8)
+	final_img.fill(Color(0,0,0,0))
 
-	# HTSF
-	if magic == "HTSF":
-		var tile_size: int = data.decode_u32(off + 0x4)
-		print("HTSF found - Tile size + 0x10:", tile_size)
-		off += 0x10
-		magic = data.slice(off, off + 4).get_string_from_ascii()
-		print("Next Magic @", off, ":", magic)
+	# --- Place tiles ---
+	for e in entries:
+		var tile_id: int = e["id"]
+		if tile_id < 0 or tile_id >= tiles.size():
+			continue
+		var tile_img: Image = tiles[tile_id]
 
-	# GBIX
-	if magic == "GBIX":
-		print("GBIX found")
-		off += 0x10
-		magic = data.slice(off, off + 4).get_string_from_ascii()
-		print("Next Magic @", off, ":", magic)
+		# source rectangle
+		var u0: int = int(e["u0"])
+		var v0: int = int(e["v0"])
+		var u1: int = int(e["u1"])
+		var v1: int = int(e["v1"])
+		var src_w: int = max(1, u1 - u0)
+		var src_h: int = max(1, v1 - v0)
 
-	# PVRT
-	if magic == "PVRT":
-		var pixel_format: int = data.decode_u8(off + 0x8)
-		var image_type: int = data.decode_u8(off + 0x9)
-		var tile_width: int = data.decode_u16(off + 0xC)
-		var tile_height: int = data.decode_u16(off + 0xE)
+		# create sub-image from tile
+		var sub_img: Image = Image.create_empty(src_w, src_h, false, tile_img.get_format())
+		for dx in range(src_w):
+			for dy in range(src_h):
+				var sx: int = clamp(u0 + dx, 0, tile_img.get_width() - 1)
+				var sy: int = clamp(v0 + dy, 0, tile_img.get_height() - 1)
+				sub_img.set_pixel(dx, dy, tile_img.get_pixel(sx, sy))
 
-		print("PVRT found - Pixel format:", pixel_format)
-		print("PVRT Image Data Type:", image_type)
-		print("PVRT Tile Width:", tile_width)
-		print("PVRT Tile Height:", tile_height)
+		# target size = offset_x/offset_y (if >0), else keep original size
+		var target_w: int = int(e["offset_x"]) if e["offset_x"] > 0 else src_w
+		var target_h: int = int(e["offset_y"]) if e["offset_y"] > 0 else src_h
 
-		off += 0x10
+		if target_w != src_w or target_h != src_h:
+			sub_img.resize(target_w, target_h, Image.INTERPOLATE_LANCZOS)
 
-	print("Tile data starts at offset:", off)
-	return
+		# final placement
+		var dst_x: int = int(e["x"] - min_x)
+		var dst_y: int = int(e["y"] - min_y)
+		final_img.blit_rect(sub_img, Rect2i(0, 0, sub_img.get_width(), sub_img.get_height()), Vector2i(dst_x, dst_y))
+
+	return final_img
+	
 	
 func unswizzle8(data: PackedByteArray, w: int, h: int, swizz: bool = false) -> PackedByteArray:
 	# Original code from: https://github.com/leeao/PS2Textures/blob/583f68411b4f6cca491730fbb18cb064822f1017/PS2Textures.py#L266
@@ -243,44 +304,28 @@ func unswizzle8(data: PackedByteArray, w: int, h: int, swizz: bool = false) -> P
 	return out
 	
 	
-func split_and_reassemble_tile_bottom_to_top(tile_data: PackedByteArray, outpath: String = "F:/Games/Notes/test/Sakura Taisen/TEST") -> Image:
-	var TILE_SIZE := 256
-	var BAND_HEIGHT := 64
-	
-	# Load the raw data into an Image (RGB8 assumed)
-	var img := Image.create_from_data(TILE_SIZE, TILE_SIZE, false, Image.FORMAT_L8, tile_data)
-	
-	# Slice sizes per band row
-	var slice_sizes := [
-		Vector2i(32, BAND_HEIGHT), Vector2i(32, BAND_HEIGHT),
-		Vector2i(32, BAND_HEIGHT), Vector2i(32, BAND_HEIGHT),
-		Vector2i(64, BAND_HEIGHT), Vector2i(64, BAND_HEIGHT)
-	]
-	
-	# Create a blank final image
-	var final_img := Image.create_empty(TILE_SIZE, TILE_SIZE, false, Image.FORMAT_L8)
-	
-	# Number of bands vertically in the tile
-	var num_bands := TILE_SIZE / BAND_HEIGHT
-	var add: int = 0
-	for band_index in range(num_bands):
-		# Source Y (starting from bottom band in source image)
-		var y_src := (num_bands - 1 - band_index) * BAND_HEIGHT
-		var x_src := 0
-		
-		# Destination Y (starting from top in final image)
-		var y_dest := band_index * BAND_HEIGHT
-		var x_dest := 0
-		
-		for size in slice_sizes:
-			var section: Image = img.get_region(Rect2i(x_src, y_src, size.x, size.y))
-			section.save_png("%s_%04d.PNG" % [outpath, add])
-			final_img.blit_rect(section, Rect2i(Vector2i.ZERO, size), Vector2i(x_dest, y_dest))
-			x_src += size.x
-			x_dest += size.x
-			add += 1
-	
-	return final_img
+func _decrypt_block(mem: PackedByteArray, keys: PackedByteArray, offset: int, dec_size: int, key_offset: int, movie_id: int, forward: bool = true) -> Array:
+	var v1: int = 3
+	if forward:
+		for i in range(dec_size):
+			var remainder: int = i % v1
+			var byte: int = mem.decode_u8(offset + i)
+			var key_index: int = (remainder << 8) + byte
+			var key_byte: int = keys.decode_u8(key_offset + key_index)
+			mem.encode_s8(offset + i, key_byte)
+		return [mem, offset + dec_size]
+	else:
+		var neg_counter: int = 1
+		var t0: int = -1
+		for _i in range(dec_size):
+			var byte2: int = mem.decode_u8((offset - neg_counter) - 1)
+			var a2: int = int((t0 << 32) << 24) >> 56
+			var byte: int = mem.decode_u8(offset - neg_counter)
+			var v1_calc: int = (byte2 + a2 + movie_id) & 0xFF
+			mem.encode_s8(offset - neg_counter, byte - v1_calc)
+			neg_counter += 1
+			t0 -= 1
+		return [mem, offset + 0x1E00]
 	
 	
 func decompress_lz_variant(input: PackedByteArray) -> PackedByteArray:
@@ -308,10 +353,24 @@ func decompress_lz_variant(input: PackedByteArray) -> PackedByteArray:
 	var v0: int = 0
 	var v1: int = 0
 	var temp_buff: PackedByteArray
+	var input_pos: int 
+	var hdr: String = input.slice(0, 4).get_string_from_ascii()
+	
+	if hdr == "EOFC":
+		return PackedByteArray()
+	elif hdr == "APLN":
+		input_pos = input.decode_u32(0x4) + 0x30
+	elif hdr == "FCNK":
+		input_pos = 0x20
+	elif hdr == "AFCE":
+		input_pos = input.decode_u32(0x14) + 0x30
+	else:
+		input_pos = 0xA8
+		
 	temp_buff.resize(0x40)
 	temp_buff.encode_u8(4, 1) #a0 0x2034 counter
 	temp_buff.encode_u8(5, 0) #a0 0x2035 other counter
-	temp_buff.encode_u32(0x20, 0x48) #input pos
+	temp_buff.encode_u32(0x20, input_pos) #input pos
 	temp_buff.encode_u32(0x24, input.decode_u32(0x2C) + 0x38) #input end offset
 	temp_buff.encode_u8(0x2C, 0) #a0 0x2C output pos
 	var history: PackedByteArray
@@ -882,3 +941,32 @@ func _on_file_load_cvm_dir_selected(dir: String) -> void:
 
 func _on_load_cvm_pressed() -> void:
 	file_load_cvm.show()
+
+
+func _on_tilesoutput_toggled(_toggled_on: bool) -> void:
+	tile_output = !tile_output
+
+
+func _on_debugout_toggled(_toggled_on: bool) -> void:
+	debug_out = !debug_out
+
+
+func _on_file_load_mov_files_selected(paths: PackedStringArray) -> void:
+	selected_movs = paths
+	file_load_folder.show()
+
+
+func _on_load_mov_pressed() -> void:
+	if not selected_exe:
+		OS.alert("Please load an exe first (SLPM_xxx.xx)")
+		return
+		
+	file_load_mov.show()
+
+
+func _on_load_exe_pressed() -> void:
+	file_load_exe.show()
+
+
+func _on_file_load_exe_file_selected(path: String) -> void:
+	selected_exe = path

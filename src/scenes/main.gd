@@ -1362,7 +1362,7 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == SAKURATAISEN1:
-		game_type_sub_text.text = "Supports:\nExtraction (CVM to ISO), images (Decompression of .GRDs only)\nMovie decryption: TODO."
+		game_type_sub_text.text = "Supports:\nExtraction (CVM to ISO), images (PNG), movie decryption."
 		game_type_selector.select(SAKURATAISEN1)
 		game_type = SAKURATAISEN1
 		var next_scene: PackedScene = load("res://src/scenes/Overworks.tscn")

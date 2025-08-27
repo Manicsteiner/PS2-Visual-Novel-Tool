@@ -44,7 +44,57 @@ text = "Convert CVM to ISO"
 layout_mode = 2
 text = "Decompress .GRD Image"
 
+[node name="LoadEXE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Load EXE"
+
+[node name="LoadMOV" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Decrypt .MOV Video"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -145.5
+offset_top = 44.0
+offset_right = 160.5
+offset_bottom = 145.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="tilesoutput" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Image Tiles"
+
+[node name="debugout" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+text = "Output Decompressed Images"
+
 [node name="FILELoadGRD" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open File(s)"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 1
+access = 2
+use_native_dialog = true
+
+[node name="FILELoadEXE" type="FileDialog" parent="."]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 2
+size = Vector2i(452, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+use_native_dialog = true
+
+[node name="FILELoadMOV" type="FileDialog" parent="."]
 auto_translate_mode = 1
 title = "Open File(s)"
 initial_position = 2
@@ -77,6 +127,12 @@ use_native_dialog = true
 [connection signal="meta_clicked" from="CVMtext" to="." method="_on_cv_mtext_meta_clicked"]
 [connection signal="pressed" from="HBoxContainer/LoadCVM" to="." method="_on_load_cvm_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadGRD" to="." method="_on_load_grd_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadMOV" to="." method="_on_load_mov_pressed"]
+[connection signal="toggled" from="VBoxContainer/tilesoutput" to="." method="_on_tilesoutput_toggled"]
+[connection signal="toggled" from="VBoxContainer/debugout" to="." method="_on_debugout_toggled"]
 [connection signal="files_selected" from="FILELoadGRD" to="." method="_on_file_load_grd_files_selected"]
+[connection signal="file_selected" from="FILELoadEXE" to="." method="_on_file_load_exe_file_selected"]
+[connection signal="files_selected" from="FILELoadMOV" to="." method="_on_file_load_mov_files_selected"]
 [connection signal="dir_selected" from="FILELoadCVM" to="." method="_on_file_load_cvm_dir_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]
