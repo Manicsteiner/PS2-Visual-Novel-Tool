@@ -7,7 +7,7 @@ var folder_path: String
 var selected_files: PackedStringArray
 var chose_file: bool = false
 var chose_folder: bool = false
-var remove_alpha: bool = true
+var fix_alpha: bool = true
 
 
 func _process(_delta: float) -> void:
@@ -189,9 +189,10 @@ func make_image(data: PackedByteArray) -> Image:
 		for i in range(0, palette_size):
 			palette.append(data.decode_u8(palette_offset + i))
 		palette = unswizzle_palette(palette, palette_size, 4)
-		#if remove_alpha:
-			#for i in range(0, palette_size, 4):
-				#palette.encode_u8(i + 3, 255)
+		if fix_alpha:
+			for i in range(0, palette_size, 4):
+				var a: int = int((palette.decode_u8(i + 3) / 128.0) * 255.0)
+				palette.encode_u8(i + 3, a)
 	else:
 		for i in range(0, palette_size, 2):
 			var bgr555: int = data.decode_u16(palette_offset + i)
@@ -245,8 +246,8 @@ func make_image(data: PackedByteArray) -> Image:
 					var a2: int = palette[pixel_index_2 * 4 + 3]
 					image.set_pixel(x + 1, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
 					
-	if remove_alpha:
-		image.convert(Image.FORMAT_RGB8)
+	#if fix_alpha:
+		#image.convert(Image.FORMAT_RGB8)
 	return image
 
 
@@ -279,5 +280,5 @@ func _on_file_load_folder_dir_selected(dir: String) -> void:
 	chose_folder = true
 
 
-func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_toggled(_toggled_on: bool) -> void:
+	fix_alpha = !fix_alpha

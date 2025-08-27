@@ -45,7 +45,7 @@ offset_bottom = 141.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="removeAlpha" type="CheckBox" parent="VBoxContainer"]
+[node name="fixAlpha" type="CheckBox" parent="VBoxContainer"]
 layout_mode = 2
 button_pressed = true
 text = "Remove Alpha in PNGs"
@@ -72,6 +72,6 @@ access = 2
 use_native_dialog = true
 
 [connection signal="pressed" from="HBoxContainer/LoadUNI" to="." method="_on_load_uni_pressed"]
-[connection signal="toggled" from="VBoxContainer/removeAlpha" to="." method="_on_remove_alpha_toggled"]
+[connection signal="toggled" from="VBoxContainer/fixAlpha" to="." method="_on_fix_alpha_toggled"]
 [connection signal="files_selected" from="FILELoadUNI" to="." method="_on_file_load_uni_files_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

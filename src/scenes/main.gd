@@ -222,6 +222,7 @@ enum {
 	SAISHUUSHIKEN,
 	SAKURASESTU,
 	SAKURATAISEN1,
+	SAKURATAISEN5,
 	SANGOKURENSEKI,
 	SCARLETNICHIJOU,
 	SCHOOLLOVE,
@@ -1367,6 +1368,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SAKURATAISEN1
 		var next_scene: PackedScene = load("res://src/scenes/Overworks.tscn")
 		sceneChanger(next_scene)
+	elif index == SAKURATAISEN5:
+		game_type_sub_text.text = "Supports:\nExtraction (CVM to ISO only)."
+		game_type_selector.select(SAKURATAISEN5)
+		game_type = SAKURATAISEN5
+		var next_scene: PackedScene = load("res://src/scenes/Overworks.tscn")
+		sceneChanger(next_scene)
 	elif index == SCHOOLNI:
 		game_type_sub_text.text = "Supports 'School Rumble Ni-Gakki'."
 		game_type_selector.select(SCHOOLNI)
@@ -2317,6 +2324,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Saishuu Shiken Kujira: Alive", SAISHUUSHIKEN)
 	game_type_selector.add_item("Sakura: Setsugekka", SAKURASESTU)
 	game_type_selector.add_item("Sakura Taisen: Atsuki Chishio Ni", SAKURATAISEN1)
+	game_type_selector.add_item("Sakura Wars: So Long, My Love", SAKURATAISEN5)
 	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
 	game_type_selector.add_item("Scarlet: Nichijou no Kyoukaisen", SCARLETNICHIJOU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
