@@ -380,13 +380,13 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 						var b: int = (b5 << 3) | (b5 >> 2)
 						var a: int = 255 if a1 else 0
 						img.set_pixel(x, y, Color8(r, g, b, a))
-			2:  # 32-bit X8B8G8R8  -> bytes [R, G, B, X] in stream (little-endian)
+			2:  # 24-bit RGB888 -> bytes [R, G, B] per pixel
 				for y in range(height):
 					for x in range(width):
-						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
-						var r: int =  col        & 0xFF
-						var g: int = (col >> 8)  & 0xFF
-						var b: int = (col >> 16) & 0xFF
+						var idx: int = (y * width + x) * 3
+						var r: int = data.decode_u8(img_data_offset + idx + 0)
+						var g: int = data.decode_u8(img_data_offset + idx + 1)
+						var b: int = data.decode_u8(img_data_offset + idx + 2)
 						var a: int = 255
 						img.set_pixel(x, y, Color8(r, g, b, a))
 			3:  # 32-bit A8B8G8R8  -> bytes [R, G, B, A] in stream (little-endian)
