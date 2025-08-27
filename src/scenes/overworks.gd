@@ -328,563 +328,683 @@ func _decrypt_block(mem: PackedByteArray, keys: PackedByteArray, offset: int, de
 		return [mem, offset + 0x1E00]
 	
 	
+#func decompress_lz_variant_mips(input: PackedByteArray) -> PackedByteArray:
+	#var a0: int = 0
+	#var a1: int = 0
+	#var a2: int = 0
+	#var a3: int = 0
+	#var s0: int = 0
+	#var s1: int = 0
+	#var s2: int = 0
+	#var s3: int = 0
+	#var s4: int = 0
+	#var s5: int = 0
+	#var s6: int = 0
+	#var t0: int = 0
+	#var t1: int = 0
+	#var t2: int = 0
+	#var t3: int = 0
+	#var t4: int = 0
+	#var t5: int = 0
+	#var t6: int = 0
+	#var t7: int = 0
+	#var t8: int = 0
+	#var t9: int = 0
+	#var v0: int = 0
+	#var v1: int = 0
+	#var temp_buff: PackedByteArray
+	#var input_pos: int 
+	#var hdr: String = input.slice(0, 4).get_string_from_ascii()
+	#
+	#if hdr == "EOFC":
+		#return PackedByteArray()
+	#elif hdr == "APLN":
+		#input_pos = input.decode_u32(0x4) + 0x30
+	#elif hdr == "FCNK":
+		#input_pos = 0x20
+	#elif hdr == "AFCE":
+		#input_pos = input.decode_u32(0x14) + 0x30
+	#else:
+		#input_pos = 0xA8
+		#
+	#temp_buff.resize(0x40)
+	#temp_buff.encode_u8(4, 1) #a0 0x2034 counter
+	#temp_buff.encode_u8(5, 0) #a0 0x2035 other counter
+	#temp_buff.encode_u32(0x20, input_pos) #input pos
+	#temp_buff.encode_u32(0x24, input.decode_u32(0x2C) + 0x38) #input end offset
+	#temp_buff.encode_u8(0x2C, 0) #a0 0x2C output pos
+	#var history: PackedByteArray
+	#history.resize(0x2034)
+	#var output: PackedByteArray
+#
+	#var pc: int = 0x0021F890  # starting label
+	#while true:
+		#match pc:
+			#0x0021F890:
+				#v0 = 0
+				#a1 = temp_buff.decode_u32(0x2C)
+				#pc = 0x0021F8BC
+				#continue
+			#0x0021F8BC:
+				#v1 = temp_buff.decode_u8(4)
+				#pc = 0x0021F8C0
+				#continue
+			#0x0021F8C0:
+				#v1 = v1 + -1
+				#temp_buff.encode_s8(4, v1) #store_byte(a0 + 0x2034, v1)
+				#v1 = v1 & 255
+				#if v1 != 0:
+					#pc = 0x0021f924
+					#continue
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0
+				#if s3 != v1:
+					#pc = 0x0021f8ec
+					#continue
+				#pc = 0x0021f908
+				#continue
+			#0x0021F8EC:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#t8 = v1 & 255
+				#pc = 0x0021F908
+				#continue
+			#0x0021F908:
+				#s3 = 0 + 0
+				#if s4 != 0:
+					#pc = 0x0021f918
+					#continue
+				#pc = 0x0021f944
+				#continue
+			#0x0021F918:
+				#temp_buff.encode_s8(5, t8)#store_byte(a0 + 0x2035, t8)
+				#v1 = 0 + 8
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#pc = 0x0021F924
+				#continue
+			#0x0021F924:
+				## nop
+				#v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
+				#s3 = 0 + 1
+				#a2 = (v1 << 24)
+				#a2 = (a2 >> 24)
+				#v1 = v1 >> 1
+				#temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
+				#a2 = a2 & 1
+				#pc = 0x0021F944
+				#continue
+			#0x0021F944:
+				#if s3 != 0:
+					#pc = 0x0021f958
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021F958:
+				#s3 = 0 + 8
+				#if a2 == 0:
+					#pc = 0x0021fa48
+					#continue
+				#pc = 0x0021F960
+				#continue
+			#0x0021F960:
+				#s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s5 = 0
+				#if s4 != v1:
+					#pc = 0x0021f978
+					#continue
+				#pc = 0x0021f990
+				#continue
+			#0x0021F978:
+				#v1 = s4 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s5 = 1
+				#v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#a3 = v1 & 255
+				#pc = 0x0021F990
+				#continue
+			#0x0021F990:
+				#v1 = v0 & 8191
+				#if s5 != 0:
+					#pc = 0x0021f9a0
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021F9A0:
+				#v1 = a0 + v1
+				#v0 = v0 + 1
+				#history.encode_s8(v1 + 0x0034, a3)#store_byte(v1 + 0x0034, a3)
+				#output.append(a3)#store_byte(a1 + 0x0000, a3)
+				#v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
+				#v1 = v1 + -1
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#v1 = v1 & 255
+				#a1 = a1 + 1
+				#if v1 != 0:
+					#pc = 0x0021fa10
+					#continue
+				#s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s5 = 0
+				#if s4 != v1:
+					#pc = 0x0021f9e0
+					#continue
+				#pc = 0x0021f9f8
+				#continue
+			#0x0021F9E0:
+				#v1 = s4 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s5 = 0 + 1
+				#v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#t9 = v1 & 255
+				#pc = 0x0021F9F8
+				#continue
+			#0x0021F9F8:
+				#s4 = 0
+				#if s5 != 0:
+					#pc = 0x0021fa08
+					#continue
+				#pc = 0x0021fa2c
+				#continue
+			#0x0021FA08:
+				#temp_buff.encode_s8(5, t9)#store_byte(a0 + 0x2035, t9)
+				#temp_buff.encode_s8(4, s3)#store_byte(a0 + 0x2034, s3)
+				#pc = 0x0021FA10
+				#continue
+			#0x0021FA10:
+				#v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
+				#s4 = 0 + 1
+				#t0 = (v1 << 24)
+				#t0 = (t0 >> 24)
+				#v1 = v1 >> 1
+				#temp_buff.encode_s8(5, v1) #store_byte(a0 + 0x2035, v1)
+				#t0 = t0 & 1
+				#pc = 0x0021FA2C
+				#continue
+			#0x0021FA2C:
+				#if s4 != 0:
+					#pc = 0x0021fa40
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FA40:
+				#if t0 != 0:
+					#pc = 0x0021f960
+					#continue
+				#pc = 0x0021FA48
+				#continue
+			#0x0021FA48:
+				#v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
+				#v1 = v1 + -1
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#v1 = v1 & 255
+				#if v1 != 0:
+					#pc = 0x0021faac
+					#continue
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0
+				#if s3 != v1:
+					#pc = 0x0021fa78
+					#continue
+				#pc = 0x0021fa90
+				#continue
+			#0x0021FA78:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#s0 = v1 & 255
+				#pc = 0x0021FA90
+				#continue
+			#0x0021FA90:
+				#s3 = 0
+				#if s4 != 0:
+					#pc = 0x0021faa0
+					#continue
+				#pc = 0x0021facc
+				#continue
+			#0x0021FAA0:
+				#temp_buff.encode_s8(5, s0)#store_byte(a0 + 0x2035, s0)
+				#v1 = 0 + 8
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#pc = 0x0021FAAC
+				#continue
+			#0x0021FAAC:
+				#v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
+				#s3 = 0 + 1
+				#t1 = (v1 << 24)
+				#t1 = (t1 >> 24)
+				#v1 = v1 >> 1
+				#temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
+				#t1 = t1 & 1
+				#pc = 0x0021FACC
+				#continue
+			#0x0021FACC:
+				#if s3 != 0:
+					#pc = 0x0021fae0
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FAE0:
+				#if t1 == 0:
+					#pc = 0x0021fbd8
+					#continue
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0
+				#if s3 != v1:
+					#pc = 0x0021fb00
+					#continue
+				#pc = 0x0021fb18
+				#continue
+			#0x0021FB00:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#t2 = v1 & 255
+				#pc = 0x0021FB18
+				#continue
+			#0x0021FB18:
+				## nop
+				#if s4 != 0:
+					#pc = 0x0021fb28
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FB28:
+				#s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#s3 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#v1 = t2 & 255
+				#if s4 != s3:
+					#pc = 0x0021fb40
+					#continue
+				#s3 = 0
+				#pc = 0x0021fb58
+				#continue
+			#0x0021FB40:
+				#t3 = s4 + 1
+				#temp_buff.encode_s32(0x20, t3)#store_word(a0 + 0x0020, t3)
+				#s3 = 0 + 1
+				#t3 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
+				#t3 = ~(t3 | 0)
+				#t3 = t3 & 255
+				#pc = 0x0021FB58
+				#continue
+			#0x0021FB58:
+				#s4 = t3 & 255
+				#if s3 != 0:
+					#pc = 0x0021fb68
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FB68:
+				#s3 = s4 | v1 # or                s3, s4, v1
+				#if s3 == 0:
+					#s3 = v1 >> 3
+					#pc = 0x0021fdac
+					#continue
+				#s3 = v1 >> 3
+				#s4 = s4 << 5
+				#s3 = s4 + s3
+				#v1 = v1 & 7
+				#s3 = s3 + -8192
+				#if v1 == 0:
+					#pc = 0x0021fb90
+					#continue
+				#v1 = v1 + 2
+				#pc = 0x0021fd60
+				#continue
+			#0x0021FB90:
+				#s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s5 = 0
+				#if s4 != v1:
+					#pc = 0x0021fba8
+					#continue
+				#pc = 0x0021fbc0
+				#continue
+			#0x0021FBA8:
+				#v1 = s4 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s5 = 0 + 1
+				#v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#t4 = v1 & 255
+				#pc = 0x0021FBC0
+				#continue
+			#0x0021FBC0:
+				#v1 = t4 & 255
+				#if s5 != 0:
+					#pc = 0x0021fbd0
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FBD0:
+				#v1 = v1 + 1
+				#pc = 0x0021fd60
+				#continue
+			#0x0021FBD8:
+				#v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
+				#v1 = v1 + -1
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#v1 = v1 & 255
+				#if v1 != 0:
+					#pc = 0x0021fc3c
+					#continue
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0
+				#if s3 != v1:
+					#pc = 0x0021fc08
+					#continue
+				#pc = 0x0021fc20
+				#continue
+			#0x0021FC08:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#s1 = v1 & 255
+				#pc = 0x0021FC20
+				#continue
+			#0x0021FC20:
+				#s3 = 0
+				#if s4 != 0:
+					#pc = 0x0021fc30
+					#continue
+				#pc = 0x0021fc5c
+				#continue
+			#0x0021FC30:
+				#temp_buff.encode_s8(5, s1)#store_byte(a0 + 0x2035, s1)
+				#v1 = 0 + 8
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#pc = 0x0021FC3C
+				#continue
+			#0x0021FC3C:
+				## nop
+				#v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
+				#s3 = 0 + 1
+				#t5 = (v1 << 24)
+				#t5 = (t5 >> 24)
+				#v1 = v1 >> 1
+				#temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
+				#t5 = t5 & 1
+				#pc = 0x0021FC5C
+				#continue
+			#0x0021FC5C:
+				#if s3 != 0:
+					#pc = 0x0021fc70
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FC70:
+				#v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
+				#v1 = v1 + -1
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#v1 = v1 & 255
+				#if v1 != 0:
+					#pc = 0x0021fcd4
+					#continue
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0 + 0
+				#if s3 != v1:
+					#pc = 0x0021fca0
+					#continue
+				## nop
+				#pc = 0x0021fcb8
+				#continue
+			#0x0021FCA0:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#s2 = v1 & 255
+				#pc = 0x0021FCB8
+				#continue
+			#0x0021FCB8:
+				#s3 = 0
+				#if s4 != 0:
+					#pc = 0x0021fcc8
+					#continue
+				#pc = 0x0021fcf4
+				#continue
+			#0x0021FCC8:
+				#temp_buff.encode_s8(5, s2)#store_byte(a0 + 0x2035, s2)
+				#v1 = 0 + 8
+				#temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
+				#pc = 0x0021FCD4
+				#continue
+			#0x0021FCD4:
+				## nop
+				#v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
+				#s3 = 0 + 1
+				#t6 = (v1 << 24)
+				#t6 = (t6 >> 24)
+				#v1 = v1 >> 1
+				#temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
+				#t6 = t6 & 1
+				#pc = 0x0021FCF4
+				#continue
+			#0x0021FCF4:
+				#if s3 != 0:
+					#pc = 0x0021fd08
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FD08:
+				#s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
+				#v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
+				#s4 = 0
+				#if s3 != v1:
+					#pc = 0x0021fd20
+					#continue
+				#pc = 0x0021fd38
+				#continue
+			#0x0021FD20:
+				#v1 = s3 + 1
+				#temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
+				#s4 = 0 + 1
+				#v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
+				#v1 = ~(v1 | 0)
+				#t7 = v1 & 255
+				#pc = 0x0021FD38
+				#continue
+			#0x0021FD38:
+				#v1 = t5 & 255
+				#if s4 != 0:
+					#pc = 0x0021fd48
+					#continue
+				#v0 = 0
+				#pc = 0x0021fdb4
+				#continue
+			#0x0021FD48:
+				#s3 = t7 & 255
+				#s4 = v1 << 1
+				#s3 = s3 + -256
+				#v1 = t6 & 255
+				#v1 = s4 + v1
+				#v1 = v1 + 2
+				#pc = 0x0021FD60
+				#continue
+			#0x0021FD60:
+				#s4 = v1 + 0
+				#s3 = s3 + v0
+				#v1 = v1 + -1
+				#if s4 == 0:
+					#pc = 0x0021f8bc
+					#continue
+				#pc = 0x0021FD70
+				#continue
+			#0x0021FD70:
+				#s4 = s3 & 8191
+				#s5 = a0 + s4
+				#s3 = s3 + 1
+				#s6 = history.decode_u8(s5 + 0x34)#load_byte_unsigned(s5 + 0x0034)
+				#s4 = v0 & 8191
+				#v0 = v0 + 1
+				#s5 = a0 + s4
+				#history.encode_s8(s5 + 0x34, s6)#store_byte(s5 + 0x0034, s6)
+				#s4 = v1 + 0
+				#output.append(s6)#store_byte(a1 + 0x0000, s6)
+				#v1 = v1 + -1
+				#a1 = a1 + 1
+				#if s4 != 0:
+					#pc = 0x0021fd70
+					#continue
+				#v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
+				#pc = 0x0021f8c0
+				#continue
+			#0x0021FDAC:
+				#v0 = 0 + 1
+				#pc = 0x0021FDB4
+				#continue
+			#0x0021FDB4:
+				#break
+	#return output
+
+
+func _get_bit(input: PackedByteArray, ip: int, bitbuf: int, bits_left: int) -> Array:
+	if bits_left == 0:
+		if ip >= input.size():
+			# No new data → behave as 0 bit without advancing state.
+			return [0, ip, bitbuf, bits_left]
+		bitbuf = (~input[ip]) & 0xFF
+		ip += 1
+		bits_left = 8
+	var bit := bitbuf & 1
+	bitbuf >>= 1
+	bits_left -= 1
+	return [bit, ip, bitbuf, bits_left]
+
+
+func _read_byte(input: PackedByteArray, ip: int) -> Array:
+	if ip >= input.size():
+		return [0, ip]
+	var v := (~input[ip]) & 0xFF
+	ip += 1
+	return [v, ip]
+
+
 func decompress_lz_variant(input: PackedByteArray) -> PackedByteArray:
-	var a0: int = 0
-	var a1: int = 0
-	var a2: int = 0
-	var a3: int = 0
-	var s0: int = 0
-	var s1: int = 0
-	var s2: int = 0
-	var s3: int = 0
-	var s4: int = 0
-	var s5: int = 0
-	var s6: int = 0
-	var t0: int = 0
-	var t1: int = 0
-	var t2: int = 0
-	var t3: int = 0
-	var t4: int = 0
-	var t5: int = 0
-	var t6: int = 0
-	var t7: int = 0
-	var t8: int = 0
-	var t9: int = 0
-	var v0: int = 0
-	var v1: int = 0
-	var temp_buff: PackedByteArray
-	var input_pos: int 
-	var hdr: String = input.slice(0, 4).get_string_from_ascii()
-	
-	if hdr == "EOFC":
+	if input.size() < 4:
 		return PackedByteArray()
-	elif hdr == "APLN":
-		input_pos = input.decode_u32(0x4) + 0x30
-	elif hdr == "FCNK":
-		input_pos = 0x20
-	elif hdr == "AFCE":
-		input_pos = input.decode_u32(0x14) + 0x30
+
+	var magic: String = input.slice(0, 4).get_string_from_ascii()
+	var ip: int = 0
+	if magic == "EOFC":
+		return PackedByteArray()
+	elif magic == "APLN":
+		ip = input.decode_u32(0x4) + 0x30
+	elif magic == "FCNK":
+		ip = 0x20
+	elif magic == "AFCE":
+		ip = input.decode_u32(0x14) + 0x30
 	else:
-		input_pos = 0xA8
-		
-	temp_buff.resize(0x40)
-	temp_buff.encode_u8(4, 1) #a0 0x2034 counter
-	temp_buff.encode_u8(5, 0) #a0 0x2035 other counter
-	temp_buff.encode_u32(0x20, input_pos) #input pos
-	temp_buff.encode_u32(0x24, input.decode_u32(0x2C) + 0x38) #input end offset
-	temp_buff.encode_u8(0x2C, 0) #a0 0x2C output pos
-	var history: PackedByteArray
-	history.resize(0x2034)
-	var output: PackedByteArray
+		ip = 0xA8
 
-	var pc: int = 0x0021F890  # starting label
+	# If your files rely on the embedded end pointer:
+	# var end := input.decode_u32(0x2C) + 0x38
+
+	var out := PackedByteArray()
+	var hist := PackedByteArray()
+	hist.resize(0x2000)              # 8 KiB history
+
+	var bitbuf := 0
+	var bits_left := 0
+	var wpos := 0
+	var mask := 0x1FFF
+
 	while true:
-		match pc:
-			0x0021F890:
-				v0 = 0
-				a1 = temp_buff.decode_u32(0x2C)
-				pc = 0x0021F8BC
-				continue
-			0x0021F8BC:
-				v1 = temp_buff.decode_u8(4)
-				pc = 0x0021F8C0
-				continue
-			0x0021F8C0:
-				v1 = v1 + -1
-				temp_buff.encode_s8(4, v1) #store_byte(a0 + 0x2034, v1)
-				v1 = v1 & 255
-				if v1 != 0:
-					pc = 0x0021f924
-					continue
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0
-				if s3 != v1:
-					pc = 0x0021f8ec
-					continue
-				pc = 0x0021f908
-				continue
-			0x0021F8EC:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				t8 = v1 & 255
-				pc = 0x0021F908
-				continue
-			0x0021F908:
-				s3 = 0 + 0
-				if s4 != 0:
-					pc = 0x0021f918
-					continue
-				pc = 0x0021f944
-				continue
-			0x0021F918:
-				temp_buff.encode_s8(5, t8)#store_byte(a0 + 0x2035, t8)
-				v1 = 0 + 8
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				pc = 0x0021F924
-				continue
-			0x0021F924:
-				# nop
-				v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
-				s3 = 0 + 1
-				a2 = (v1 << 24)
-				a2 = (a2 >> 24)
-				v1 = v1 >> 1
-				temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
-				a2 = a2 & 1
-				pc = 0x0021F944
-				continue
-			0x0021F944:
-				if s3 != 0:
-					pc = 0x0021f958
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021F958:
-				s3 = 0 + 8
-				if a2 == 0:
-					pc = 0x0021fa48
-					continue
-				pc = 0x0021F960
-				continue
-			0x0021F960:
-				s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s5 = 0
-				if s4 != v1:
-					pc = 0x0021f978
-					continue
-				pc = 0x0021f990
-				continue
-			0x0021F978:
-				v1 = s4 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s5 = 1
-				v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
-				v1 = ~(v1 | 0)
-				a3 = v1 & 255
-				pc = 0x0021F990
-				continue
-			0x0021F990:
-				v1 = v0 & 8191
-				if s5 != 0:
-					pc = 0x0021f9a0
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021F9A0:
-				v1 = a0 + v1
-				v0 = v0 + 1
-				history.encode_s8(v1 + 0x0034, a3)#store_byte(v1 + 0x0034, a3)
-				output.append(a3)#store_byte(a1 + 0x0000, a3)
-				v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
-				v1 = v1 + -1
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				v1 = v1 & 255
-				a1 = a1 + 1
-				if v1 != 0:
-					pc = 0x0021fa10
-					continue
-				s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s5 = 0
-				if s4 != v1:
-					pc = 0x0021f9e0
-					continue
-				pc = 0x0021f9f8
-				continue
-			0x0021F9E0:
-				v1 = s4 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s5 = 0 + 1
-				v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
-				v1 = ~(v1 | 0)
-				t9 = v1 & 255
-				pc = 0x0021F9F8
-				continue
-			0x0021F9F8:
-				s4 = 0
-				if s5 != 0:
-					pc = 0x0021fa08
-					continue
-				pc = 0x0021fa2c
-				continue
-			0x0021FA08:
-				temp_buff.encode_s8(5, t9)#store_byte(a0 + 0x2035, t9)
-				temp_buff.encode_s8(4, s3)#store_byte(a0 + 0x2034, s3)
-				pc = 0x0021FA10
-				continue
-			0x0021FA10:
-				v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
-				s4 = 0 + 1
-				t0 = (v1 << 24)
-				t0 = (t0 >> 24)
-				v1 = v1 >> 1
-				temp_buff.encode_s8(5, v1) #store_byte(a0 + 0x2035, v1)
-				t0 = t0 & 1
-				pc = 0x0021FA2C
-				continue
-			0x0021FA2C:
-				if s4 != 0:
-					pc = 0x0021fa40
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FA40:
-				if t0 != 0:
-					pc = 0x0021f960
-					continue
-				pc = 0x0021FA48
-				continue
-			0x0021FA48:
-				v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
-				v1 = v1 + -1
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				v1 = v1 & 255
-				if v1 != 0:
-					pc = 0x0021faac
-					continue
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0
-				if s3 != v1:
-					pc = 0x0021fa78
-					continue
-				pc = 0x0021fa90
-				continue
-			0x0021FA78:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				s0 = v1 & 255
-				pc = 0x0021FA90
-				continue
-			0x0021FA90:
-				s3 = 0
-				if s4 != 0:
-					pc = 0x0021faa0
-					continue
-				pc = 0x0021facc
-				continue
-			0x0021FAA0:
-				temp_buff.encode_s8(5, s0)#store_byte(a0 + 0x2035, s0)
-				v1 = 0 + 8
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				pc = 0x0021FAAC
-				continue
-			0x0021FAAC:
-				v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
-				s3 = 0 + 1
-				t1 = (v1 << 24)
-				t1 = (t1 >> 24)
-				v1 = v1 >> 1
-				temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
-				t1 = t1 & 1
-				pc = 0x0021FACC
-				continue
-			0x0021FACC:
-				if s3 != 0:
-					pc = 0x0021fae0
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FAE0:
-				if t1 == 0:
-					pc = 0x0021fbd8
-					continue
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0
-				if s3 != v1:
-					pc = 0x0021fb00
-					continue
-				pc = 0x0021fb18
-				continue
-			0x0021FB00:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				t2 = v1 & 255
-				pc = 0x0021FB18
-				continue
-			0x0021FB18:
-				# nop
-				if s4 != 0:
-					pc = 0x0021fb28
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FB28:
-				s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				s3 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				v1 = t2 & 255
-				if s4 != s3:
-					pc = 0x0021fb40
-					continue
-				s3 = 0
-				pc = 0x0021fb58
-				continue
-			0x0021FB40:
-				t3 = s4 + 1
-				temp_buff.encode_s32(0x20, t3)#store_word(a0 + 0x0020, t3)
-				s3 = 0 + 1
-				t3 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
-				t3 = ~(t3 | 0)
-				t3 = t3 & 255
-				pc = 0x0021FB58
-				continue
-			0x0021FB58:
-				s4 = t3 & 255
-				if s3 != 0:
-					pc = 0x0021fb68
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FB68:
-				s3 = s4 | v1 # or                s3, s4, v1
-				if s3 == 0:
-					s3 = v1 >> 3
-					pc = 0x0021fdac
-					continue
-				s3 = v1 >> 3
-				s4 = s4 << 5
-				s3 = s4 + s3
-				v1 = v1 & 7
-				s3 = s3 + -8192
-				if v1 == 0:
-					pc = 0x0021fb90
-					continue
-				v1 = v1 + 2
-				pc = 0x0021fd60
-				continue
-			0x0021FB90:
-				s4 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s5 = 0
-				if s4 != v1:
-					pc = 0x0021fba8
-					continue
-				pc = 0x0021fbc0
-				continue
-			0x0021FBA8:
-				v1 = s4 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s5 = 0 + 1
-				v1 = input.decode_s8(s4)#load_byte_signed(s4 + 0x0000)
-				v1 = ~(v1 | 0)
-				t4 = v1 & 255
-				pc = 0x0021FBC0
-				continue
-			0x0021FBC0:
-				v1 = t4 & 255
-				if s5 != 0:
-					pc = 0x0021fbd0
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FBD0:
-				v1 = v1 + 1
-				pc = 0x0021fd60
-				continue
-			0x0021FBD8:
-				v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
-				v1 = v1 + -1
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				v1 = v1 & 255
-				if v1 != 0:
-					pc = 0x0021fc3c
-					continue
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0
-				if s3 != v1:
-					pc = 0x0021fc08
-					continue
-				pc = 0x0021fc20
-				continue
-			0x0021FC08:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				s1 = v1 & 255
-				pc = 0x0021FC20
-				continue
-			0x0021FC20:
-				s3 = 0
-				if s4 != 0:
-					pc = 0x0021fc30
-					continue
-				pc = 0x0021fc5c
-				continue
-			0x0021FC30:
-				temp_buff.encode_s8(5, s1)#store_byte(a0 + 0x2035, s1)
-				v1 = 0 + 8
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				pc = 0x0021FC3C
-				continue
-			0x0021FC3C:
-				# nop
-				v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
-				s3 = 0 + 1
-				t5 = (v1 << 24)
-				t5 = (t5 >> 24)
-				v1 = v1 >> 1
-				temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
-				t5 = t5 & 1
-				pc = 0x0021FC5C
-				continue
-			0x0021FC5C:
-				if s3 != 0:
-					pc = 0x0021fc70
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FC70:
-				v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
-				v1 = v1 + -1
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				v1 = v1 & 255
-				if v1 != 0:
-					pc = 0x0021fcd4
-					continue
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0 + 0
-				if s3 != v1:
-					pc = 0x0021fca0
-					continue
-				# nop
-				pc = 0x0021fcb8
-				continue
-			0x0021FCA0:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				s2 = v1 & 255
-				pc = 0x0021FCB8
-				continue
-			0x0021FCB8:
-				s3 = 0
-				if s4 != 0:
-					pc = 0x0021fcc8
-					continue
-				pc = 0x0021fcf4
-				continue
-			0x0021FCC8:
-				temp_buff.encode_s8(5, s2)#store_byte(a0 + 0x2035, s2)
-				v1 = 0 + 8
-				temp_buff.encode_s8(4, v1)#store_byte(a0 + 0x2034, v1)
-				pc = 0x0021FCD4
-				continue
-			0x0021FCD4:
-				# nop
-				v1 = temp_buff.decode_u8(5)#load_byte_unsigned(a0 + 0x2035)
-				s3 = 0 + 1
-				t6 = (v1 << 24)
-				t6 = (t6 >> 24)
-				v1 = v1 >> 1
-				temp_buff.encode_s8(5, v1)#store_byte(a0 + 0x2035, v1)
-				t6 = t6 & 1
-				pc = 0x0021FCF4
-				continue
-			0x0021FCF4:
-				if s3 != 0:
-					pc = 0x0021fd08
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FD08:
-				s3 = temp_buff.decode_s32(0x20)#load_word(a0 + 0x0020)
-				v1 = temp_buff.decode_s32(0x24)#load_word(a0 + 0x0024)
-				s4 = 0
-				if s3 != v1:
-					pc = 0x0021fd20
-					continue
-				pc = 0x0021fd38
-				continue
-			0x0021FD20:
-				v1 = s3 + 1
-				temp_buff.encode_s32(0x20, v1)#store_word(a0 + 0x0020, v1)
-				s4 = 0 + 1
-				v1 = input.decode_s8(s3)#load_byte_signed(s3 + 0x0000)
-				v1 = ~(v1 | 0)
-				t7 = v1 & 255
-				pc = 0x0021FD38
-				continue
-			0x0021FD38:
-				v1 = t5 & 255
-				if s4 != 0:
-					pc = 0x0021fd48
-					continue
-				v0 = 0
-				pc = 0x0021fdb4
-				continue
-			0x0021FD48:
-				s3 = t7 & 255
-				s4 = v1 << 1
-				s3 = s3 + -256
-				v1 = t6 & 255
-				v1 = s4 + v1
-				v1 = v1 + 2
-				pc = 0x0021FD60
-				continue
-			0x0021FD60:
-				s4 = v1 + 0
-				s3 = s3 + v0
-				v1 = v1 + -1
-				if s4 == 0:
-					pc = 0x0021f8bc
-					continue
-				pc = 0x0021FD70
-				continue
-			0x0021FD70:
-				s4 = s3 & 8191
-				s5 = a0 + s4
-				s3 = s3 + 1
-				s6 = history.decode_u8(s5 + 0x34)#load_byte_unsigned(s5 + 0x0034)
-				s4 = v0 & 8191
-				v0 = v0 + 1
-				s5 = a0 + s4
-				history.encode_s8(s5 + 0x34, s6)#store_byte(s5 + 0x0034, s6)
-				s4 = v1 + 0
-				output.append(s6)#store_byte(a1 + 0x0000, s6)
-				v1 = v1 + -1
-				a1 = a1 + 1
-				if s4 != 0:
-					pc = 0x0021fd70
-					continue
-				v1 = temp_buff.decode_u8(4)#load_byte_unsigned(a0 + 0x2034)
-				pc = 0x0021f8c0
-				continue
-			0x0021FDAC:
-				v0 = 0 + 1
-				pc = 0x0021FDB4
-				continue
-			0x0021FDB4:
+		# Literal if first control bit is 1.
+		var r: Array = _get_bit(input, ip, bitbuf, bits_left)
+		var ctrl: int = r[0]; ip = r[1]; bitbuf = r[2]; bits_left = r[3]
+		if ctrl == 1:
+			var rb := _read_byte(input, ip)
+			var lit: int = rb[0]; ip = rb[1]
+			hist[wpos & mask] = lit
+			out.append(lit)
+			wpos += 1
+			continue
+
+		# Otherwise a match. Next bit chooses short/long form.
+		r = _get_bit(input, ip, bitbuf, bits_left)
+		var is_long: int = r[0] == 1
+		ip = r[1]; bitbuf = r[2]; bits_left = r[3]
+
+		var length := 0
+		var offset := 0
+
+		if is_long:
+			# Long form:
+			# offset = ((b2<<5)|(b1>>3)) - 8192
+			# length = (b1&7)==0 ? (next+1) : (b1&7)+2
+			var rb1: Array = _read_byte(input, ip)
+			var b1: int = rb1[0]; ip = rb1[1]
+			var rb2: Array = _read_byte(input, ip)
+			var b2: int= rb2[0]; ip = rb2[1]
+
+			# End marker.
+			if (b1 | b2) == 0:
 				break
-	return output
 
+			offset = ((b2 << 5) | (b1 >> 3)) - 8192
+			length = b1 & 7
+			if length == 0:
+				var rbl := _read_byte(input, ip)
+				length = rbl[0] + 1
+				ip = rbl[1]
+			else:
+				length += 2
+		else:
+			# Short form:
+			# length = ((bA<<1)|bB) + 2  ∈ [2..5]
+			# offset = next_byte - 256  ∈ [-256..-1]
+			r = _get_bit(input, ip, bitbuf, bits_left)
+			var bA: int= r[0]; ip = r[1]; bitbuf = r[2]; bits_left = r[3]
+			r = _get_bit(input, ip, bitbuf, bits_left)
+			var bB: int = r[0]; ip = r[1]; bitbuf = r[2]; bits_left = r[3]
 
+			length = ((bA << 1) | bB) + 2
+			var rbo := _read_byte(input, ip)
+			offset = rbo[0] - 256
+			ip = rbo[1]
+
+		# Copy (overlap-safe).
+		var src := wpos + offset
+		var i := 0
+		while i < length:
+			var v := hist[src & mask]
+			hist[wpos & mask] = v
+			out.append(v)
+			wpos += 1
+			src += 1
+			i += 1
+
+	return out
+	
+	
 func _on_load_grd_pressed() -> void:
 	file_load_grd.show()
 
