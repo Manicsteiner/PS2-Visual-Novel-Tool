@@ -11,6 +11,7 @@ enum {
 	ONETWENTYYEN = 0, # 120 Yen no Haru - 120 Yen Stories
 	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
 	THREELDK = 2, # 3LDK - Shiawase ni Narouyo
+	ABARENBOU,
 	AIR,
 	AIYORIAOSHI,
 	AFTER,
@@ -665,6 +666,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(GUISARD)
 		game_type = GUISARD
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == ABARENBOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG).\nSupports BMZ images only."
+		game_type_selector.select(ABARENBOU)
+		game_type = ABARENBOU
+		var next_scene: PackedScene = load("res://src/scenes/AlfaSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == MIZUNOSENRITSU:
 		game_type_sub_text.text = "Supports 'Mizu no Senritsu'."
@@ -2113,6 +2120,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("120 Yen no Haru: 120 Yen Stories", ONETWENTYYEN)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
+	game_type_selector.add_item("Abarenbou Princess", ABARENBOU)
 	game_type_selector.add_item("Air", AIR)
 	game_type_selector.add_item("Ai Yori Aoshi", AIYORIAOSHI)
 	game_type_selector.add_item("After... Wasureenu Kizuna", AFTER)
