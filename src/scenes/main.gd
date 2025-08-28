@@ -80,6 +80,7 @@ enum {
 	GIFTPRISIM,
 	GINNOECLIPSE, 
 	GIRLSBRAVO,
+	GOKUJOU,
 	GUARDIANANGEL,
 	GUISARD,
 	HAKARENA,
@@ -665,6 +666,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(GUISARD)
 		game_type = GUISARD
+		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
+		sceneChanger(next_scene)
+	elif index == GOKUJOU:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(GOKUJOU)
+		game_type = GOKUJOU
 		var next_scene: PackedScene = load("res://src/scenes/Kid.tscn")
 		sceneChanger(next_scene)
 	elif index == ABARENBOU:
@@ -2189,6 +2196,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Gift: Prism", GIFTPRISIM)
 	game_type_selector.add_item("Gin no Eclipse", GINNOECLIPSE)
 	game_type_selector.add_item("Girls Bravo: Romance 15's", GIRLSBRAVO)
+	game_type_selector.add_item("Gokujou Seitokai", GOKUJOU)
 	game_type_selector.add_item("Guardian Angel", GUARDIANANGEL)
 	game_type_selector.add_item("Guisard Revolution: Bokura wa Omoi wo Mi ni Matou", GUISARD)
 	game_type_selector.add_item("Hakarena Heart: Kimi ga Tame ni Kagayaki wo", HAKARENA)
