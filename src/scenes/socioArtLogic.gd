@@ -100,6 +100,10 @@ func socioMakeFiles() -> void:
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(mem_file, true, true)
+						for png_i in range(pngs.size()):
+							var png: Image = pngs[png_i]
+							png.save_png(folder_path + "/" + archive_id + "_%08d" % i + ".TM2" + "_%04d.PNG" % png_i)
 				elif mem_file.decode_u16(9) == 0x4D42: #BMP
 					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".BMP", FileAccess.WRITE)
 					if decomp_file:
@@ -114,6 +118,11 @@ func socioMakeFiles() -> void:
 						
 						print_rich("[color=green]Combined split TIM2 image in %s[/color]" % i)
 						mem_file = combineSplitTIM2(mem_file, split_size)
+						
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(mem_file, true, true)
+						for png_i in range(pngs.size()):
+							var png: Image = pngs[png_i]
+							png.save_png(folder_path + "/" + archive_id + "_%08d" % i + ".TM2" + "_%04d.PNG" % png_i)
 					out_file = FileAccess.open(folder_path + "/" + archive_id + "_%08d" % i + ".TM2", FileAccess.WRITE)
 				else:
 					if decomp_file:
