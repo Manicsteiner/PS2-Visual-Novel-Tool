@@ -315,6 +315,11 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 		push_error("Not a TIM2 file")
 		return images
 
+	var tm2_version: int = data.decode_u8(5)
+	if tm2_version > 1:
+		push_error("Unknown TIM2 version %02X" % tm2_version)
+		return images
+		
 	var picture_count: int = data.decode_u16(6)
 	if picture_count <= 0:
 		push_error("No pictures found")
@@ -322,6 +327,7 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 
 	var pic_offset: int = 0x10
 	for p in range(picture_count):
+		if tm2_version == 1: pic_offset += 0x70
 		var total_size: int = data.decode_u32(pic_offset)
 		var clut_size: int = data.decode_u32(pic_offset + 4)
 		var img_size: int = data.decode_u32(pic_offset + 8)

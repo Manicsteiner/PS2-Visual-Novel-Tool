@@ -26,7 +26,6 @@ func _ready() -> void:
 		load_image.hide()
 		load_ptd.show()
 		remove_alpha_box.hide()
-		output_debug.hide()
 	
 	
 func _process(_delta: float) -> void:
@@ -216,20 +215,39 @@ func extract_ptd() -> void:
 				f_size = ptd_all_file.get_32()
 				if f_size == 0:
 					continue
-					
+				
 				in_file.seek(f_offset)
 				buff = in_file.get_buffer(f_size)
 				if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
 					f_name += ".TM2"
+					
+					if debug_out:
+						out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
+						
+					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true)
+					for i in range(pngs.size()):
+						var png: Image = pngs[i]
+						png.save_png(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name + "_%04d.PNG" %  i)
+					
+					print("%08X %08X %s %s/%s/%s" % [f_offset, f_size, selected_ptd_name.get_basename(), folder_path, selected_ptd_name.get_basename(), f_name])
+					continue
 				elif buff.decode_u32(0) == 0:
 					f_name += ".ADPCM"
 				else:
 					if selected_ptd_name == "PTD000.PTD":
 						var tm2_arr: Array[PackedByteArray] = ComFuncs.tim2_scan_buffer(buff, 4)
 						for tm2 in range(0, tm2_arr.size()):
-							out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name + ".BIN_%04d.TM2" % tm2, FileAccess.WRITE)
-							out_file.store_buffer(tm2_arr[tm2])
-							out_file.close()
+							if debug_out:
+								out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name + ".BIN_%04d.TM2" % tm2, FileAccess.WRITE)
+								out_file.store_buffer(tm2_arr[tm2])
+								out_file.close()
+								
+							var pngs: Array[Image] = ComFuncs.load_tim2_images(tm2_arr[tm2], true, true)
+							for i in range(pngs.size()):
+								var png: Image = pngs[i]
+								png.save_png(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name + "_%04d_%04d.PNG" % [tm2, i])
 					f_name += ".BIN"
 					
 				out_file = FileAccess.open(folder_path + "/%s" % selected_ptd_name.get_basename() + "/%s" % f_name, FileAccess.WRITE)
@@ -501,7 +519,8 @@ func make_img(data: PackedByteArray) -> Image:
 		palette = ComFuncs.unswizzle_palette(palette, 32)
 		if remove_alpha:
 			for i in range(0, 0x400, 4):
-				palette.encode_u8(i + 3, 255)
+				var a: int = int((palette.decode_u8(i + 3) / 128.0) * 255.0)
+				palette.encode_u8(i + 3, a)
 	else:
 		palette = data.slice(palette_offset)
 	
