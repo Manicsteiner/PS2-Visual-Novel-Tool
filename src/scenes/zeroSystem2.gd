@@ -281,7 +281,7 @@ func extractBin() -> void:
 			bytes = in_file.get_32()
 			if bytes == scr_bytes:
 				ext = ".SCR"
-			elif bytes == 0x01504D43 or bytes == 0x02504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
+			elif bytes == 0x01504D43 or bytes == 0x02504D43 or bytes == 0x03504D43 or bytes == 0x04504D43 or bytes == 0x05504D43:
 				ext = ".TM2"
 				
 				out_file = FileAccess.open(folder_path + "/%02d" % i + "_%08d" % f_id + ext, FileAccess.WRITE)
@@ -295,6 +295,12 @@ func extractBin() -> void:
 					buff = decompress_rle(in_file.get_buffer(f_offset + f_size))
 			
 				out_file.store_buffer(buff)
+				
+				var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, true)
+				for p in range(pngs.size()):
+					var png: Image = pngs[p]
+					png.save_png(folder_path + "/%02d" % i + "_%08d" % f_id + ext + "_%04d.PNG" %  p)
+					
 				print("%08X %08X %02d %s/%02d_%08d%s" % [f_offset, buff.size(), i, folder_path, i, f_id, ext])
 				
 				buff.clear()
