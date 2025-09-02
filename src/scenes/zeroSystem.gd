@@ -148,6 +148,10 @@ func extractBin() -> void:
 							
 							if tak_data.slice(0, 4).get_string_from_ascii() == "TIM2":
 								f_name = "TAK%05d_%02d.TM2" % [id, num]
+								var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+								for p in range(pngs.size()):
+									var png: Image = pngs[p]
+									png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
 							else:
 								f_name = "TAK%05d_%02d.BIN" % [id, num]
 								
@@ -173,6 +177,10 @@ func extractBin() -> void:
 					f_name = "TAK%05d.BIN" % id
 				elif type == 0x01:
 					f_name = "VIS%05d.TM2" % id
+					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+					for p in range(pngs.size()):
+						var png: Image = pngs[p]
+						png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
 				elif type == 0x02:
 					f_name = "STR%05d.VGS" % id
 				elif type == 0x06:
@@ -239,6 +247,13 @@ func extractBin() -> void:
 						f_ext = ".BIN"
 					
 					f_name = "/%08d" % f_id + f_ext
+					
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+						for i in range(pngs.size()):
+							var png: Image = pngs[i]
+							png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  i)
+							
 					out_file = FileAccess.open(folder_path + "%s" % f_name, FileAccess.WRITE)
 					out_file.store_buffer(buff)
 					out_file.close()
@@ -272,6 +287,12 @@ func extractBin() -> void:
 						f_size = buff.decode_u32(4)
 						buff = ComFuncs.decompLZSS(buff.slice(8), buff.size() - 8, f_size)
 						
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+						for i in range(pngs.size()):
+							var png: Image = pngs[i]
+							png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  i)
+							
 					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 					out_file.store_buffer(buff)
 					out_file.close()
