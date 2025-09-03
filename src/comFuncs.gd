@@ -1019,30 +1019,29 @@ func decompLZSS(buffer: PackedByteArray, zsize: int, size: int, dic_off: int = 0
 	return dec
 
 
-func decompress_raw_zlib(compressed_data: PackedByteArray, dec_size: int, is_zlib: bool) -> PackedByteArray:
-	var out: PackedByteArray
-	var part: Array
-	var bytes_left: int
+func decompress_raw_zlib(compressed_data: PackedByteArray, is_zlib: bool = true) -> PackedByteArray:
+	var out: PackedByteArray = PackedByteArray()
 	var gzip_stream: StreamPeerGZIP = StreamPeerGZIP.new()
-	# This isn't fail safe, as this can write junk data on certain items. Need a better method in the future.
-	
-	gzip_stream.start_decompression(is_zlib, dec_size)
-	if compressed_data.size() <= 0x800:
-		gzip_stream.put_data(compressed_data)
-		part = gzip_stream.get_data(dec_size)
-		out.append_array(part[1])
-		gzip_stream.clear()
-		return out
-	gzip_stream.put_partial_data(compressed_data)
-	part = gzip_stream.get_partial_data(0x400)
-	out.append_array(part[1])
-	bytes_left = gzip_stream.get_available_bytes()
-	while bytes_left != 0:
-		part = gzip_stream.get_partial_data(0x400)
-		out.append_array(part[1])
-		bytes_left = gzip_stream.get_available_bytes()
+
+	# This just sets the working window size, not the final output size.
+	gzip_stream.start_decompression(is_zlib, 64 * 1024)
+
+	var offset: int = 0
+	while offset < compressed_data.size():
+		var chunk_size: int = min(0x4000, compressed_data.size() - offset) # 16 KB per feed
+		var slice: PackedByteArray = compressed_data.slice(offset, offset + chunk_size)
+		gzip_stream.put_partial_data(slice)
+		offset += chunk_size
+
+		# Drain any available decompressed bytes
+		while gzip_stream.get_available_bytes() > 0:
+			var part: Array = gzip_stream.get_partial_data(gzip_stream.get_available_bytes())
+			if part[0] != OK:
+				push_error("Decompression failed: %s" % part[0])
+				return out
+			out.append_array(part[1])
+
 	gzip_stream.clear()
-	#gzip_stream.finish()
 	return out
 	
 	
