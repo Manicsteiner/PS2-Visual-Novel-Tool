@@ -18,6 +18,7 @@ enum {
 	AMAGAMI,
 	ANGELSFEATHER,
 	ANGELWISH,
+	AOIUMINOTRISTIA,
 	AONOMAMA,
 	ARABIANS,
 	ARCANAHEART,
@@ -1886,6 +1887,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = AONOMAMA
 		var next_scene: PackedScene = load("res://src/scenes/IdeaFactory.tscn")
 		sceneChanger(next_scene)
+	elif index == AOIUMINOTRISTIA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2, PNG)."
+		game_type_selector.select(AOIUMINOTRISTIA)
+		game_type = AOIUMINOTRISTIA
+		var next_scene: PackedScene = load("res://src/scenes/KumaSanTeam.tscn")
+		sceneChanger(next_scene)
 	elif index == STEADYXSTUDY:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(STEADYXSTUDY)
@@ -2134,6 +2141,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Amagami", AMAGAMI)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Aoi Umi no Tristia: Nanoca Flanka Hatsumei Koubouki", AOIUMINOTRISTIA)
 	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
 	game_type_selector.add_item("Arcana Heart", ARCANAHEART)
