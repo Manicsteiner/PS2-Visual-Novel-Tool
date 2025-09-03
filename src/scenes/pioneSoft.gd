@@ -88,7 +88,7 @@ func makeFiles() -> void:
 			
 			file.seek(f_offset)
 			if f_size != dec_size:
-				buff = ComFuncs.decompress_raw_zlib(file.get_buffer(f_size), dec_size, true)
+				buff = ComFuncs.decompress_raw_zlib(file.get_buffer(f_size))
 			else:
 				buff = file.get_buffer(f_size)
 			

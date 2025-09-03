@@ -96,7 +96,7 @@ func extract_idx() -> void:
 				for off in offs:
 					var comp_size: int = buff.decode_u32(off + 8)
 					var dec_size: int = buff.decode_u32(off + 12)
-					var zlib_file: PackedByteArray =  ComFuncs.decompress_raw_zlib(buff.slice(off + 0x10, off + 0x10 + comp_size), dec_size, true)
+					var zlib_file: PackedByteArray =  ComFuncs.decompress_raw_zlib(buff.slice(off + 0x10, off + 0x10 + comp_size))
 					out_file = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % folder + "/%s_%02d.DEC" % [f_name, id], FileAccess.WRITE)
 					out_file.store_buffer(zlib_file)
 					out_file.close()
