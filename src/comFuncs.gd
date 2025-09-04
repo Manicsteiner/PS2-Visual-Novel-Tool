@@ -1023,8 +1023,9 @@ func decompress_raw_zlib(compressed_data: PackedByteArray, is_zlib: bool = true)
 	var out: PackedByteArray = PackedByteArray()
 	var gzip_stream: StreamPeerGZIP = StreamPeerGZIP.new()
 
-	# This just sets the working window size, not the final output size.
-	gzip_stream.start_decompression(is_zlib, 64 * 1024)
+	# Over-allocate generously so we don’t cut off large streams.
+	# The buffer size here does NOT need to be precise, just >= max output size.
+	gzip_stream.start_decompression(is_zlib, 3 * 1024 * 1024)
 
 	var offset: int = 0
 	while offset < compressed_data.size():
@@ -1033,13 +1034,21 @@ func decompress_raw_zlib(compressed_data: PackedByteArray, is_zlib: bool = true)
 		gzip_stream.put_partial_data(slice)
 		offset += chunk_size
 
-		# Drain any available decompressed bytes
+		# Drain as much as possible after each feed
 		while gzip_stream.get_available_bytes() > 0:
 			var part: Array = gzip_stream.get_partial_data(gzip_stream.get_available_bytes())
 			if part[0] != OK:
 				push_error("Decompression failed: %s" % part[0])
 				return out
 			out.append_array(part[1])
+
+	# Final drain, in case trailing data was still buffered
+	while gzip_stream.get_available_bytes() > 0:
+		var part: Array = gzip_stream.get_partial_data(gzip_stream.get_available_bytes())
+		if part[0] != OK:
+			push_error("Decompression failed at end: %s" % part[0])
+			break
+		out.append_array(part[1])
 
 	gzip_stream.clear()
 	return out
