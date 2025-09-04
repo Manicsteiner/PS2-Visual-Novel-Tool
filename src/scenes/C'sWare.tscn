@@ -29,7 +29,7 @@ theme_override_constants/separation = 28
 
 [node name="LoadAFS" type="Button" parent="HBoxContainer"]
 layout_mode = 2
-text = "Extract .AFS"
+text = "Extract .AFS / .PAK"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1

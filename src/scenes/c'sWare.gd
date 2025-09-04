@@ -8,7 +8,7 @@ var selected_files: PackedStringArray
 var debug_out: bool = false
 
 func _ready() -> void:
-	file_load_afs.filters = ["*.AFS"]
+	file_load_afs.filters = ["*.AFS, *.PAK"]
 
 
 func _process(_delta: float) -> void:
@@ -24,7 +24,11 @@ func extract_afs() -> void:
 		var arc_name: String = selected_files[file].get_file().get_basename()
 		var base_dir: String = "%s/%s" % [folder_path, arc_name]
 		
-		in_file.seek(4)
+		in_file.seek(0)
+		if in_file.get_buffer(4).get_string_from_ascii() != "AFS":
+			OS.alert("%s doesn't have a valid AFS header!" % arc_name)
+			continue
+			
 		var num_files: int = in_file.get_32()
 		
 		var off_tbl: int = 8
@@ -120,6 +124,38 @@ func extract_afs() -> void:
 							png.save_png(file_path)
 							
 					off += comp_size
+			elif f_name.get_extension().to_lower() == "pbp":
+				if debug_out:
+					var file_path: String = "%s/%s" % [base_dir, f_name]
+					if FileAccess.file_exists(file_path):
+						file_path = "%s/%s%04d.%s" % [base_dir, f_name_no_ext, ovr_id, f_ext]
+					var out_file: FileAccess = FileAccess.open(file_path, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+				var pngs: Array[Image] = make_image_pbp(buff)
+				for png_i in range(pngs.size()):
+					var png: Image = pngs[png_i]
+					var file_path: String = "%s/%s_%04d.PNG" % [base_dir, f_name, png_i]
+					if FileAccess.file_exists(file_path):
+						file_path = "%s/%s%04d.%s_%04d.PNG" % [base_dir, f_name_no_ext, ovr_id, f_ext, png_i]
+					png.save_png(file_path)
+			elif f_name.get_extension().to_lower() == "pbd":
+				if debug_out:
+					var file_path: String = "%s/%s" % [base_dir, f_name]
+					if FileAccess.file_exists(file_path):
+						file_path = "%s/%s%04d.%s" % [base_dir, f_name_no_ext, ovr_id, f_ext]
+					var out_file: FileAccess = FileAccess.open(file_path, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+				var width: int = buff.decode_u16(4)
+				var height: int = buff.decode_u16(6)
+				var file_path: String = "%s/%s.PNG" % [base_dir, f_name]
+				if FileAccess.file_exists(file_path):
+					file_path = "%s/%s%04d.%s.PNG" % [base_dir, f_name_no_ext, ovr_id, f_ext]
+				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff.slice(8))
+				png.save_png(file_path)
 			else:
 				var file_path: String = ""
 				if FileAccess.file_exists(base_dir + "/%s" % f_name):
@@ -159,7 +195,30 @@ func make_image(data: PackedByteArray) -> Array[Image]:
 		off += img_size
 	return imgs
 
+func make_image_pbp(data: PackedByteArray) -> Array[Image]:
+	var images: Array[Image] = []
 
+	# Number of images (32-bit at offset 0x4)
+	var num_imgs: int = data.decode_u32(4)
+
+	# Start of image information
+	var info_offset: int = 0x8
+
+	for i in range(num_imgs):
+		var width: int = data.decode_u16(info_offset + 0x0)
+		var height: int = data.decode_u16(info_offset + 0x2)
+		var img_offset: int = data.decode_u32(info_offset + 0x4)
+		var img_size: int = width * height * 4
+
+		var img_bytes: PackedByteArray = data.slice(img_offset, img_offset + img_size)
+
+		var img: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, img_bytes)
+		images.append(img)
+
+		info_offset += 0x8
+	return images
+	
+	
 func _on_load_afs_pressed() -> void:
 	file_load_afs.show()
 

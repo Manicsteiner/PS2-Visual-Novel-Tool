@@ -55,6 +55,7 @@ enum {
 	ELYSION,
 	ERDE,
 	ETUDE,
+	EVEBURSTERROR,
 	FANATIC,
 	FATESTAY,
 	FESTAHYPER,
@@ -1247,9 +1248,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == DESIRE:
-		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(DESIRE)
 		game_type = DESIRE
+		var next_scene: PackedScene = load("res://src/scenes/C'sWare.tscn")
+		sceneChanger(next_scene)
+	elif index == EVEBURSTERROR:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
+		game_type_selector.select(EVEBURSTERROR)
+		game_type = EVEBURSTERROR
 		var next_scene: PackedScene = load("res://src/scenes/C'sWare.tscn")
 		sceneChanger(next_scene)
 	elif index == HURRAH:
@@ -2185,6 +2192,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)
 	game_type_selector.add_item("Erde: Nezu no Ki no Shita de", ERDE)
 	game_type_selector.add_item("E'tude Prologue: Yureugoku Kokoro no Katachi", ETUDE)
+	game_type_selector.add_item("Eve: Burst Error Plus", EVEBURSTERROR)
 	game_type_selector.add_item("F: Fanatic", FANATIC)
 	game_type_selector.add_item("Fate-stay night: Realta Nua", FATESTAY)
 	game_type_selector.add_item("Festa!! Hyper Girls Party", FESTAHYPER)
