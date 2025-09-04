@@ -46,6 +46,7 @@ enum {
 	DCORIGIN,
 	DCPS,
 	DEARMYFRIEND,
+	DESIRE,
 	DIGI,
 	DOKOHE,
 	DOUBLEREACTION,
@@ -1245,6 +1246,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HOKENSHITSU
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == DESIRE:
+		game_type_sub_text.text = "Supports:\nImages (PNG)."
+		game_type_selector.select(DESIRE)
+		game_type = DESIRE
+		var next_scene: PackedScene = load("res://src/scenes/C'sWare.tscn")
+		sceneChanger(next_scene)
 	elif index == HURRAH:
 		game_type_sub_text.text = "Supports:\nImages (PNG)."
 		game_type_selector.select(HURRAH)
@@ -2169,6 +2176,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("D.C.P.S.: Da Capo Plus Situation", DCPS)
 	game_type_selector.add_item("D.C.: The Origin", DCORIGIN)
 	game_type_selector.add_item("Dear My Friend: Love Like Powdery Snow", DEARMYFRIEND)
+	game_type_selector.add_item("Desire", DESIRE)
 	game_type_selector.add_item("Di Gi Charat Fantasy: Excellent", DIGI)
 	game_type_selector.add_item("Doko he Iku no, Anohi", DOKOHE)
 	game_type_selector.add_item("Double Reaction! Plus", DOUBLEREACTION)
