@@ -5,13 +5,13 @@ extends Control
 @onready var load_image: Button = $HBoxContainer/LoadImage
 @onready var load_ptd: Button = $HBoxContainer/LoadPTD
 @onready var file_load_ptd: FileDialog = $FILELoadPTD
-@onready var remove_alpha_box: CheckBox = $"VBoxContainer/Remove Alpha"
+@onready var fix_alpha_box: CheckBox = $"VBoxContainer/Fix Alpha"
 @onready var output_debug: CheckBox = $"VBoxContainer/Output Debug"
 
 var folder_path: String
 var selected_files: PackedStringArray
 var selected_ptds: PackedStringArray
-var remove_alpha: bool = true
+var fix_alpha: bool = true
 var debug_out: bool = false
 
 # TODO: Make sense of number of colors in an image. See make_img()
@@ -20,12 +20,12 @@ func _ready() -> void:
 	if Main.game_type == Main.ROSARIO:
 		load_image.show()
 		load_ptd.hide()
-		remove_alpha_box.show()
+		fix_alpha_box.show()
 		output_debug.show()
 	elif Main.game_type == Main.JIGOKUSHOUJO:
 		load_image.hide()
 		load_ptd.show()
-		remove_alpha_box.hide()
+		fix_alpha_box.hide()
 	
 	
 func _process(_delta: float) -> void:
@@ -260,265 +260,363 @@ func extract_ptd() -> void:
 	
 	
 func lzr_decompress(compressed: PackedByteArray) -> PackedByteArray:
+	# --- Read header (pre-slice) ---
+	var decompressed_size: int = compressed.decode_u32(0x0C)
+	var control_bits: int = compressed.decode_u32(0x04)
+	var control_bytes: int = (control_bits + 7) >> 3        # ceil(control_bits / 8)
+	var total_symbols: int = control_bits >> 1              # 2 bits per symbol
+
+	# --- Prepare buffers ---
 	var out: PackedByteArray
-	var v0: int
-	var v1: int
-	var a0: int = 0  # Stack offset
-	var a1: int = 0 #compressed.size() - 0x10
-	var a2: int = 0  # Output offset
-	var a3: int
-	var t0: int
-	var t1: int
-	var t2: int
-	var t3: int
-	var t4: int
-	var t5: int
-	var t6: int
-	var t7: int
-	var t8: int
-	var t9: int
-	var s0: int
-	var s1: int
-	var s2: int
-	var s3: int
-	var s4: int
-	var s5: int
-	var dec_size: int = compressed.decode_u32(0xC)
-	var header_buff: PackedByteArray # Acts as a0 offset (pointer to stack)
-	
-	out.resize(dec_size)
-	header_buff.resize(0x20)
-	#header_buff.encode_u32(0, 0) # out offset
-	#header_buff.encode_u32(0x8, 0) # Compressed data start
-	header_buff.encode_u32(0xC, compressed.decode_u32(4))
-	header_buff.encode_u32(0x14, compressed.decode_u32(8))
-	t4 = compressed.decode_u32(4)
-	t7 = t4 + 7
-	t5 = t4 + 0xE
-	t6 = t7 > 0
-	if t6 == 0: # How can this ever happen? Who knows.
-		t7 = t5
-	header_buff.encode_u32(0x10, t7 >> 3)
-	compressed = compressed.slice(0x10)
-	
-	var goto: String = "init"
-	while true:
-		match goto:
-			"init":
-				t1 = header_buff.decode_u32(0xC)
-				t3 = header_buff.decode_u32(0)
-				t0 = 0xC0
-				t7 = t1 >> 31
-				t7 = t1 + t7
-				a2 = 0
-				t7 >>= 1
-				t6 = t3
-				a3 = header_buff.decode_u32(0x8) # Compressed data start off
-				t2 = header_buff.decode_u32(0x10) # Some new offset pointer
-				if t7 <= 0:
-					goto = "00145334"
-				else:
-					a1 = 0xC
-					v0 = 2
-					s2 = 1
-					s0 = 4
-					s5 = 8
-					v1 = 0x30
-					t8 = 0x10
-					s1 = 0x20
-					t9 = 0x80
-					s3 = 0x40
-					s4 = 0xC0
-					t7 = compressed.decode_u8(a3)
-					goto = "00145280"
-			"00145280":
-				t6 = t7 & t0
-				t7 = t6 < 0xD
-				if t6 == a1:
-					goto = "001453A8"
-				elif t7 == 0:
-					goto = "00145400"
-				else:
-					goto = "00145294" # Fake but needed since we don't have proper gotos
-			"00145294":
-				t7 = t6 < 0x3
-				if t6 == v0:
-					goto = "0014536C"
-				elif t7 == 0:
-					goto = "00145354"
-				elif t6 == 0:
-					goto = "00145340"
-					t7 = compressed.decode_u8(t2)
-				elif t6 == s2:
-					goto = "001452D8"
-					t5 = compressed.decode_u8(t2)
-				else:
+	out.resize(decompressed_size)
+
+	# Slice away the 0x10-byte file header so indexes are local to the data block.
+	var data: PackedByteArray = compressed.slice(0x10)
+
+	# Control stream pointers
+	var ctrl_index: int = 0                                  # which control byte we’re on
+	var shift: int = 6                                       # bit position inside control byte: 6,4,2,0
+	var ctrl_byte: int = 0
+	if control_bytes > 0:
+		ctrl_byte = data.decode_u8(0)
+
+	# Payload pointer (starts immediately after the control stream)
+	var payload_index: int = control_bytes
+
+	# Output pointer
+	var out_index: int = 0
+
+	# --- Decode loop ---
+	var symbols_used: int = 0
+	while out_index < decompressed_size and symbols_used < total_symbols:
+		# Extract the next 2-bit code from the control stream
+		var code: int = (ctrl_byte >> shift) & 0x3
+		symbols_used += 1
+
+		# Move to next 2 bits for the next iteration
+		shift -= 2
+		if shift < 0:
+			shift = 6
+			ctrl_index += 1
+			if ctrl_index < control_bytes:
+				ctrl_byte = data.decode_u8(ctrl_index)
+
+		match code:
+			0: # 00 — single literal byte
+				if payload_index >= data.size():
 					break
-			"001452D4":
-				t5 = compressed.decode_u8(t2)
-				goto = "001452D8"
-			"001452D8":
-				t4 = 0
-				t2 += 1
-				if t5 == 0:
-					goto = "00145304"
-				else:
-					t6 = 1
-					while t6 != 0:
-						t7 = compressed.decode_u8(t2)
-						t4 += 1
-						t6 = t4 < t5
-						out.encode_s8(t3, t7)
-						t2 += 1
-						t3 += 1
-					t1 = header_buff.decode_u32(0xC)
-					goto = "00145304"
-			"00145304":
-				t0 >>= 2
-				t7 = t1 >> 31
-				if t0 != 0:
-					goto = "00145318"
-				else:
-					t0 = 0xC0
-					a3 += 1
-					goto = "00145318"
-			"00145318":
-				a2 += 1
-				t7 = t1 + t7
-				t7 >>= 1
-				t7 = a2 < t7
-				if t7 != 0:
-					goto = "00145280"
-					t7 = compressed.decode_u8(a3)
-				else:
-					goto = "00145334"
-			"00145334":
-				t6 = header_buff.decode_u32(0)
-				t7 =  t4 - t6
-				# goto = "001452B4"
-				header_buff.encode_s32(4, t7)
-				break
-			"00145340":
-				out.encode_s8(t3, t7)
-				t2 += 1
-				t1 = header_buff.decode_u32(0xC)
-				goto = "00145304"
-				t3 += 1
-			"00145354":
-				t7 = t6 < 4
-				if t6 == s0:
-					goto = "001452D4"
-				else:
-					if t7 != 0:
-						goto = "001453AC"
-						t5 = compressed.decode_u8(t2 + 1)
-					elif t6 != s5:
-						break
-					else:
-						goto = "0014536C"
-			"0014536C":
-				t5 = compressed.decode_u8(t2)
-				goto = "00145370"
-			"00145370":
-				t4 = 0
-				t2 += 1
-				t6 = compressed.decode_u8(t2)
-				t2 += 1
-				if t5 == 0:
-					goto = "00145304"
-				else:
-					t7 = 1
-					while t7 != 0:
-						out.encode_s8(t3, t6)
-						t4 += 1
-						t7 = t4 < t5
-						t3 += 1
-					goto = "00145304"
-					t1 = header_buff.decode_u32(0xC)
-			"001453A8":
-				t5 = compressed.decode_u8(t2 + 1)
-				goto = "001453AC"
-			"001453AC":
-				t6 = compressed.decode_u8(t2)
-				t7 = t5 & 0xFF
-				t6 <<= 4
-				t7 >>= 4
-				t5 &= 0xF
-				t6 = t6 + t7
-				t5 &= 0xFF # but why
-				t6 = t3 - t6
-				t2 += 2
-				if t5 == 0:
-					goto = "00145304"
-				else:
-					t4 = t5
-					t7 = out.decode_u8(t6)
-					t4 -= 1
-					out.encode_s8(t3, t7)
-					t6 += 1
-					t3 += 1
-					while t4 != 0:
-						t7 = out.decode_u8(t6)
-						t4 -= 1
-						out.encode_s8(t3, t7)
-						t6 += 1
-						t3 += 1
-					goto = "00145304"
-					t1 = header_buff.decode_u32(0xC)
-			"00145400":
-				t7 = t6 < 0x31
-				if t6 == v1:
-					goto = "001453A8"
-				elif t7 == 0:
-					goto = "00145428"
-				elif t6 == t8:
-					goto = "001452D8"
-					t5 = compressed.decode_u8(t2)
-				elif t6 == s1:
-					goto = "00145370"
-					t5 = compressed.decode_u8(t2)
-				else:
+				out.encode_u8(out_index, data.decode_u8(payload_index))
+				payload_index += 1
+				out_index += 1
+
+			1: # 01 — copy N literal bytes (N = next payload byte)
+				if payload_index >= data.size():
 					break
-			"00145428":
-				t7 = t6 < 0x81
-				if t6 == t9:
-					goto = "0014536C"
-				elif t7 == 0:
-					goto = "00145448"
-				elif t6 == s3:
-					goto = "001452D8"
-					t5 = compressed.decode_u8(t2)
-				else:
+				var length: int = data.decode_u8(payload_index)
+				payload_index += 1
+				if length > 0:
+					# Copy `length` raw bytes from payload to output
+					var end_pi: int = min(payload_index + length, data.size())
+					while payload_index < end_pi and out_index < decompressed_size:
+						out.encode_u8(out_index, data.decode_u8(payload_index))
+						payload_index += 1
+						out_index += 1
+
+			2: # 10 — RLE fill (length, value)
+				if payload_index + 1 >= data.size():
 					break
-			"00145448":
-				if t6 == s4:
-					goto = "001453AC"
-					t5 = compressed.decode_u8(t2 + 1)
-				else:
+				var length: int = data.decode_u8(payload_index)
+				var value: int  = data.decode_u8(payload_index + 1)
+				payload_index += 2
+				if length > 0:
+					for _i in range(length):
+						if out_index >= decompressed_size:
+							break
+						out.encode_u8(out_index, value)
+						out_index += 1
+
+			3: # 11 — back-reference (offset12, length4) packed in 2 bytes
+				if payload_index + 1 >= data.size():
 					break
+				var b0: int = data.decode_u8(payload_index)
+				var b1: int = data.decode_u8(payload_index + 1)
+				payload_index += 2
+
+				var offset: int = (b0 << 4) | (b1 >> 4)   # 12-bit offset
+				var length: int = b1 & 0x0F               # 4-bit length
+
+				if length > 0:
+					var src: int = out_index - offset
+					for _i in range(length):
+						if out_index >= decompressed_size:
+							break
+						var byte_val: int = out.decode_u8(src)
+						out.encode_u8(out_index, byte_val)
+						src += 1
+						out_index += 1
 	return out
+	
+	
+#func lzr_decompress_mips(compressed: PackedByteArray) -> PackedByteArray:
+	#var out: PackedByteArray
+	#var v0: int
+	#var v1: int
+	#var a0: int = 0  # Stack offset
+	#var a1: int = 0 #compressed.size() - 0x10
+	#var a2: int = 0  # Output offset
+	#var a3: int
+	#var t0: int
+	#var t1: int
+	#var t2: int
+	#var t3: int
+	#var t4: int
+	#var t5: int
+	#var t6: int
+	#var t7: int
+	#var t8: int
+	#var t9: int
+	#var s0: int
+	#var s1: int
+	#var s2: int
+	#var s3: int
+	#var s4: int
+	#var s5: int
+	#var dec_size: int = compressed.decode_u32(0xC)
+	#var header_buff: PackedByteArray # Acts as a0 offset (pointer to stack)
+	#
+	#out.resize(dec_size)
+	#header_buff.resize(0x20)
+	##header_buff.encode_u32(0, 0) # out offset
+	##header_buff.encode_u32(0x8, 0) # Compressed data start
+	#header_buff.encode_u32(0xC, compressed.decode_u32(4))
+	#header_buff.encode_u32(0x14, compressed.decode_u32(8))
+	#t4 = compressed.decode_u32(4)
+	#t7 = t4 + 7
+	#t5 = t4 + 0xE
+	#t6 = t7 > 0
+	#if t6 == 0: # How can this ever happen? Who knows.
+		#t7 = t5
+	#header_buff.encode_u32(0x10, t7 >> 3)
+	#compressed = compressed.slice(0x10)
+	#
+	#var goto: String = "init"
+	#while true:
+		#match goto:
+			#"init":
+				#t1 = header_buff.decode_u32(0xC)
+				#t3 = header_buff.decode_u32(0)
+				#t0 = 0xC0
+				#t7 = t1 >> 31
+				#t7 = t1 + t7
+				#a2 = 0
+				#t7 >>= 1
+				#t6 = t3
+				#a3 = header_buff.decode_u32(0x8) # Compressed data start off
+				#t2 = header_buff.decode_u32(0x10) # Some new offset pointer
+				#if t7 <= 0:
+					#goto = "00145334"
+				#else:
+					#a1 = 0xC
+					#v0 = 2
+					#s2 = 1
+					#s0 = 4
+					#s5 = 8
+					#v1 = 0x30
+					#t8 = 0x10
+					#s1 = 0x20
+					#t9 = 0x80
+					#s3 = 0x40
+					#s4 = 0xC0
+					#t7 = compressed.decode_u8(a3)
+					#goto = "00145280"
+			#"00145280":
+				#t6 = t7 & t0
+				#t7 = t6 < 0xD
+				#if t6 == a1:
+					#goto = "001453A8"
+				#elif t7 == 0:
+					#goto = "00145400"
+				#else:
+					#goto = "00145294" # Fake but needed since we don't have proper gotos
+			#"00145294":
+				#t7 = t6 < 0x3
+				#if t6 == v0:
+					#goto = "0014536C"
+				#elif t7 == 0:
+					#goto = "00145354"
+				#elif t6 == 0:
+					#goto = "00145340"
+					#t7 = compressed.decode_u8(t2)
+				#elif t6 == s2:
+					#goto = "001452D8"
+					#t5 = compressed.decode_u8(t2)
+				#else:
+					#break
+			#"001452D4":
+				#t5 = compressed.decode_u8(t2)
+				#goto = "001452D8"
+			#"001452D8":
+				#t4 = 0
+				#t2 += 1
+				#if t5 == 0:
+					#goto = "00145304"
+				#else:
+					#t6 = 1
+					#while t6 != 0:
+						#t7 = compressed.decode_u8(t2)
+						#t4 += 1
+						#t6 = t4 < t5
+						#out.encode_s8(t3, t7)
+						#t2 += 1
+						#t3 += 1
+					#t1 = header_buff.decode_u32(0xC)
+					#goto = "00145304"
+			#"00145304":
+				#t0 >>= 2
+				#t7 = t1 >> 31
+				#if t0 != 0:
+					#goto = "00145318"
+				#else:
+					#t0 = 0xC0
+					#a3 += 1
+					#goto = "00145318"
+			#"00145318":
+				#a2 += 1
+				#t7 = t1 + t7
+				#t7 >>= 1
+				#t7 = a2 < t7
+				#if t7 != 0:
+					#goto = "00145280"
+					#t7 = compressed.decode_u8(a3)
+				#else:
+					#goto = "00145334"
+			#"00145334":
+				#t6 = header_buff.decode_u32(0)
+				#t7 =  t4 - t6
+				## goto = "001452B4"
+				#header_buff.encode_s32(4, t7)
+				#break
+			#"00145340":
+				#out.encode_s8(t3, t7)
+				#t2 += 1
+				#t1 = header_buff.decode_u32(0xC)
+				#goto = "00145304"
+				#t3 += 1
+			#"00145354":
+				#t7 = t6 < 4
+				#if t6 == s0:
+					#goto = "001452D4"
+				#else:
+					#if t7 != 0:
+						#goto = "001453AC"
+						#t5 = compressed.decode_u8(t2 + 1)
+					#elif t6 != s5:
+						#break
+					#else:
+						#goto = "0014536C"
+			#"0014536C":
+				#t5 = compressed.decode_u8(t2)
+				#goto = "00145370"
+			#"00145370":
+				#t4 = 0
+				#t2 += 1
+				#t6 = compressed.decode_u8(t2)
+				#t2 += 1
+				#if t5 == 0:
+					#goto = "00145304"
+				#else:
+					#t7 = 1
+					#while t7 != 0:
+						#out.encode_s8(t3, t6)
+						#t4 += 1
+						#t7 = t4 < t5
+						#t3 += 1
+					#goto = "00145304"
+					#t1 = header_buff.decode_u32(0xC)
+			#"001453A8":
+				#t5 = compressed.decode_u8(t2 + 1)
+				#goto = "001453AC"
+			#"001453AC":
+				#t6 = compressed.decode_u8(t2)
+				#t7 = t5 & 0xFF
+				#t6 <<= 4
+				#t7 >>= 4
+				#t5 &= 0xF
+				#t6 = t6 + t7
+				#t5 &= 0xFF # but why
+				#t6 = t3 - t6
+				#t2 += 2
+				#if t5 == 0:
+					#goto = "00145304"
+				#else:
+					#t4 = t5
+					#t7 = out.decode_u8(t6)
+					#t4 -= 1
+					#out.encode_s8(t3, t7)
+					#t6 += 1
+					#t3 += 1
+					#while t4 != 0:
+						#t7 = out.decode_u8(t6)
+						#t4 -= 1
+						#out.encode_s8(t3, t7)
+						#t6 += 1
+						#t3 += 1
+					#goto = "00145304"
+					#t1 = header_buff.decode_u32(0xC)
+			#"00145400":
+				#t7 = t6 < 0x31
+				#if t6 == v1:
+					#goto = "001453A8"
+				#elif t7 == 0:
+					#goto = "00145428"
+				#elif t6 == t8:
+					#goto = "001452D8"
+					#t5 = compressed.decode_u8(t2)
+				#elif t6 == s1:
+					#goto = "00145370"
+					#t5 = compressed.decode_u8(t2)
+				#else:
+					#break
+			#"00145428":
+				#t7 = t6 < 0x81
+				#if t6 == t9:
+					#goto = "0014536C"
+				#elif t7 == 0:
+					#goto = "00145448"
+				#elif t6 == s3:
+					#goto = "001452D8"
+					#t5 = compressed.decode_u8(t2)
+				#else:
+					#break
+			#"00145448":
+				#if t6 == s4:
+					#goto = "001453AC"
+					#t5 = compressed.decode_u8(t2 + 1)
+				#else:
+					#break
+	#return out
 
 
 func make_img(data: PackedByteArray) -> Image:
 	var bpp: int = data.decode_u16(0) # 1 = 8bb, 2 = 16bpp, 3 = 32bpp
 	var image_width: int = data.decode_u16(2)
 	var image_height: int = data.decode_u16(4)
-	var num_colors: int = data.decode_u16(6) # Determines palette size as well
-	if num_colors != 256:
-		push_error("Number of colors in image isn't 256. Output will be wrong!")
+	#var num_colors: int = data.decode_u16(6) # Determines palette size as well
+	#if num_colors != 256:
+		#push_error("Number of colors in image isn't 256. Output will be wrong!")
 		#return Image.create(1, 1, false, Image.FORMAT_RGBA8)
 	if bpp != 1:
 		push_error("image bpp isn't 8. Output will be wrong!")
 		#return Image.create(1, 1, false, Image.FORMAT_RGBA8)
 
 	var palette_offset: int = data.decode_u32(0x8) + 0x10
+	var pal_size: int = data.size() - palette_offset
 	var palette: PackedByteArray = PackedByteArray()
-	if num_colors == 256:
-		for i in range(0, 0x400):
-			palette.append(data.decode_u8(palette_offset + i))
-		palette = ComFuncs.unswizzle_palette(palette, 32)
-		if remove_alpha:
-			for i in range(0, 0x400, 4):
+	if bpp == 1:
+		palette = data.slice(palette_offset)
+		palette = unswizzle_palette(palette, pal_size, 4)
+		if fix_alpha:
+			for i in range(0, pal_size, 4):
 				var a: int = int((palette.decode_u8(i + 3) / 128.0) * 255.0)
 				palette.encode_u8(i + 3, a)
 	else:
@@ -542,6 +640,24 @@ func make_img(data: PackedByteArray) -> Image:
 	return image
 	
 	
+func unswizzle_palette(pal_buffer: PackedByteArray, pal_size: int, nbpp: int) -> PackedByteArray:
+	var pal: PackedByteArray
+	var num_colors: int = pal_size / nbpp
+	var pos: int
+	
+	pal.resize(pal_size)
+	for p in range(num_colors):
+		# Same swizzle formula, but limited to available colors
+		pos = ((p & 231) + ((p & 8) << 1) + ((p & 16) >> 1))
+		
+		# Only remap if within bounds (important for smaller palettes like 16 or 64 colors)
+		if pos < num_colors:
+			for i in range(nbpp):
+				pal[pos * nbpp + i] = pal_buffer[p * nbpp + i]
+	
+	return pal
+	
+	
 func _on_load_image_pressed() -> void:
 	file_load_image.show()
 
@@ -555,8 +671,8 @@ func _on_file_load_folder_dir_selected(dir: String) -> void:
 	folder_path = dir
 
 
-func _on_remove_alpha_toggled(_toggled_on: bool) -> void:
-	remove_alpha = !remove_alpha
+func _on_fix_alpha_toggled(_toggled_on: bool) -> void:
+	fix_alpha = !fix_alpha
 
 
 func _on_output_debug_toggled(_toggled_on: bool) -> void:
