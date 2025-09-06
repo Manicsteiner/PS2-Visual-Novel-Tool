@@ -52,6 +52,7 @@ enum {
 	DOUBLEREACTION,
 	DOUBLEWISH,
 	EF,
+	EIENNOASELIA,
 	ELYSION,
 	ERDE,
 	ETUDE,
@@ -1247,6 +1248,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = HOKENSHITSU
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
+	elif index == EIENNOASELIA:
+		game_type_sub_text.text = "Supports:\nExtraction, images (BMP, PNG)."
+		game_type_selector.select(EIENNOASELIA)
+		game_type = EIENNOASELIA
+		var next_scene: PackedScene = load("res://src/scenes/Xuse.tscn")
+		sceneChanger(next_scene)
 	elif index == DESIRE:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(DESIRE)
@@ -2189,6 +2196,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Double Reaction! Plus", DOUBLEREACTION)
 	game_type_selector.add_item("Double Wish (WWish)", DOUBLEWISH)
 	game_type_selector.add_item("ef: A Fairy Tale of the Two", EF)
+	game_type_selector.add_item("Eien no Aselia: Kono Daichi no Hate de", EIENNOASELIA)
 	game_type_selector.add_item("Elysion: Eien no Sanctuary", ELYSION)
 	game_type_selector.add_item("Erde: Nezu no Ki no Shita de", ERDE)
 	game_type_selector.add_item("E'tude Prologue: Yureugoku Kokoro no Katachi", ETUDE)
