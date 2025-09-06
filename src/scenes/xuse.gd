@@ -63,9 +63,10 @@ func extract_ard() -> void:
 					var png: Image = make_indexed_image(buff)
 					png.save_png(folder_path + "/%s" % arc_name + "/%s" % f_name + ".SZ3.PNG")
 					
-					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name + ".SZ3.DEC", FileAccess.WRITE)
-					out_file.store_buffer(buff)
-					out_file.close()
+					if ComFuncs.swapNumber(buff.decode_u16(4), "16") == 3:
+						var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name + ".SZ3.DEC", FileAccess.WRITE)
+						out_file.store_buffer(buff)
+						out_file.close()
 				else:
 					var out_file: FileAccess = FileAccess.open(folder_path + "/%s" % arc_name + "/%s" % f_name + ".SZ3.DEC", FileAccess.WRITE)
 					out_file.store_buffer(buff)
