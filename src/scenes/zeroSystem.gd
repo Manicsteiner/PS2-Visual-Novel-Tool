@@ -261,6 +261,39 @@ func extractBin() -> void:
 					buff.clear()
 					
 					print("%08X %08X %s%s" % [offset, f_size, folder_path, f_name])
+			elif Main.game_type == Main.SORAIROFUUKIN:
+				in_file = FileAccess.open(selected_file, FileAccess.READ)
+				
+				var num_files: int = in_file.get_32()
+				var file_tbl: int = in_file.get_32()
+				
+				for files in range(0, num_files):
+					in_file.seek((files * 0x20) + file_tbl)
+					f_name = in_file.get_buffer(0x14).get_string_from_ascii()
+					f_size = in_file.get_32()
+					offset = in_file.get_32()
+					var unk32: int = in_file.get_32()
+					
+					print("%08X %08X %s/%s" % [offset, f_size, folder_path, f_name])
+					
+					in_file.seek(offset)
+					buff = in_file.get_buffer(f_size)
+					
+					if buff.slice(0, 3).get_string_from_ascii() == "LZS":
+						f_size = buff.decode_u32(4)
+						buff = ComFuncs.decompLZSS(buff.slice(8), buff.size() - 8, f_size)
+						
+					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+						for i in range(pngs.size()):
+							var png: Image = pngs[i]
+							png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  i)
+							
+					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+					out_file.store_buffer(buff)
+					out_file.close()
+					
+					buff.clear()
 			else:
 				in_file = FileAccess.open(selected_file, FileAccess.READ)
 				
