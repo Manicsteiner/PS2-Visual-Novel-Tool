@@ -122,8 +122,6 @@ func extractBin() -> void:
 				
 				if f_size < 0 or f_size == 0xFFFFFFFF:
 					break
-					
-				if type != 1: continue
 				
 				in_file.seek(offset)
 				buff = in_file.get_buffer(f_size)
