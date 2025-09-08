@@ -350,7 +350,7 @@ func extractBin() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
-					if f_name.get_extension() == "ext":
+					if Main.game_type != Main.KIMIGANOZOMUEIEN and f_name.get_extension() == "ext":
 						var png: Image = make_ext_img(buff)
 						png.save_png(folder_path + "/%s" % f_name + ".PNG")
 					

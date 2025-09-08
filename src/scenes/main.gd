@@ -124,6 +124,7 @@ enum {
 	KAZEIROSURF,
 	KIDOUSHINSENGUMI,
 	KIMIGAARUJI,
+	KIMIGANOZOMUEIEN,
 	KIMIKISS,
 	KIMISUTA,
 	KIRAKIRA, 
@@ -1000,6 +1001,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_sub_text.text = "Supports 'Sorairo no Fuukin Remix'."
 		game_type_selector.select(SORAIROFUUKIN)
 		game_type = SORAIROFUUKIN
+		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == KIMIGANOZOMUEIEN:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2, PNG)."
+		game_type_selector.select(KIMIGANOZOMUEIEN)
+		game_type = KIMIGANOZOMUEIEN
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == OTONANOGALJAN2:
@@ -2268,6 +2275,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Kazeiro Surf", KAZEIROSURF)
 	game_type_selector.add_item("Kidou Shinsengumi: Moe yo Ken", KIDOUSHINSENGUMI)
 	game_type_selector.add_item("Kimi ga Aruji de Shitsuji ga Ore de: Otsukae Nikki", KIMIGAARUJI)
+	game_type_selector.add_item("Kimi ga Nozomu Eien: Rumbling Hearts", KIMIGANOZOMUEIEN)
 	game_type_selector.add_item("KimiKiss", KIMIKISS)
 	game_type_selector.add_item("KimiSuta: Kimi to Study", KIMISUTA)
 	game_type_selector.add_item("Kira Kira: Rock 'N' Roll Show", KIRAKIRA)
