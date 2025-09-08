@@ -123,6 +123,8 @@ func extractBin() -> void:
 				if f_size < 0 or f_size == 0xFFFFFFFF:
 					break
 					
+				if type != 1: continue
+				
 				in_file.seek(offset)
 				buff = in_file.get_buffer(f_size)
 				
@@ -150,7 +152,7 @@ func extractBin() -> void:
 								f_name = "TAK%05d_%02d.TM2" % [id, num]
 								var pngs: Array[Image]
 								if Main.game_type == Main.SCHOOLNI:
-									pngs = load_tim2_images_mod(tak_data, false, false)
+									pngs = load_tim2_images_mod(tak_data, false)
 								else:
 									pngs = ComFuncs.load_tim2_images(tak_data, false, true)
 									
@@ -184,7 +186,7 @@ func extractBin() -> void:
 					f_name = "VIS%05d.TM2" % id
 					var pngs: Array[Image]
 					if Main.game_type == Main.SCHOOLNI:
-						pngs = load_tim2_images_mod(buff, false, false)
+						pngs = load_tim2_images_mod(buff, false)
 					else:
 						pngs = ComFuncs.load_tim2_images(buff, false, true)
 						
@@ -206,7 +208,7 @@ func extractBin() -> void:
 							
 							var pngs: Array[Image]
 							if Main.game_type == Main.SCHOOLNI:
-								pngs = load_tim2_images_mod(buff, false, true)
+								pngs = load_tim2_images_mod(buff, false)
 							else:
 								pngs = ComFuncs.load_tim2_images(buff, false, true)
 								
@@ -502,8 +504,11 @@ func upac_parse(buff: PackedByteArray) -> Array:
 	return buffer
 	
 	
-func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true) -> Array[Image]:
+func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:
 	# don't move pic offset by 16 if more than 1 image
+	# swizzled palette detection
+	# update into ComFuncs if this is a sure way to detect swizzled palettes?
+	
 	var images: Array[Image] = []
 
 	# Check magic
@@ -543,7 +548,7 @@ func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true, is_swiz
 		var palette: Array[Color] = []
 		if clut_size > 0:
 			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
-			if is_swizzled and clut_colors == 256:
+			if clut_color_type & 128 == 0 and clut_colors == 256:
 				pal_bytes = ComFuncs.unswizzle_palette(pal_bytes, 32)
 				
 			# Apply alpha correction ONLY for indexed formats
