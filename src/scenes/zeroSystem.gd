@@ -148,7 +148,12 @@ func extractBin() -> void:
 							
 							if tak_data.slice(0, 4).get_string_from_ascii() == "TIM2":
 								f_name = "TAK%05d_%02d.TM2" % [id, num]
-								var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+								var pngs: Array[Image]
+								if Main.game_type == Main.SCHOOLNI:
+									pngs = load_tim2_images_mod(tak_data, false, false)
+								else:
+									pngs = ComFuncs.load_tim2_images(tak_data, false, true)
+									
 								for p in range(pngs.size()):
 									var png: Image = pngs[p]
 									png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
@@ -177,7 +182,12 @@ func extractBin() -> void:
 					f_name = "TAK%05d.BIN" % id
 				elif type == 0x01:
 					f_name = "VIS%05d.TM2" % id
-					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, false, true)
+					var pngs: Array[Image]
+					if Main.game_type == Main.SCHOOLNI:
+						pngs = load_tim2_images_mod(buff, false, false)
+					else:
+						pngs = ComFuncs.load_tim2_images(buff, false, true)
+						
 					for p in range(pngs.size()):
 						var png: Image = pngs[p]
 						png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
@@ -193,6 +203,16 @@ func extractBin() -> void:
 							f_name = "SRE%05d.TM2" % id
 							f_size = arr[1]
 							buff = arr[2]
+							
+							var pngs: Array[Image]
+							if Main.game_type == Main.SCHOOLNI:
+								pngs = load_tim2_images_mod(buff, false, true)
+							else:
+								pngs = ComFuncs.load_tim2_images(buff, false, true)
+								
+							for p in range(pngs.size()):
+								var png: Image = pngs[p]
+								png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
 						else:
 							f_name = "SRE%05d.BIN" % id
 							if arr[1] != 0:
@@ -480,6 +500,134 @@ func upac_parse(buff: PackedByteArray) -> Array:
 	buffer.append(f_size)
 	buffer.append(buff)
 	return buffer
+	
+	
+func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true) -> Array[Image]:
+	# don't move pic offset by 16 if more than 1 image
+	var images: Array[Image] = []
+
+	# Check magic
+	if data.slice(0, 4).get_string_from_ascii() != "TIM2":
+		push_error("Not a TIM2 file")
+		return images
+
+	var tm2_version: int = data.decode_u8(5)
+	if tm2_version > 1:
+		push_error("Unknown TIM2 version %02X" % tm2_version)
+		return images
+		
+	var picture_count: int = data.decode_u16(6)
+	if picture_count <= 0:
+		push_error("No pictures found")
+		return images
+
+	var pic_offset: int = 0x10
+	for p in range(picture_count):
+		if tm2_version == 1: pic_offset += 0x70
+		var total_size: int = data.decode_u32(pic_offset)
+		var clut_size: int = data.decode_u32(pic_offset + 4)
+		var img_size: int = data.decode_u32(pic_offset + 8)
+		var header_size: int = data.decode_u16(pic_offset + 0x0C)
+		var clut_colors: int = data.decode_u16(pic_offset + 0x0E)
+		var pic_format: int = data.decode_u8(pic_offset + 0x10)
+		var mipmap_count: int = data.decode_u8(pic_offset + 0x11)
+		var clut_color_type: int = data.decode_u8(pic_offset + 0x12)
+		var img_color_type: int = data.decode_u8(pic_offset + 0x13)
+		var width: int = data.decode_u16(pic_offset + 0x14)
+		var height: int = data.decode_u16(pic_offset + 0x16)
+
+		var img_data_offset: int = pic_offset + header_size
+		var clut_data_offset: int = img_data_offset + img_size
+
+		# --- Palette (CLUT) ---
+		var palette: Array[Color] = []
+		if clut_size > 0:
+			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
+			if is_swizzled and clut_colors == 256:
+				pal_bytes = ComFuncs.unswizzle_palette(pal_bytes, 32)
+				
+			# Apply alpha correction ONLY for indexed formats
+			if fix_alpha:
+				match img_color_type:
+					3, 5:
+						for j in range(3, pal_bytes.size(), 4):
+							var a: int = int((pal_bytes.decode_u8(j) / 128.0) * 255.0)
+							pal_bytes.encode_u8(j, a)
+							
+			for i in range(clut_colors):
+				var col: int = pal_bytes.decode_u32(i * 4)
+				var r: int =  col        & 0xFF
+				var g: int = (col >> 8)  & 0xFF
+				var b: int = (col >> 16) & 0xFF
+				var a: int = (col >> 24) & 0xFF
+				palette.append(Color8(r, g, b, a))
+
+		# --- Image decode ---
+		var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+
+		match img_color_type:
+			1: 
+				# 1: 16-bit A1B5G5R5  (bits: R=0..4, G=5..9, B=10..14, A=15)
+				for y in range(height):
+					for x in range(width):
+						var idx: int = (y * width + x) * 2
+						var px: int = data.decode_u16(img_data_offset + idx)
+						var a1: int = (px >> 15) & 1
+						var r5: int = (px >> 0) & 0x1F
+						var g5: int = (px >> 5) & 0x1F
+						var b5: int = (px >> 10) & 0x1F
+						# expand 5->8 bits (better than <<3):
+						var r: int = (r5 << 3) | (r5 >> 2)
+						var g: int = (g5 << 3) | (g5 >> 2)
+						var b: int = (b5 << 3) | (b5 >> 2)
+						var a: int = 255 if a1 else 0
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			2:  # 24-bit RGB888 -> bytes [R, G, B] per pixel
+				for y in range(height):
+					for x in range(width):
+						var idx: int = (y * width + x) * 3
+						var r: int = data.decode_u8(img_data_offset + idx + 0)
+						var g: int = data.decode_u8(img_data_offset + idx + 1)
+						var b: int = data.decode_u8(img_data_offset + idx + 2)
+						var a: int = 255
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			3:  # 32-bit A8B8G8R8  -> bytes [R, G, B, A] in stream (little-endian)
+				for y in range(height):
+					for x in range(width):
+						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
+						var r: int =  col        & 0xFF
+						var g: int = (col >> 8)  & 0xFF
+						var b: int = (col >> 16) & 0xFF
+						var a: int = (col >> 24) & 0xFF
+						if fix_alpha: 
+							a = int((a / 128.0) * 255.0)
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			4:  # 4-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var byte: int = data.decode_u8(img_data_offset + ((y * width + x) >> 1))
+						var idx: int = (byte & 0x0F) if (x & 1) == 0 else ((byte >> 4) & 0x0F)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			5:  # 8-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var idx: int = data.decode_u8(img_data_offset + y * width + x)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			_:
+				push_error("Unsupported TIM2 image color type: %d" % img_color_type)
+
+		images.append(img)
+
+		# Move to next picture block
+		pic_offset += total_size
+
+	return images
 	
 	
 func _on_load_exe_pressed() -> void:
