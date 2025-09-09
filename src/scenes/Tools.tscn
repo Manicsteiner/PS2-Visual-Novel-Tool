@@ -85,6 +85,7 @@ button_pressed = true
 text = "Fix Alpha Channel"
 
 [node name="TM2Swizzle" type="CheckBox" parent="VBoxContainer3"]
+visible = false
 layout_mode = 2
 button_pressed = true
 text = "Unswizzle Palettes"

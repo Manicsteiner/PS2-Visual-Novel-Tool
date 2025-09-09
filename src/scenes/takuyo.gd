@@ -71,6 +71,12 @@ func extract_arc() -> void:
 				in_file.seek(f_offset)
 				buff = in_file.get_buffer(f_size)
 				
+				if f_name.get_extension().to_lower() == "tm2":
+					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true)
+					for p in range(pngs.size()):
+						var png: Image = pngs[p]
+						png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
+				
 				out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
 				out_file.store_buffer(buff)
 			
@@ -103,6 +109,10 @@ func extract_arc() -> void:
 				var buff_str: String = buff.slice(0, 3).get_string_from_ascii()
 				if buff_str == "TIM": # TIM2
 					f_name += ".TM2"
+					var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true)
+					for p in range(pngs.size()):
+						var png: Image = pngs[p]
+						png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
 				elif buff_str == "SCR": # SCRx20
 					f_name += ".SCR"
 				elif buff_str == "LSD": # LSDx1A
@@ -114,6 +124,10 @@ func extract_arc() -> void:
 					buff = decompress_lsd(buff)
 					if buff.slice(0, 4).get_string_from_ascii() == "TIM2":
 						f_name += ".TM2"
+						var pngs: Array[Image] = ComFuncs.load_tim2_images(buff, true, false)
+						for p in range(pngs.size()):
+							var png: Image = pngs[p]
+							png.save_png(folder_path + "/%s" % f_name + "_%04d.PNG" %  p)
 					else:
 						f_name += ".BIN"
 				else:
