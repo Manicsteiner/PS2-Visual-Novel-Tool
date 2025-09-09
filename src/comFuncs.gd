@@ -324,6 +324,19 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 	if picture_count <= 0:
 		push_error("No pictures found")
 		return images
+		
+	var unswizzle_palette_tm2: Callable = func (pal_buffer: PackedByteArray, nbpp: int, pal_size: int = pal_buffer.size()) -> PackedByteArray:
+		# pal_size = total bytes in palette
+		# nbpp     = bytes per palette entry (2 for RGBA5551, 4 for RGBA8888, etc.)
+		var num_colors: int = pal_size / nbpp
+		var pal: PackedByteArray
+		pal.resize(pal_size)
+		for p in range(num_colors):
+			var pos: int = (p & 231) + ((p & 8) << 1) + ((p & 16) >> 1)
+			if pos < num_colors:
+				for i in range(nbpp):
+					pal[pos * nbpp + i] = pal_buffer[p * nbpp + i]
+		return pal
 
 	var pic_offset: int = 0x10
 	for p in range(picture_count):
@@ -347,24 +360,45 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 		var palette: Array[Color] = []
 		if clut_size > 0:
 			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
-			if is_swizzled and clut_colors == 256:
-				pal_bytes = ComFuncs.unswizzle_palette(pal_bytes, 32)
+			#if is_swizzled and clut_colors == 256:
+			if clut_color_type & 128 == 0 and clut_colors == 256:
+				var nbpp: int = 4
+				if clut_size == clut_colors * 2: nbpp = 2
+				pal_bytes = unswizzle_palette_tm2.call(pal_bytes, nbpp)
 				
 			# Apply alpha correction ONLY for indexed formats
 			if fix_alpha:
-				match img_color_type:
-					3, 5:
-						for j in range(3, pal_bytes.size(), 4):
-							var a: int = int((pal_bytes.decode_u8(j) / 128.0) * 255.0)
-							pal_bytes.encode_u8(j, a)
-							
-			for i in range(clut_colors):
-				var col: int = pal_bytes.decode_u32(i * 4)
-				var r: int =  col        & 0xFF
-				var g: int = (col >> 8)  & 0xFF
-				var b: int = (col >> 16) & 0xFF
-				var a: int = (col >> 24) & 0xFF
-				palette.append(Color8(r, g, b, a))
+				if clut_size == clut_colors * 4:
+					for j in range(3, pal_bytes.size(), 4):
+						var a: int = int((pal_bytes.decode_u8(j) / 128.0) * 255.0)
+						pal_bytes.encode_u8(j, a)
+						
+			# RGBA5551 palette (16-bit entries)
+			if clut_size == clut_colors * 2:
+				for i in range(clut_colors):
+					var px: int = pal_bytes.decode_u16(i * 2)
+					var r5: int = (px >> 0) & 0x1F
+					var g5: int = (px >> 5) & 0x1F
+					var b5: int = (px >> 10) & 0x1F
+					var a1: int = (px >> 15) & 0x01
+
+					# expand to 8-bit
+					var r: int = (r5 << 3) | (r5 >> 2)
+					var g: int = (g5 << 3) | (g5 >> 2)
+					var b: int = (b5 << 3) | (b5 >> 2)
+					var a: int = 255 if a1 else 0
+
+					palette.append(Color8(r, g, b, a))
+			# Standard 32-bit RGBA8 palette
+			elif clut_size == clut_colors * 4:
+				for i in range(clut_colors):
+					var r: int = pal_bytes.decode_u8(i * 4 + 0)
+					var g: int = pal_bytes.decode_u8(i * 4 + 1)
+					var b: int = pal_bytes.decode_u8(i * 4 + 2)
+					var a: int = pal_bytes.decode_u8(i * 4 + 3)
+					palette.append(Color8(r, g, b, a))
+			else:
+				push_error("Unexpected CLUT size %d for %d colors" % [clut_size, clut_colors])
 
 		# --- Image decode ---
 		var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
@@ -1105,7 +1139,7 @@ func tobpp(data:PackedByteArray, bpp:int) -> PackedByteArray:
 	return out
 	
 func unswizzle_palette(palBuffer: PackedByteArray, bpp: int) -> PackedByteArray:
-	# TODO: Update this function later with the one in ideaFactory.gd
+	# TODO: Update this function later with the one in compileHeart.gd
 	
 	var newPal:PackedByteArray
 	var pos:int
