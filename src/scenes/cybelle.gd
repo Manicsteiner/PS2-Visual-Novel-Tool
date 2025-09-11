@@ -279,7 +279,7 @@ func cybellePakExtract() -> void:
 				f_size = in_file.get_32()
 				pos = in_file.get_position()
 				
-			#if file != 97:
+			#if file != 0:
 				#continue
 				
 			if pak_name == "SCRIPT.PAK" or pak_name == "FONT.PAK":
@@ -320,6 +320,9 @@ func cybellePakExtract() -> void:
 				out_file.store_buffer(buff)
 				
 			f_name = pak_name + "_%04d" % file + ".BIN"
+			
+			#if f_name != "CHARCG.PAK_0082.BIN": continue
+			#if f_name != "CHARCG.PAK_0000.BIN": continue
 			
 			if bytes_2 == 0:
 				width = buff.decode_u16(0)
@@ -402,19 +405,30 @@ func cybellePakExtract() -> void:
 							var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, t_buff)
 							png.save_png(folder_path + "/%s" % f_name)
 						else:
-							t_buff = cCbsd(t_buff, 0x20)
-							if debug_out:
-								out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-								out_file.store_buffer(t_buff)
+							if t_buff.decode_u8(10) == 0xF:
+								var pal_size: int = t_buff.decode_u16(0x1E) << 1
+								var pal_bytes: PackedByteArray = t_buff.slice(0x20, 0x20 + pal_size)
+								t_buff = cCbsd(t_buff)
+								if debug_out:
+									out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+									out_file.store_buffer(t_buff)
 								
-							f_name += ".PNG"
-							var png: Image = ComFuncs.convert_rgb555_to_image(t_buff, width, height, true)
-							png.save_png(folder_path + "/%s" % f_name)
+								f_name += ".PNG"
+								var png: Image = rgb5551_4_banks(t_buff, pal_bytes, width, height)
+								png.save_png(folder_path + "/%s" % f_name)
+							else:
+								t_buff = cCbsd(t_buff, 0x20)
+								if debug_out:
+									out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+									out_file.store_buffer(t_buff)
+									
+								f_name += ".PNG"
+								var png: Image = ComFuncs.convert_rgb555_to_image(t_buff, width, height, true)
+								png.save_png(folder_path + "/%s" % f_name)
 						
 						print("%08X %08X %02X /%s/%s" % [f_offset, t_buff.size(), decomp_type, folder_path, f_name])
 					continue
 					
-			# TODO: If flag at 0x1F (Planetarian?) in header, has a palette? If flag is 4, seems to have a compressed palette?
 			if buff.decode_u8(10) == 0xC:
 				var pal: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x420)
 				#pal = ComFuncs.rgba_to_bgra(pal)
@@ -430,20 +444,103 @@ func cybellePakExtract() -> void:
 				var png: Image = Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, buff)
 				png.save_png(folder_path + "/%s" % f_name)
 			else:
-				buff = cCbsd(buff)
-				if debug_out:
-					out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
-					out_file.store_buffer(buff)
+				if buff.decode_u8(bytes_2 + 10) == 0xF:
+					var pal_size: int = buff.decode_u16(bytes_2 + 0x1E) << 1
+					var pal_bytes: PackedByteArray = buff.slice(bytes_2 + 0x20, bytes_2 + 0x20 + pal_size)
+					buff = cCbsd(buff)
+					if debug_out:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
 					
-				f_name += ".PNG"
-				var png: Image = ComFuncs.convert_rgb555_to_image(buff, width, height, true)
-				png.save_png(folder_path + "/%s" % f_name)
+					f_name += ".PNG"
+					var png: Image = rgb5551_4_banks(buff, pal_bytes, width, height)
+					png.save_png(folder_path + "/%s" % f_name)
+				else:
+					buff = cCbsd(buff)
+					if debug_out:
+						out_file = FileAccess.open(folder_path + "/%s" % f_name, FileAccess.WRITE)
+						out_file.store_buffer(buff)
+					
+					f_name += ".PNG"
+					var png: Image = ComFuncs.convert_rgb555_to_image(buff, width, height, true)
+					png.save_png(folder_path + "/%s" % f_name)
 			
 			print("%08X %08X %02X /%s/%s" % [f_offset, f_size, decomp_type, folder_path, f_name])
 	
 	print_rich("[color=green]Finished![/color]")
 	
 	
+func rgb5551_4_banks(data: PackedByteArray, pal_bytes: PackedByteArray, width: int, height: int) -> Image:
+	var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+	var palette: Array[Color] = []
+	var num_colors: int = pal_bytes.size() / 2
+
+	for i in range(num_colors):
+		var px: int = pal_bytes.decode_u16(i * 2)
+		var r5: int = (px >> 0) & 0x1F
+		var g5: int = (px >> 5) & 0x1F
+		var b5: int = (px >> 10) & 0x1F
+		var a1: int = (px >> 15) & 0x01 #?
+
+		var r: int = (r5 << 3) | (r5 >> 2)
+		var g: int = (g5 << 3) | (g5 >> 2)
+		var b: int = (b5 << 3) | (b5 >> 2)
+
+		#var a: int = 0 if i == 0 else (255 if a1 == 1 else 0)
+
+		#palette.append(Color8(r, g, b, a))
+		palette.append(Color8(r, g, b, 255)) #unsure what alpha is correct
+
+	for y in range(height):
+		for x in range(width):
+			var pixel_index: int = (y * width + x) * 2
+			var raw: int = data.decode_u16(pixel_index)
+			var bank: int = (raw >> 8) & 0x03
+			var lo: int = raw & 0xFF
+			var idx: int = bank * 256 + lo
+			if idx < palette.size():
+				img.set_pixel(x, y, palette[idx])
+			else:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+
+	return img
+	
+	
+#func convert_ps2_16bit_packed_alpha(raw_data: PackedByteArray, palette_data: PackedByteArray, width: int, height: int) -> Image:
+	#var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+	#
+	## Build 16-bit palette (BGR555, big-endian swap)
+	#var palette: Array = []
+	#for i in range(0, palette_data.size(), 2):
+		#var val: int = (palette_data[i] << 8) | palette_data[i + 1]  # big-endian
+		#var b: int = (val >> 0) & 0x1F
+		#var g: int = (val >> 5) & 0x1F
+		#var r: int = (val >> 10) & 0x1F
+		#
+		## Scale 5-bit to 8-bit
+		#r = (r << 3) | (r >> 2)
+		#g = (g << 3) | (g >> 2)
+		#b = (b << 3) | (b >> 2)
+		#
+		#palette.append(Color(r / 255.0, g / 255.0, b / 255.0, 1.0))  # temporarily full alpha
+	#
+	## Map raw image pixels (16-bit packed: 4-bit alpha + 12-bit palette index)
+	#for y in range(height):
+		#for x in range(width):
+			#var packed: int = raw_data.decode_u16((y * width + x) * 2)
+			#var alpha_4bit: int = (packed >> 12) & 0xF
+			#var idx_12bit: int = packed & 0x0FFF
+			#
+			#if idx_12bit >= palette.size():
+				#idx_12bit = palette.size() - 1
+			#
+			#var col: Color = palette[idx_12bit]
+			#col.a = alpha_4bit / 15.0  # convert 0–15 to 0.0–1.0
+			#img.set_pixel(x, y, col)
+	#
+	#return img
+
+
 func convert_rgb555_with_palette(image_data: PackedByteArray, width: int, height: int, palette_data: PackedByteArray) -> PackedByteArray:
 	var output_data = PackedByteArray()
 	
@@ -649,7 +746,6 @@ func cCbsd(input: PackedByteArray, header_off: int = 0) -> PackedByteArray:
 		0xD:
 			palette_size = 0x40
 		0xF:
-			# Possibly encrypted/compressed palettes. What are these and where does the game get the palettes from?
 			palette_size = input.decode_u16(0x1E) << 1
 		
 	var section_start: int  = input.decode_u32(0x10)
