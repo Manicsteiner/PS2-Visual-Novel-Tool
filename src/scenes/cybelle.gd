@@ -475,33 +475,35 @@ func rgb5551_4_banks(data: PackedByteArray, pal_bytes: PackedByteArray, width: i
 	var palette: Array[Color] = []
 	var num_colors: int = pal_bytes.size() / 2
 
+	# Palette is plain RGB555 (ignore alpha in palette)
 	for i in range(num_colors):
 		var px: int = pal_bytes.decode_u16(i * 2)
 		var r5: int = (px >> 0) & 0x1F
 		var g5: int = (px >> 5) & 0x1F
 		var b5: int = (px >> 10) & 0x1F
-		var a1: int = (px >> 15) & 0x01 #?
 
 		var r: int = (r5 << 3) | (r5 >> 2)
 		var g: int = (g5 << 3) | (g5 >> 2)
 		var b: int = (b5 << 3) | (b5 >> 2)
 
-		#var a: int = 0 if i == 0 else (255 if a1 == 1 else 0)
+		palette.append(Color8(r, g, b, 255))  # alpha overridden below
 
-		#palette.append(Color8(r, g, b, a))
-		palette.append(Color8(r, g, b, 255)) #unsure what alpha is correct
-
+	# Read 16-bit pixels: low 8 = index, next 2 = bank, high 4 = alpha
 	for y in range(height):
 		for x in range(width):
-			var pixel_index: int = (y * width + x) * 2
-			var raw: int = data.decode_u16(pixel_index)
-			var bank: int = (raw >> 8) & 0x03
-			var lo: int = raw & 0xFF
+			var raw: int = data.decode_u16((y * width + x) * 2)
+
+			var lo: int = raw & 0xFF                 # 8-bit palette offset
+			var bank: int = (raw >> 8) & 0x03        # 2-bit bank selector
+			var alpha_4bit: int = (raw >> 12) & 0xF  # high nibble
+
 			var idx: int = bank * 256 + lo
-			if idx < palette.size():
-				img.set_pixel(x, y, palette[idx])
-			else:
-				img.set_pixel(x, y, Color(0, 0, 0, 0))
+			if idx >= palette.size():
+				idx = palette.size() - 1
+
+			var col: Color = palette[idx]
+			col.a = float(alpha_4bit) / 15.0         # map 0–15 → 0.0–1.0
+			img.set_pixel(x, y, col)
 
 	return img
 	
