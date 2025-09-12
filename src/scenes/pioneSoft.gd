@@ -99,10 +99,13 @@ func makeFiles() -> void:
 					out_file.store_buffer(buff)
 					out_file.close()
 					
+				img_bpp_type = buff.decode_u8(2)
+				img_type = buff.decode_u8(3)
+				
 				var png: Image = make_image(buff)
 				png.save_png(folder_path + "/%s" % f_name + ".PNG")
 				
-				print("%08X " % f_offset, "%08X " % dec_size + "%02X " % img_type + "%02X " % img_bpp_type + "%s" % folder_path + "/%s" % f_name)
+				print("%08X " % f_offset, "%08X " % dec_size + "%02X " % img_bpp_type + "%02X " % img_type + "%s" % folder_path + "/%s" % f_name)
 			else:
 				if buff.decode_u32(0) == 0x324D4954:
 					ext = ".TM2"
@@ -160,48 +163,73 @@ func make_image(data: PackedByteArray) -> Image:
 	var image_width: int = data.decode_u16(0xC) & 0xFFF
 	var image_height: int = data.decode_u16(0xE) & 0xFFF
 	var palette_size: int
-	
+
 	if img_type == 0x13:
 		image_width = (image_width + 7) >> 3 << 19 >> 16
 	elif img_type == 0x14:
 		image_width = (image_width + 0xF) >> 4 << 20 >> 16
 	elif img_type == 2:
 		image_width = (image_width + 3) >> 2 << 18 >> 16
-		
+
 	if img_bpp_type & 1 == 1:
 		palette_size = 0x400
-		if img_bpp_type & 2 == 0: palette_size = 0x40
-		
-	if (image_width * image_height) + palette_size + 0x10 != data.size(): # Safety check if zlib decompression messes up
-		print_rich("[color=red]Image decompression likely failed. Expected: %08X, but got: %08X[/color]" % [(image_width * image_height) + palette_size + 0x10, data.size()])
-		return Image.create(1, 1, false, Image.FORMAT_RGBA8)
-		
+		if img_bpp_type & 2 == 0: 
+			palette_size = 0x40
+
 	var palette_offset: int = 0x10
 	var palette: PackedByteArray = PackedByteArray()
-	for i in range(0, palette_size):
+	for i in range(palette_size):
 		palette.append(data.decode_u8(palette_offset + i))
 
-	palette = ComFuncs.unswizzle_palette(palette, 32)
-	if fix_alpha:
+	if img_type == 0x13:
+		palette = ComFuncs.unswizzle_palette(palette, 32)
+
+	if fix_alpha and (img_type == 0x13 or img_type == 0x14):
 		for i in range(0, palette_size, 4):
 			palette.encode_u8(i + 3, int((palette.decode_u8(i + 3) / 128.0) * 255.0))
 
-	# Extract raw pixel data
-	var image_data_offset: int = palette_offset + 0x400
-	var pixel_data: PackedByteArray = data.slice(image_data_offset, image_data_offset + image_width * image_height)
+	var image_data_offset: int = palette_offset + palette_size
+	var pixel_data: PackedByteArray = data.slice(image_data_offset)
 
-	# Create the image object
 	var image: Image = Image.create(image_width, image_height, false, Image.FORMAT_RGBA8)
 
-	# Process the pixel data and apply the palette
-	for y in range(image_height):
-		for x in range(image_width):
-			var pixel_index: int = pixel_data[x + y * image_width]
-			var r: int = palette[pixel_index * 4 + 0]
-			var g: int = palette[pixel_index * 4 + 1]
-			var b: int = palette[pixel_index * 4 + 2]
-			var a: int = palette[pixel_index * 4 + 3]
-			image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+	if img_type == 0x13 or img_type == 2:
+		# 8-bit image
+		for y in range(image_height):
+			for x in range(image_width):
+				var pixel_index: int = pixel_data[x + y * image_width]
+				var r: int = palette[pixel_index * 4 + 0]
+				var g: int = palette[pixel_index * 4 + 1]
+				var b: int = palette[pixel_index * 4 + 2]
+				var a: int = palette[pixel_index * 4 + 3]
+				image.set_pixel(x, y, Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+	elif img_type == 0x14:
+		# 4-bit image
+		var row_bytes: int = (image_width + 1) >> 1  # Bytes per row
+		for y in range(image_height):
+			var row_start: int = y * row_bytes
+			for bx in range(row_bytes):
+				var byte_value: int = pixel_data[row_start + bx]
+				# Left pixel
+				var x1: int = bx * 2
+				var pixel_index_1 = byte_value & 0xF
+				var r1: int = palette[pixel_index_1 * 4 + 0]
+				var g1: int = palette[pixel_index_1 * 4 + 1]
+				var b1: int = palette[pixel_index_1 * 4 + 2]
+				var a1: int = palette[pixel_index_1 * 4 + 3]
+				image.set_pixel(x1, y, Color(r1 / 255.0, g1 / 255.0, b1 / 255.0, a1 / 255.0))
+
+				# Right pixel, only if within width
+				var x2: int = x1 + 1
+				if x2 < image_width:
+					var pixel_index_2 = (byte_value >> 4) & 0xF
+					var r2: int = palette[pixel_index_2 * 4 + 0]
+					var g2: int = palette[pixel_index_2 * 4 + 1]
+					var b2: int = palette[pixel_index_2 * 4 + 2]
+					var a2: int = palette[pixel_index_2 * 4 + 3]
+					image.set_pixel(x2, y, Color(r2 / 255.0, g2 / 255.0, b2 / 255.0, a2 / 255.0))
+	else:
+		push_error("Unknown img_type")
 
 	return image
 	
