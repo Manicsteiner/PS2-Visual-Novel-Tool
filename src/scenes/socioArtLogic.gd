@@ -59,7 +59,7 @@ func socioMakeFiles() -> void:
 				seek_hed += 4
 				continue
 			# for debugging
-			#if i != 295:
+			#if i != 872:
 				#start_off = (((start_off + file_size) + 0x7FF) >> 11) * 0x800
 				#i += 1
 				#seek_hed += 4
@@ -100,7 +100,7 @@ func socioMakeFiles() -> void:
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
-						var pngs: Array[Image] = ComFuncs.load_tim2_images(mem_file, true, true)
+						var pngs: Array[Image] = load_tim2_images_mod(mem_file, true)
 						for png_i in range(pngs.size()):
 							var png: Image = pngs[png_i]
 							png.save_png(folder_path + "/" + archive_id + "_%08d" % i + ".TM2" + "_%04d.PNG" % png_i)
@@ -109,17 +109,34 @@ func socioMakeFiles() -> void:
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
-				elif mem_file.decode_u16(9) == 0x4D54: #TM split headers
+				elif (mem_file.decode_u16(9) == 0x4D54 or 
+					mem_file.decode_u16(9) == 0x0454 or 
+					mem_file.decode_u16(9) == 0x0054 or
+					mem_file.decode_u16(9) == 0x3054 or
+					mem_file.decode_u16(9) == 0xF054): #TM split headers
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						var dec_size: int = mem_file.decode_u32(0)
 						var split_size: int = dec_size / 2
+						var num_parts: int = 2
+						if mem_file.decode_u16(9) == 0x0454:
+							split_size = dec_size / 4
+							num_parts = 4
+						elif mem_file.decode_u16(9) == 0x0054:
+							split_size = dec_size / 8
+							num_parts = 8
+						elif mem_file.decode_u16(9) == 0x3054 or mem_file.decode_u16(9) == 0xF054:
+							split_size = dec_size / 16
+							num_parts = 16
+							
+							
 						mem_file = decompressFile(mem_file, dec_size, 8)
 						
 						print_rich("[color=green]Combined split TIM2 image in %s[/color]" % i)
-						mem_file = combineSplitTIM2(mem_file, split_size)
 						
-						var pngs: Array[Image] = ComFuncs.load_tim2_images(mem_file, true, true)
+						mem_file = combine_split_tim2(mem_file, split_size, num_parts)
+						
+						var pngs: Array[Image] = load_tim2_images_mod(mem_file, true)
 						for png_i in range(pngs.size()):
 							var png: Image = pngs[png_i]
 							png.save_png(folder_path + "/" + archive_id + "_%08d" % i + ".TM2" + "_%04d.PNG" % png_i)
@@ -147,14 +164,186 @@ func socioMakeFiles() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
-func combineSplitTIM2(data: PackedByteArray, part_size: int) -> PackedByteArray:
-	var tm2_data: PackedByteArray
-	
-	for part in range(0, part_size):
-		tm2_data.append(data.decode_u8(part))
-		tm2_data.append(data.decode_u8(part + part_size))
-		
+func combine_split_tim2(data: PackedByteArray, part_size: int, num_parts: int = 2) -> PackedByteArray:
+	var tm2_data: PackedByteArray = []
+
+	tm2_data.resize(part_size * num_parts)
+
+	var out_index: int = 0
+	for i in range(part_size):
+		for p in range(num_parts):
+			tm2_data[out_index] = data.decode_u8(i + p * part_size)
+			out_index += 1
+
 	return tm2_data
+	
+
+func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:
+	var images: Array[Image] = []
+
+	# Check magic
+	if data.slice(0, 4).get_string_from_ascii() != "TIM2":
+		push_error("Not a TIM2 file")
+		return images
+
+	var tm2_version: int = data.decode_u8(5)
+	if tm2_version > 1:
+		push_error("Unknown TIM2 version %02X" % tm2_version)
+		return images
+		
+	var picture_count: int = data.decode_u16(6)
+	if picture_count <= 0:
+		push_error("No pictures found")
+		return images
+		
+	var unswizzle_palette_tm2: Callable = func (pal_buffer: PackedByteArray, nbpp: int, pal_size: int = pal_buffer.size()) -> PackedByteArray:
+		# pal_size = total bytes in palette
+		# nbpp     = bytes per palette entry (2 for RGBA5551, 4 for RGBA8888, etc.)
+		var num_colors: int = pal_size / nbpp
+		var pal: PackedByteArray
+		pal.resize(pal_size)
+		for p in range(num_colors):
+			var pos: int = (p & 231) + ((p & 8) << 1) + ((p & 16) >> 1)
+			if pos < num_colors:
+				for i in range(nbpp):
+					pal[pos * nbpp + i] = pal_buffer[p * nbpp + i]
+		return pal
+
+	var pic_offset: int = 0x10
+	for p in range(picture_count):
+		if tm2_version == 1: pic_offset += 0x70
+		var total_size: int = data.decode_u32(pic_offset)
+		var clut_size: int = data.decode_u32(pic_offset + 4)
+		var img_size: int = data.decode_u32(pic_offset + 8)
+		var header_size: int = data.decode_u16(pic_offset + 0x0C)
+		var clut_colors: int = data.decode_u16(pic_offset + 0x0E)
+		var pic_format: int = data.decode_u8(pic_offset + 0x10)
+		var mipmap_count: int = data.decode_u8(pic_offset + 0x11)
+		var clut_color_type: int = data.decode_u8(pic_offset + 0x12)
+		var img_color_type: int = data.decode_u8(pic_offset + 0x13)
+		var width: int = data.decode_u16(pic_offset + 0x14)
+		var height: int = data.decode_u16(pic_offset + 0x16)
+
+		var img_data_offset: int = pic_offset + header_size
+		var clut_data_offset: int = img_data_offset + img_size
+
+		# --- Palette (CLUT) ---
+		var palette: Array[Color] = []
+		if clut_size > 0:
+			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
+			#if is_swizzled and clut_colors == 256:
+			if clut_color_type & 128 == 0 and clut_colors == 256:
+				var nbpp: int = 4
+				if clut_size == clut_colors * 2: nbpp = 2
+				pal_bytes = unswizzle_palette_tm2.call(pal_bytes, nbpp)
+				
+			# Apply alpha correction ONLY for indexed formats
+			if fix_alpha:
+				if clut_size == clut_colors * 4:
+					for j in range(3, pal_bytes.size(), 4):
+						var a: int = int((pal_bytes.decode_u8(j) / 128.0) * 255.0)
+						pal_bytes.encode_u8(j, a)
+						
+			# RGBA5551 palette (16-bit entries)
+			if clut_size == clut_colors * 2:
+				for i in range(clut_colors):
+					var px: int = pal_bytes.decode_u16(i * 2)
+					var r5: int = (px >> 0) & 0x1F
+					var g5: int = (px >> 5) & 0x1F
+					var b5: int = (px >> 10) & 0x1F
+					var a1: int = (px >> 15) & 0x01
+
+					# expand to 8-bit
+					var r: int = (r5 << 3) | (r5 >> 2)
+					var g: int = (g5 << 3) | (g5 >> 2)
+					var b: int = (b5 << 3) | (b5 >> 2)
+					var a: int = 255 if a1 else 0
+
+					palette.append(Color8(r, g, b, a))
+			elif clut_size == 128 and clut_colors == 16:
+				for i in range(clut_colors):
+					var r: int = pal_bytes.decode_u8(i * 4 + 0)
+					var g: int = pal_bytes.decode_u8(i * 4 + 1)
+					var b: int = pal_bytes.decode_u8(i * 4 + 2)
+					var a: int = pal_bytes.decode_u8(i * 4 + 3)
+					palette.append(Color8(r, g, b, a))
+			# Standard 32-bit RGBA8 palette
+			elif clut_size == clut_colors * 4:
+				for i in range(clut_colors):
+					var r: int = pal_bytes.decode_u8(i * 4 + 0)
+					var g: int = pal_bytes.decode_u8(i * 4 + 1)
+					var b: int = pal_bytes.decode_u8(i * 4 + 2)
+					var a: int = pal_bytes.decode_u8(i * 4 + 3)
+					palette.append(Color8(r, g, b, a))
+			else:
+				push_error("Unexpected CLUT size %d for %d colors" % [clut_size, clut_colors])
+
+		# --- Image decode ---
+		var img: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+
+		match img_color_type:
+			1: 
+				# 1: 16-bit A1B5G5R5  (bits: R=0..4, G=5..9, B=10..14, A=15)
+				for y in range(height):
+					for x in range(width):
+						var idx: int = (y * width + x) * 2
+						var px: int = data.decode_u16(img_data_offset + idx)
+						var a1: int = (px >> 15) & 1
+						var r5: int = (px >> 0) & 0x1F
+						var g5: int = (px >> 5) & 0x1F
+						var b5: int = (px >> 10) & 0x1F
+						# expand 5->8 bits (better than <<3):
+						var r: int = (r5 << 3) | (r5 >> 2)
+						var g: int = (g5 << 3) | (g5 >> 2)
+						var b: int = (b5 << 3) | (b5 >> 2)
+						var a: int = 255 if a1 else 0
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			2:  # 24-bit RGB888 -> bytes [R, G, B] per pixel
+				for y in range(height):
+					for x in range(width):
+						var idx: int = (y * width + x) * 3
+						var r: int = data.decode_u8(img_data_offset + idx + 0)
+						var g: int = data.decode_u8(img_data_offset + idx + 1)
+						var b: int = data.decode_u8(img_data_offset + idx + 2)
+						var a: int = 255
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			3:  # 32-bit A8B8G8R8  -> bytes [R, G, B, A] in stream (little-endian)
+				for y in range(height):
+					for x in range(width):
+						var col: int = data.decode_u32(img_data_offset + (y * width + x) * 4)
+						var r: int =  col        & 0xFF
+						var g: int = (col >> 8)  & 0xFF
+						var b: int = (col >> 16) & 0xFF
+						var a: int = (col >> 24) & 0xFF
+						if fix_alpha: 
+							a = int((a / 128.0) * 255.0)
+						img.set_pixel(x, y, Color8(r, g, b, a))
+			4:  # 4-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var byte: int = data.decode_u8(img_data_offset + ((y * width + x) >> 1))
+						var idx: int = (byte & 0x0F) if (x & 1) == 0 else ((byte >> 4) & 0x0F)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			5:  # 8-bit indexed
+				for y in range(height):
+					for x in range(width):
+						var idx: int = data.decode_u8(img_data_offset + y * width + x)
+						if idx < palette.size():
+							img.set_pixel(x, y, palette[idx])
+						else:
+							img.set_pixel(x, y, Color(0, 0, 0, 1))
+			_:
+				push_error("Unsupported TIM2 image color type: %d" % img_color_type)
+
+		images.append(img)
+
+		# Move to next picture block
+		pic_offset += total_size + 16
+
+	return images
 	
 	
 func decompressFile(buffer: PackedByteArray, decompressed_size: int, off: int) -> PackedByteArray:
