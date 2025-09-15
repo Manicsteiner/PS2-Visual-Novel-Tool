@@ -59,7 +59,7 @@ func socioMakeFiles() -> void:
 				seek_hed += 4
 				continue
 			# for debugging
-			#if i != 872:
+			#if i != 34:
 				#start_off = (((start_off + file_size) + 0x7FF) >> 11) * 0x800
 				#i += 1
 				#seek_hed += 4
@@ -109,28 +109,16 @@ func socioMakeFiles() -> void:
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						mem_file = decompressFile(mem_file, mem_file.decode_u32(0), 8)
-				elif (mem_file.decode_u16(9) == 0x4D54 or 
-					mem_file.decode_u16(9) == 0x0454 or 
-					mem_file.decode_u16(9) == 0x0054 or
-					mem_file.decode_u16(9) == 0x3054 or
-					mem_file.decode_u16(9) == 0xF054): #TM split headers
+				elif mem_file.decode_u8(9) == 0x54: #TIM2 split headers
 					if decomp_file:
 						mem_file.resize(mem_file.decode_u32(0))
 						var dec_size: int = mem_file.decode_u32(0)
-						var split_size: int = dec_size / 2
-						var num_parts: int = 2
-						if mem_file.decode_u16(9) == 0x0454:
-							split_size = dec_size / 4
-							num_parts = 4
-						elif mem_file.decode_u16(9) == 0x0054:
-							split_size = dec_size / 8
-							num_parts = 8
-						elif mem_file.decode_u16(9) == 0x3054 or mem_file.decode_u16(9) == 0xF054:
-							split_size = dec_size / 16
-							num_parts = 16
-							
-							
+						
 						mem_file = decompressFile(mem_file, dec_size, 8)
+						
+						var sizes: Dictionary = detect_split(mem_file, dec_size)
+						var split_size: int = sizes["split_size"]
+						var num_parts: int = sizes["num_parts"]
 						
 						print_rich("[color=green]Combined split TIM2 image in %s[/color]" % i)
 						
@@ -164,10 +152,24 @@ func socioMakeFiles() -> void:
 	print_rich("[color=green]Finished![/color]")
 	
 	
+func detect_split(mem_file: PackedByteArray, dec_size: int) -> Dictionary:
+	var possible_parts: Array[int] = [2, 4, 8, 12, 16]
+	for parts in possible_parts:
+		var split_size: int = dec_size / parts
+		# Check if the letter "I" (0x49 in ASCII) appears at the split boundary
+		if mem_file.decode_u8(split_size) == 0x49:
+			return {
+				"split_size": split_size,
+				"num_parts": parts
+				}
+	return {"split_size": dec_size,  
+			"num_parts": 1} # fallback: no split
+	
+	
 func combine_split_tim2(data: PackedByteArray, part_size: int, num_parts: int = 2) -> PackedByteArray:
 	var tm2_data: PackedByteArray = []
 
-	tm2_data.resize(part_size * num_parts)
+	tm2_data.resize(data.size())
 
 	var out_index: int = 0
 	for i in range(part_size):
