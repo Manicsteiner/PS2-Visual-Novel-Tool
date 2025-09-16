@@ -307,7 +307,7 @@ func gim_to_image(data: PackedByteArray, file_name: String, ps2_mode: bool = fal
 	return img
 	
 	
-func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled: bool = true) -> Array[Image]:
+func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:
 	var images: Array[Image] = []
 
 	# Check magic
@@ -326,16 +326,28 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 		return images
 		
 	var unswizzle_palette_tm2: Callable = func (pal_buffer: PackedByteArray, nbpp: int, pal_size: int = pal_buffer.size()) -> PackedByteArray:
-		# pal_size = total bytes in palette
-		# nbpp     = bytes per palette entry (2 for RGBA5551, 4 for RGBA8888, etc.)
 		var num_colors: int = pal_size / nbpp
 		var pal: PackedByteArray
 		pal.resize(pal_size)
-		for p in range(num_colors):
-			var pos: int = (p & 231) + ((p & 8) << 1) + ((p & 16) >> 1)
-			if pos < num_colors:
-				for i in range(nbpp):
-					pal[pos * nbpp + i] = pal_buffer[p * nbpp + i]
+
+		if num_colors > 256:
+			# Handle multiple 256-color banks separately
+			var banks: int = num_colors / 256
+			for b in range(banks):
+				for p in range(256):
+					var pos: int = (p & 231) + ((p & 8) << 1) + ((p & 16) >> 1)
+					if pos < 256:
+						for i in range(nbpp):
+							var src: int = (b * 256 + p) * nbpp + i
+							var dst: int = (b * 256 + pos) * nbpp + i
+							pal[dst] = pal_buffer[src]
+		else:
+			# Normal single-bank swizzle
+			for p in range(num_colors):
+				var pos: int = (p & 231) + ((p & 8) << 1) + ((p & 16) >> 1)
+				if pos < num_colors:
+					for i in range(nbpp):
+						pal[pos * nbpp + i] = pal_buffer[p * nbpp + i]
 		return pal
 
 	var pic_offset: int = 0x10
@@ -361,7 +373,7 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 		if clut_size > 0:
 			var pal_bytes: PackedByteArray = data.slice(clut_data_offset, clut_data_offset + clut_size)
 			#if is_swizzled and clut_colors == 256:
-			if clut_color_type & 128 == 0 and clut_colors == 256:
+			if clut_color_type & 128 == 0 and (clut_colors == 256 or clut_colors == 512):
 				var nbpp: int = 4
 				if clut_size == clut_colors * 2: nbpp = 2
 				pal_bytes = unswizzle_palette_tm2.call(pal_bytes, nbpp)
@@ -388,6 +400,13 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 					var b: int = (b5 << 3) | (b5 >> 2)
 					var a: int = 255 if a1 else 0
 
+					palette.append(Color8(r, g, b, a))
+			elif clut_size == 128 and clut_colors == 16:
+				for i in range(clut_colors):
+					var r: int = pal_bytes.decode_u8(i * 4 + 0)
+					var g: int = pal_bytes.decode_u8(i * 4 + 1)
+					var b: int = pal_bytes.decode_u8(i * 4 + 2)
+					var a: int = pal_bytes.decode_u8(i * 4 + 3)
 					palette.append(Color8(r, g, b, a))
 			# Standard 32-bit RGBA8 palette
 			elif clut_size == clut_colors * 4:
@@ -450,13 +469,30 @@ func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true, is_swizzled
 						else:
 							img.set_pixel(x, y, Color(0, 0, 0, 1))
 			5:  # 8-bit indexed
-				for y in range(height):
-					for x in range(width):
-						var idx: int = data.decode_u8(img_data_offset + y * width + x)
-						if idx < palette.size():
-							img.set_pixel(x, y, palette[idx])
-						else:
-							img.set_pixel(x, y, Color(0, 0, 0, 1))
+				if clut_colors > 256:
+					# Multi bank palettes. The user will have to choose what parts are correct.
+					# There doesn't seem to currently be a way to blend these into one final image.
+					var banks: int = clut_colors / 256
+					for chosen_bank in range(banks):
+						var img_multi_bank: Image = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+						var bank_offset: int = chosen_bank * 256
+						for y in range(height):
+							for x in range(width):
+								var idx: int = data.decode_u8(img_data_offset + y * width + x)
+								var pal_idx: int = bank_offset + idx
+								if pal_idx < palette.size():
+									img_multi_bank.set_pixel(x, y, palette[pal_idx])
+								else:
+									img_multi_bank.set_pixel(x, y, Color(0, 0, 0, 1))
+						images.append(img_multi_bank)
+				else:
+					for y in range(height):
+						for x in range(width):
+							var idx: int = data.decode_u8(img_data_offset + y * width + x)
+							if idx < palette.size():
+								img.set_pixel(x, y, palette[idx])
+							else:
+								img.set_pixel(x, y, Color(0, 0, 0, 1))
 			_:
 				push_error("Unsupported TIM2 image color type: %d" % img_color_type)
 
