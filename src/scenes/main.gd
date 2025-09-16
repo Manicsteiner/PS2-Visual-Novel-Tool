@@ -8,9 +8,10 @@ extends Control
 # Game types must be in alphabetical order
 
 enum {
-	ONETWENTYYEN = 0, # 120 Yen no Haru - 120 Yen Stories
-	TWELVERIVEN = 1, # 12Riven: The Psi-Climinal of Integral
-	THREELDK = 2, # 3LDK - Shiawase ni Narouyo
+	TOOLS = 0,
+	ONETWENTYYEN = 1, # 120 Yen no Haru - 120 Yen Stories
+	TWELVERIVEN = 2, # 12Riven: The Psi-Climinal of Integral
+	THREELDK = 3, # 3LDK - Shiawase ni Narouyo
 	ABARENBOU,
 	AIR,
 	AIYORIAOSHI,
@@ -309,8 +310,7 @@ enum {
 	YUMEMISHI,
 	ZNTKOAKUMA,
 	ZNTMAIGO,
-	ZNTMUMA,
-	TOOLS
+	ZNTMUMA
 	}
 	
 var game_type: int = FUTAKOI
@@ -2159,6 +2159,7 @@ func sceneChanger(scene: PackedScene) -> void:
 func initMenuItems() -> void:
 	# Menu items must be in alphabetical order based on their enum value.
 	
+	game_type_selector.add_item("TOOLS")
 	game_type_selector.add_item("120 Yen no Haru: 120 Yen Stories", ONETWENTYYEN)
 	game_type_selector.add_item("12Riven: The Psi-Climinal of Integral", TWELVERIVEN)
 	game_type_selector.add_item("3LDK - Shiawase ni Narouyo", THREELDK)
@@ -2461,7 +2462,6 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Zero no Tsukaima: Koakuma to Harukaze no Concerto", ZNTKOAKUMA)
 	game_type_selector.add_item("Zero no Tsukaima: Maigo no Period to Ikusen no Symphony", ZNTMAIGO)
 	game_type_selector.add_item("Zero no Tsukaima: Muma ga Tsumugu Yokaze no Fantasy", ZNTMUMA)
-	game_type_selector.add_item("TOOLS")
 	#print(game_type_selector.item_count)
 	#for i in range(game_type_selector.item_count):
 		#print("* %s" % game_type_selector.get_item_text(i))
