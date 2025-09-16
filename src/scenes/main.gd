@@ -234,7 +234,8 @@ enum {
 	SANGOKURENSEKI,
 	SCARLETNICHIJOU,
 	SCHOOLLOVE,
-	SCHOOLNI,
+	SCHOOLRUMBLE,
+	SCHOOLRUMBLENI,
 	SEIKAINOSENKI,
 	SEGAAGESVOL12,
 	SEKIREI,
@@ -1417,11 +1418,17 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = SAKURATAISEN5
 		var next_scene: PackedScene = load("res://src/scenes/Overworks.tscn")
 		sceneChanger(next_scene)
-	elif index == SCHOOLNI:
+	elif index == SCHOOLRUMBLENI:
 		game_type_sub_text.text = "Supports 'School Rumble Ni-Gakki'."
-		game_type_selector.select(SCHOOLNI)
-		game_type = SCHOOLNI
+		game_type_selector.select(SCHOOLRUMBLENI)
+		game_type = SCHOOLRUMBLENI
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
+		sceneChanger(next_scene)
+	elif index == SCHOOLRUMBLE:
+		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_selector.select(SCHOOLRUMBLE)
+		game_type = SCHOOLRUMBLE
+		var next_scene: PackedScene = load("res://src/scenes/StudioComet.tscn")
 		sceneChanger(next_scene)
 	elif index == STARTRAIN:
 		game_type_sub_text.text = "Supports 'StarTRain: Your Past Makes Your Future'."
@@ -2385,7 +2392,8 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Sangoku Rensenki: Otome no Heihou!", SANGOKURENSEKI)
 	game_type_selector.add_item("Scarlet: Nichijou no Kyoukaisen", SCARLETNICHIJOU)
 	game_type_selector.add_item("School Love! Koi to Kibou no Metronome", SCHOOLLOVE)
-	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLNI)
+	game_type_selector.add_item("School Rumble: Neru Musume wa Sodatsu", SCHOOLRUMBLE)
+	game_type_selector.add_item("School Rumble Ni-Gakki", SCHOOLRUMBLENI)
 	game_type_selector.add_item("Seikai no Senki", SEIKAINOSENKI)
 	game_type_selector.add_item("Sega Ages 2500 Series Vol. 12: Puyo Puyo Tsuu Perfect Set", SEGAAGESVOL12)
 	game_type_selector.add_item("Sekirei: Mirai kara no Okurimono", SEKIREI)
