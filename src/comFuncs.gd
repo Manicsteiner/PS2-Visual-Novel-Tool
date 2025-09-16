@@ -307,7 +307,7 @@ func gim_to_image(data: PackedByteArray, file_name: String, ps2_mode: bool = fal
 	return img
 	
 	
-func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:
+func load_tim2_images(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:
 	var images: Array[Image] = []
 
 	# Check magic
