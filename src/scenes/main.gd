@@ -35,6 +35,7 @@ enum {
 	CASTLEFANTASIA,
 	CHANTER,
 	CHERRYBLOSSOM,
+	CHOBITS,
 	CHOCOLAT,
 	CLOVERNOKUNI,
 	CODEGEASS,
@@ -1425,9 +1426,15 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		var next_scene: PackedScene = load("res://src/scenes/ZeroSystem.tscn")
 		sceneChanger(next_scene)
 	elif index == SCHOOLRUMBLE:
-		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
+		game_type_sub_text.text = "Supports:\nExtraction (most files), images (TM2)."
 		game_type_selector.select(SCHOOLRUMBLE)
 		game_type = SCHOOLRUMBLE
+		var next_scene: PackedScene = load("res://src/scenes/StudioComet.tscn")
+		sceneChanger(next_scene)
+	elif index == CHOBITS:
+		game_type_sub_text.text = "Supports:\nExtraction (most files), images (TM2)."
+		game_type_selector.select(CHOBITS)
+		game_type = CHOBITS
 		var next_scene: PackedScene = load("res://src/scenes/StudioComet.tscn")
 		sceneChanger(next_scene)
 	elif index == STARTRAIN:
@@ -2193,6 +2200,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Castle Fantasia: Erencia Senki - Plus Stories", CASTLEFANTASIA)
 	game_type_selector.add_item("Chanter: Kimi no Uta ga Todoitara", CHANTER)
 	game_type_selector.add_item("Cherry Blossom", CHERRYBLOSSOM)
+	game_type_selector.add_item("Chobits: Chii dake no Hito", CHOBITS)
 	game_type_selector.add_item("Chocolat: Maid Cafe Curio", CHOCOLAT)
 	game_type_selector.add_item("Clover no Kuni no Alice: Wonderful Wonder World", CLOVERNOKUNI)
 	game_type_selector.add_item("Code Geass: Hangyaku no Lelouch - Lost Colors", CODEGEASS)

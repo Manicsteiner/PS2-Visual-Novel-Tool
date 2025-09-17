@@ -11,12 +11,19 @@ var folder_path: String = ""
 #TODO: Missing other exe offsets to files? Seems like some TIM2 files are in the single files still
 
 func _ready() -> void:
-	file_load_exe.filters = ["SLPS_255.40"]
-	file_load_bins.filters = ["
-	A00A, A00B, A00C, A00D,
-	A00E, A003, A005, A001,
-	A002, A003, A004, A005,
-	A006, A007, A008"]
+	file_load_exe.filters = ["SLPS_255.40, SLPM_652.55"]
+	
+	if Main.game_type == Main.SCHOOLRUMBLE:
+		file_load_bins.filters = ["
+		A00A, A00B, A00C, A00D,
+		A00E, A003, A005, A001,
+		A002, A003, A004, A005,
+		A006, A007, A008"]
+	elif Main.game_type == Main.CHOBITS:
+		file_load_bins.filters = ["
+		A002, A004, A005, A007, A008,
+		A00A, A00B, A00C, A010,
+		A011, A020, A021"]
 	
 
 
@@ -28,34 +35,41 @@ func _process(_delta: float) -> void:
 		
 		
 func extract() -> void:
-	const PACKED_FILES: PackedStringArray = ["A00A", "A00C", "A00E", "A002", "A006"]
-	const EXE_FILES: PackedStringArray = ["A005"]
+	var PACKED_FILES: PackedStringArray = []
+	var EXE_FILES: PackedStringArray = []
+	
+	if Main.game_type == Main.SCHOOLRUMBLE:
+		PACKED_FILES = ["A00A", "A00C", "A00E", "A002", "A006"]
+		EXE_FILES = ["A005"]
+	elif Main.game_type == Main.CHOBITS:
+		PACKED_FILES = ["A005", "A008", "A010"] #["A003"] ?
+		EXE_FILES = ["A00B", "A00C", "A011", "A020", "A021", "A004"] #jal LoadFileIopQue, a0 = arc ID
 	
 	for file in range(0, selected_files.size()):
 		var in_file: FileAccess = FileAccess.open(selected_files[file], FileAccess.READ)
 		var arc_name: String = selected_files[file].get_file().get_basename()
 		var base_dir: String = "%s/%s" % [folder_path, arc_name]
 		
-		var f_len: int = in_file.get_length()
 		if arc_name in PACKED_FILES:
+			var f_len: int = in_file.get_length()
 			var offsets: Array[int] = []
 			var pos: int = 0
-			while pos + 4 <= f_len:
+			
+			in_file.seek(pos)
+			var end: int = in_file.get_32()
+			while pos < end:
 				in_file.seek(pos)
-				var off: int = in_file.get_32()
-				if off == 0:
-					break
-				offsets.append(off)
-				if pos > 0 and pos == offsets[0]:
-					offsets.append(f_len)
-					break
+				offsets.append(in_file.get_32())
 				pos += 4
 				
+			offsets.append(f_len)
+			
 			for i in range(offsets.size() - 1):
 				var f_off: int = offsets[i]
 				var end_: int = offsets[i + 1]
 				var f_size: int = end_ - f_off
-				if f_size <= 0 or f_size > 0xFFFFFFFF or f_off < 0 or f_off > 0xFFFFFFFF or end_ > f_len:
+				
+				if f_size <= 0 or f_off < 0 or f_off > f_len or end_ > f_len:
 					continue
 				
 				in_file.seek(f_off)
@@ -77,16 +91,38 @@ func extract() -> void:
 						png.save_png("%s_%04d.PNG" % [out_path, png_i])
 					out_file.store_buffer(buff)
 					out_file.close()
-		if arc_name in EXE_FILES:
+					
+		elif arc_name in EXE_FILES:
 			if !exe_path:
 				OS.alert("Exe needs to be loaded for file %s" % arc_name)
 				continue
 				
 			var tbl_start: int = 0
 			var tbl_end: int = 0
-			if arc_name == "A005":
-				tbl_start = 0x305020
-				tbl_end = 0x3072D8
+			if Main.game_type == Main.SCHOOLRUMBLE:
+				if arc_name == "A005":
+					tbl_start = 0x305020
+					tbl_end = 0x3072D8
+			elif Main.game_type == Main.CHOBITS:
+				var entry_point: int = 0xFFF80
+				if arc_name == "A00B":
+					tbl_start = 0x002d0010 - entry_point
+					tbl_end = 0x002d01f0 - entry_point
+				elif arc_name == "A00C":
+					tbl_start = 0x002cfe30 - entry_point
+					tbl_end = 0x002d0010 - entry_point
+				elif arc_name == "A011":
+					tbl_start = 0x002e3190 - entry_point
+					tbl_end = 0x002e3330 - entry_point
+				elif arc_name == "A020":
+					tbl_start = 0x002dca30 - entry_point
+					tbl_end = 0x002dd4b0 - entry_point
+				elif arc_name == "A021":
+					tbl_start = 0x002ce290 - entry_point
+					tbl_end = 0x002ce788 - entry_point
+				elif arc_name == "A004":
+					tbl_start = 0x002cc1c0 - entry_point
+					tbl_end = 0x002cc608 - entry_point
 				
 			var exe_file: FileAccess = FileAccess.open(exe_path, FileAccess.READ)
 			var id: int = 0
@@ -137,6 +173,7 @@ func extract() -> void:
 					png.save_png("%s_%04d.PNG" % [out_path, png_i])
 				out_file.store_buffer(buff)
 				out_file.close()
+	print_rich("[color=green]Finished![/color]")
 	
 	
 func load_tim2_images_mod(data: PackedByteArray, fix_alpha: bool = true) -> Array[Image]:

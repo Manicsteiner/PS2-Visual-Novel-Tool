@@ -27,13 +27,13 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 28
 
-[node name="LoadBIN" type="Button" parent="HBoxContainer"]
-layout_mode = 2
-text = "Extract File"
-
 [node name="LoadEXE" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "Load EXE"
+
+[node name="LoadBIN" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Extract File"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -79,8 +79,8 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
-[connection signal="pressed" from="HBoxContainer/LoadBIN" to="." method="_on_load_bin_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadEXE" to="." method="_on_load_exe_pressed"]
+[connection signal="pressed" from="HBoxContainer/LoadBIN" to="." method="_on_load_bin_pressed"]
 [connection signal="files_selected" from="FILELoadBINS" to="." method="_on_file_load_bins_files_selected"]
 [connection signal="file_selected" from="FILELoadEXE" to="." method="_on_file_load_exe_file_selected"]
 [connection signal="dir_selected" from="FILELoadFOLDER" to="." method="_on_file_load_folder_dir_selected"]

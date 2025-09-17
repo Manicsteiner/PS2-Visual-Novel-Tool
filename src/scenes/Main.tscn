@@ -48,9 +48,9 @@ allow_reselect = true
 
 [node name="GameTypeText" type="Label" parent="."]
 layout_mode = 0
-offset_left = 544.0
+offset_left = 536.0
 offset_top = 512.0
-offset_right = 748.0
+offset_right = 740.0
 offset_bottom = 535.0
 
 [node name="GameTypeSubText" type="Label" parent="."]
