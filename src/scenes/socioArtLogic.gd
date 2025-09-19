@@ -59,7 +59,7 @@ func socioMakeFiles() -> void:
 				seek_hed += 4
 				continue
 			# for debugging
-			#if i != 34:
+			#if i != 264:
 				#start_off = (((start_off + file_size) + 0x7FF) >> 11) * 0x800
 				#i += 1
 				#seek_hed += 4
@@ -153,7 +153,7 @@ func socioMakeFiles() -> void:
 	
 	
 func detect_split(mem_file: PackedByteArray, dec_size: int) -> Dictionary:
-	var possible_parts: Array[int] = [2, 4, 8, 12, 16]
+	var possible_parts: Array[int] = [2, 3, 4, 6, 8, 12, 16]
 	for parts in possible_parts:
 		var split_size: int = dec_size / parts
 		# Check if the letter "I" (0x49 in ASCII) appears at the split boundary
