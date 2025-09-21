@@ -19,6 +19,7 @@ enum {
 	AMAGAMI,
 	ANGELSFEATHER,
 	ANGELWISH,
+	AOISORANONEO,
 	AOIUMINOTRISTIA,
 	AONOMAMA,
 	ARABIANS,
@@ -1935,6 +1936,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type = AOIUMINOTRISTIA
 		var next_scene: PackedScene = load("res://src/scenes/KumaSanTeam.tscn")
 		sceneChanger(next_scene)
+	elif index == AOISORANONEO:
+		game_type_sub_text.text = "Supports:\nExtraction only."
+		game_type_selector.select(AOISORANONEO)
+		game_type = AOISORANONEO
+		var next_scene: PackedScene = load("res://src/scenes/KumaSanTeam.tscn")
+		sceneChanger(next_scene)
 	elif index == STEADYXSTUDY:
 		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
 		game_type_selector.select(STEADYXSTUDY)
@@ -2184,6 +2191,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Amagami", AMAGAMI)
 	game_type_selector.add_item("Angel's Feather", ANGELSFEATHER)
 	game_type_selector.add_item("Angel Wish: Kimi no Egao ni Chu!", ANGELWISH)
+	game_type_selector.add_item("Aoi Sora no Neosphere: Nanoca Flanka Hatsumei Koubouki 2", AOISORANONEO)
 	game_type_selector.add_item("Aoi Umi no Tristia: Nanoca Flanka Hatsumei Koubouki", AOIUMINOTRISTIA)
 	game_type_selector.add_item("Ao no Mama de", AONOMAMA)
 	game_type_selector.add_item("Arabians Lost: The Engagement on Desert", ARABIANS)
