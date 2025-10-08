@@ -4,11 +4,13 @@ extends Control
 @onready var file_load_tm_2: FileDialog = $FILELoadTM2
 @onready var file_load_gim: FileDialog = $FILELoadGIM
 @onready var file_load_search: FileDialog = $FILELoadSearch
+@onready var file_load_exe: FileDialog = $FILELoadEXE
 
-var selected_files: PackedStringArray
-var selected_tm2s: PackedStringArray
-var selected_gims: PackedStringArray
-var folder_path: String
+var selected_files: PackedStringArray = []
+var selected_tm2s: PackedStringArray = []
+var selected_gims: PackedStringArray = []
+var selected_exe: String = ""
+var folder_path: String = ""
 var tm2_toggle: bool = true
 var bmp_toggle: bool = false
 
@@ -16,6 +18,8 @@ var tm2_fix_alpha: bool = true
 var tm2_swizzle: bool = true
 
 var gim_ps2_mode: bool = false
+
+var print_only_exe: bool = false
 
 
 func _process(_delta: float) -> void:
@@ -26,6 +30,10 @@ func _process(_delta: float) -> void:
 	elif selected_gims and folder_path:
 		parse_gim()
 		selected_gims.clear()
+		folder_path = ""
+	elif selected_exe and folder_path:
+		extract_exe()
+		selected_exe = ""
 		folder_path = ""
 	elif selected_files:
 		search_extract()
@@ -73,6 +81,41 @@ func search_extract() -> void:
 			ComFuncs.tim2_scan_file(in_file)
 			
 			print_rich("[color=green]Finished searching in %s[/color]" % f_name)
+	print_rich("[color=green]Finished![/color]")
+	
+	
+func extract_exe() -> void:
+	var in_file: FileAccess = FileAccess.open(selected_exe, FileAccess.READ)
+	var arc_name: String = selected_exe.get_file().get_basename()
+	if in_file.get_32() != 0x464C457F:
+		OS.alert("%s isn't a valid EXE!" % selected_exe)
+		return
+	
+	in_file.seek(0)
+	var exe_info: Dictionary = extract_ps2_exe_symbols(in_file.get_buffer(in_file.get_length()))
+	if exe_info:
+		var dir: DirAccess = DirAccess.open(folder_path)
+		dir.make_dir_recursive(arc_name)
+		
+		print_rich("[color=yellow]Extracting symbols...[/color]")
+		
+		for sec_name in exe_info.keys():
+			var info = exe_info[sec_name]
+			if print_only_exe:
+				print("%s: addr=%08X size=%d bytes=%d" % [sec_name, info["address"], info["size"], info["data"].size()])
+			else:
+				
+				var f_name: String = sec_name + "@0x%08X" % info["address"]
+				var buff: PackedByteArray = info["data"]
+				
+				var full_name: String = "%s/%s/%s" % [folder_path, arc_name, f_name]
+				
+				var out_file: FileAccess = FileAccess.open(full_name, FileAccess.WRITE)
+				out_file.store_buffer(buff)
+				out_file.close()
+	else:
+		OS.alert("%s doesn't contain debug symbols." % selected_exe)
+		
 	print_rich("[color=green]Finished![/color]")
 	
 	
@@ -169,6 +212,115 @@ func unswizzle8x8(data: PackedByteArray, w: int, h: int) -> PackedByteArray:
 	return out
 	
 	
+func extract_ps2_exe_symbols(elf_bytes: PackedByteArray) -> Dictionary:
+	var symbols: Dictionary = {}
+	
+	# --- ELF header basics ---
+	var e_shoff: int = elf_bytes.decode_u32(0x20)  # Section header table offset
+	var e_shentsize: int = elf_bytes.decode_u16(0x2E)
+	var e_shnum: int = elf_bytes.decode_u16(0x30)
+	var e_shstrndx: int = elf_bytes.decode_u16(0x32)
+
+	# --- Load section header string table ---
+	var shstr_hdr_off: int = e_shoff + e_shstrndx * e_shentsize
+	var shstr_off: int = elf_bytes.decode_u32(shstr_hdr_off + 0x10)
+	var shstr_size: int = elf_bytes.decode_u32(shstr_hdr_off + 0x14)
+	var shstr: PackedByteArray = elf_bytes.slice(shstr_off, shstr_off + shstr_size)
+
+	# --- Locate .symtab and .strtab sections ---
+	var symtab_off := -1
+	var symtab_size := 0
+	var symtab_entsize := 0
+	var strtab_off := -1
+	var strtab_size := 0
+	var sections: Array[Dictionary] = []
+	
+	for i in range(e_shnum):
+		var sh_off: int = e_shoff + i * e_shentsize
+		var name_off: int = elf_bytes.decode_u32(sh_off + 0x0)
+		
+		# Resolve section name
+		var sec_name := ""
+		for j in range(name_off, shstr.size()):
+			var c: int = shstr.decode_u8(j)
+			if c == 0:
+				break
+			sec_name += char(c)
+		
+		var sec_type: int = elf_bytes.decode_u32(sh_off + 0x4)
+		var sec_addr: int = elf_bytes.decode_u32(sh_off + 0xC)
+		var sec_offset: int = elf_bytes.decode_u32(sh_off + 0x10)
+		var sec_size: int = elf_bytes.decode_u32(sh_off + 0x14)
+		var sec_entsize: int = elf_bytes.decode_u32(sh_off + 0x24)
+		
+		sections.append({
+			"name": sec_name,
+			"addr": sec_addr,
+			"offset": sec_offset,
+			"size": sec_size
+		})
+		
+		if sec_name == ".symtab":
+			symtab_off = sec_offset
+			symtab_size = sec_size
+			symtab_entsize = sec_entsize
+		elif sec_name == ".strtab":
+			strtab_off = sec_offset
+			strtab_size = sec_size
+	
+	if symtab_off == -1 or strtab_off == -1:
+		push_error("No symbol table found in ELF")
+		return symbols
+	
+	var strtab: PackedByteArray = elf_bytes.slice(strtab_off, strtab_off + strtab_size)
+	
+	# --- Parse symbols ---
+	var num_syms: int = symtab_size / symtab_entsize
+	for i in range(num_syms):
+		var sym_off: int = symtab_off + i * symtab_entsize
+		var st_name: int = elf_bytes.decode_u32(sym_off + 0x0)   # name offset into strtab
+		var st_value: int = elf_bytes.decode_u32(sym_off + 0x4)  # symbol virtual address
+		var st_size: int = elf_bytes.decode_u32(sym_off + 0x8)   # symbol size
+		var st_info: int = elf_bytes.decode_u8(sym_off + 0xC)    # type/binding
+		var st_shndx: int = elf_bytes.decode_u16(sym_off + 0xE)  # section index
+		
+		# Extract symbol name
+		var sym_name := ""
+		if st_name < strtab.size():
+			for j in range(st_name, strtab.size()):
+				var c: int = strtab.decode_u8(j)
+				if c == 0:
+					break
+				sym_name += char(c)
+		
+		# Skip unnamed or invalid symbols
+		if sym_name == "" or st_shndx >= sections.size():
+			continue
+		
+		# Try to extract symbol data
+		var data_bytes: PackedByteArray = PackedByteArray()
+		if st_size > 0:
+			var sec := sections[st_shndx]
+			var sec_addr: int = sec["addr"]
+			var sec_offset: int = sec["offset"]
+			var sec_size: int = sec["size"]
+			
+			# Compute symbol offset relative to section
+			var rel_off: int = st_value - sec_addr
+			if rel_off >= 0 and rel_off + st_size <= sec_size:
+				data_bytes = elf_bytes.slice(sec_offset + rel_off, sec_offset + rel_off + st_size)
+		
+		# Store symbol info
+		symbols[sym_name] = {
+			"address": st_value,
+			"size": st_size,
+			"type": st_info,
+			"data": data_bytes
+		}
+	
+	return symbols
+	
+	
 func _on_tm_2_toggle_toggled(_toggled_on: bool) -> void:
 	tm2_toggle = !tm2_toggle
 
@@ -217,3 +369,16 @@ func _on_search_in_files_button_pressed() -> void:
 
 func _on_file_load_search_files_selected(paths: PackedStringArray) -> void:
 	selected_files = paths
+
+
+func _on_extract_exe_symbols_pressed() -> void:
+	file_load_exe.show()
+	
+	
+func _on_file_load_exe_file_selected(path: String) -> void:
+	selected_exe = path
+	file_load_folder.show()
+
+
+func _on_exe_print_toggled(_toggled_on: bool) -> void:
+	print_only_exe = !print_only_exe
