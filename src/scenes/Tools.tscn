@@ -43,7 +43,7 @@ text = "Convert GIM to PNG"
 layout_mode = 2
 text = "Extract EXE Debug Symbols (PS2)"
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+[node name="Vbox" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -53,20 +53,24 @@ anchor_bottom = 1.0
 offset_left = -456.0
 offset_top = -336.0
 offset_right = -150.0
-offset_bottom = -305.0
+offset_bottom = -239.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 2
 
-[node name="TM2Toggle" type="CheckBox" parent="HBoxContainer2"]
+[node name="TM2Toggle" type="CheckBox" parent="Vbox"]
 layout_mode = 2
 button_pressed = true
 text = "TIM2"
 
-[node name="BMPToggle" type="CheckBox" parent="HBoxContainer2"]
-visible = false
+[node name="BMPToggle" type="CheckBox" parent="Vbox"]
 layout_mode = 2
 text = "BMP"
+
+[node name="RIFFToggle" type="CheckBox" parent="Vbox"]
+layout_mode = 2
+tooltip_text = "RIFF style headers (.WAV, .AVI, etc)."
+text = "RIFF"
 
 [node name="VBoxContainer3" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -188,8 +192,9 @@ use_native_dialog = true
 [connection signal="pressed" from="HBoxContainer/LoadTM2" to="." method="_on_load_tm_2_pressed"]
 [connection signal="pressed" from="HBoxContainer/LoadGIM" to="." method="_on_load_gim_pressed"]
 [connection signal="pressed" from="HBoxContainer/ExtractExeSymbols" to="." method="_on_extract_exe_symbols_pressed"]
-[connection signal="toggled" from="HBoxContainer2/TM2Toggle" to="." method="_on_tm_2_toggle_toggled"]
-[connection signal="toggled" from="HBoxContainer2/BMPToggle" to="." method="_on_bmp_toggle_toggled"]
+[connection signal="toggled" from="Vbox/TM2Toggle" to="." method="_on_tm_2_toggle_toggled"]
+[connection signal="toggled" from="Vbox/BMPToggle" to="." method="_on_bmp_toggle_toggled"]
+[connection signal="toggled" from="Vbox/RIFFToggle" to="." method="_on_riff_toggle_toggled"]
 [connection signal="toggled" from="VBoxContainer3/TM2FixAlpha" to="." method="_on_tm_2_fix_alpha_toggled"]
 [connection signal="toggled" from="VBoxContainer3/TM2Swizzle" to="." method="_on_tm_2_swizzle_toggled"]
 [connection signal="toggled" from="VBoxContainer4/GIMPS2Width" to="." method="_on_gimps_2_width_toggled"]

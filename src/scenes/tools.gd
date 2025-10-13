@@ -13,6 +13,7 @@ var selected_exe: String = ""
 var folder_path: String = ""
 var tm2_toggle: bool = true
 var bmp_toggle: bool = false
+var riff_toggle: bool = false
 
 var tm2_fix_alpha: bool = true
 var tm2_swizzle: bool = true
@@ -80,7 +81,25 @@ func search_extract() -> void:
 			in_file.seek(0)
 			ComFuncs.tim2_scan_file(in_file)
 			
-			print_rich("[color=green]Finished searching in %s[/color]" % f_name)
+			print_rich("[color=green]Finished searching in %s for TM2s.[/color]" % f_name)
+	if bmp_toggle:
+		for file in selected_files.size():
+			var in_file: FileAccess = FileAccess.open(selected_files[file], FileAccess.READ)
+			var f_name: String = selected_files[file].get_file()
+			
+			in_file.seek(0)
+			bmp_scan_file(in_file)
+			
+			print_rich("[color=green]Finished searching in %s for BMPs.[/color]" % f_name)
+	if riff_toggle:
+		for file in selected_files.size():
+			var in_file: FileAccess = FileAccess.open(selected_files[file], FileAccess.READ)
+			var f_name: String = selected_files[file].get_file()
+			
+			in_file.seek(0)
+			riff_scan_file(in_file)
+			
+			print_rich("[color=green]Finished searching in %s for RIFF headers.[/color]" % f_name)
 	print_rich("[color=green]Finished![/color]")
 	
 	
@@ -117,6 +136,141 @@ func extract_exe() -> void:
 		OS.alert("%s doesn't contain debug symbols." % selected_exe)
 		
 	print_rich("[color=green]Finished![/color]")
+	
+	
+func bmp_scan_file(in_file: FileAccess) -> void:
+	# Scans a file for BMP images and extracts them based on input path.
+	# Appends _XXXX.BMP to the file name and saves each result as a new file.
+	
+	var search_results: PackedInt32Array = []
+	var bmp_file: FileAccess = in_file
+	var in_file_path: String = bmp_file.get_path_absolute()
+	
+	var pos: int = 0
+	var last_pos: int = 0
+	var entry_count: int = 0
+	
+	while bmp_file.get_position() < bmp_file.get_length():
+		bmp_file.seek(pos)
+		if bmp_file.eof_reached():
+			break
+		
+		var magic: int = bmp_file.get_16()
+		last_pos = bmp_file.get_position()
+		
+		# Check for "BM" magic (0x4D42 little-endian)
+		if magic == 0x4D42:
+			search_results.append(last_pos - 2)
+			
+			# Read BMP file size (little-endian 32-bit at offset 0x02)
+			var file_size: int = bmp_file.get_32()
+			
+			# Some corrupted or embedded BMPs may report too-large sizes,
+			# so we sanity-check it to not exceed the file length.
+			if file_size <= 0 or file_size > bmp_file.get_length() - pos:
+				file_size = bmp_file.get_length() - pos
+			
+			# Extract BMP data
+			bmp_file.seek(search_results[entry_count])
+			var bmp_buff: PackedByteArray = bmp_file.get_buffer(file_size)
+			
+			last_pos = bmp_file.get_position()
+			if last_pos % 16 != 0: # Align to 0x10 boundary
+				last_pos = (last_pos + 15) & ~15
+			
+			# Write to disk
+			var out_path: String = "%s_%04d.BMP" % [in_file_path, entry_count]
+			var out_file: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
+			if out_file == null:
+				print_rich("[color=red]Could not open %s for writing![/color]" % out_path)
+				return
+			else:
+				out_file.store_buffer(bmp_buff)
+				out_file.close()
+				bmp_buff.clear()
+			
+			entry_count += 1
+		else:
+			if last_pos % 16 != 0:
+				last_pos = (last_pos + 15) & ~15
+		
+		pos = last_pos
+	
+	var color: String
+	if entry_count > 0:
+		color = "green"
+	else:
+		color = "red"
+	print_rich("[color=%s]Found %d BMP entries[/color]" % [color, search_results.size()])
+	return
+	
+	
+func riff_scan_file(in_file: FileAccess) -> void:
+	# Scans a file for RIFF-based chunks (WAV, AVI, WEBP, etc.) and extracts them.
+	# Appends _XXXX.RIFF to the file name and saves each result as a new file.
+
+	var search_results: PackedInt32Array = []
+	var riff_file: FileAccess = in_file
+	var in_file_path: String = riff_file.get_path_absolute()
+
+	var pos: int = 0
+	var last_pos: int = 0
+	var entry_count: int = 0
+
+	while riff_file.get_position() < riff_file.get_length():
+		riff_file.seek(pos)
+		if riff_file.eof_reached():
+			break
+
+		var magic: int = riff_file.get_32()
+		last_pos = riff_file.get_position()
+
+		# Check for "RIFF" magic (0x46464952 little-endian)
+		if magic == 0x46464952:
+			search_results.append(last_pos - 4)
+
+			# Read RIFF file size (at offset +0x04)
+			var chunk_size: int = riff_file.get_32()
+			var total_size: int = chunk_size + 8  # Include "RIFF" + size field
+
+			# Validate to prevent overflow or invalid reads
+			if total_size <= 0 or total_size > riff_file.get_length() - pos:
+				total_size = riff_file.get_length() - pos
+
+			# Extract RIFF data
+			riff_file.seek(search_results[entry_count])
+			var riff_buff: PackedByteArray = riff_file.get_buffer(total_size)
+
+			last_pos = riff_file.get_position()
+			if last_pos % 16 != 0: # Align to 0x10 boundary
+				last_pos = (last_pos + 15) & ~15
+
+			# Write to disk
+			var out_path: String = "%s_%04d.RIFF" % [in_file_path, entry_count]
+			var out_file: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
+			if out_file == null:
+				print_rich("[color=red]Could not open %s for writing![/color]" % out_path)
+				return
+			else:
+				out_file.store_buffer(riff_buff)
+				out_file.close()
+				riff_buff.clear()
+
+			entry_count += 1
+		else:
+			if last_pos % 16 != 0:
+				last_pos = (last_pos + 15) & ~15
+
+		pos = last_pos
+
+	var color: String
+	if entry_count > 0:
+		color = "green"
+	else:
+		color = "red"
+
+	print_rich("[color=%s]Found %d RIFF entries[/color]" % [color, search_results.size()])
+	return
 	
 	
 func unswizzle_ps2_8bpp(data: PackedByteArray, w: int, h: int, pitch: int = 0, phase: int = 2) -> PackedByteArray:
@@ -382,3 +536,7 @@ func _on_file_load_exe_file_selected(path: String) -> void:
 
 func _on_exe_print_toggled(_toggled_on: bool) -> void:
 	print_only_exe = !print_only_exe
+
+
+func _on_riff_toggle_toggled(_toggled_on: bool) -> void:
+	riff_toggle = !riff_toggle
