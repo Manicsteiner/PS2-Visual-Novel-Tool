@@ -26,6 +26,7 @@ enum {
 	ARCANAHEART,
 	ASOBINIIKUYO,
 	BINCHOUTAN,
+	BLACKCAT,
 	CAFELINDBERGHSUMMER,
 	CAFELITTLEWISH,
 	CAMBRIAN,
@@ -850,6 +851,12 @@ func _on_game_type_selector_item_selected(index: int) -> void:
 		game_type_selector.select(BINCHOUTAN)
 		game_type = BINCHOUTAN
 		var next_scene: PackedScene = load("res://src/scenes/Marvelous.tscn")
+		sceneChanger(next_scene)
+	elif index == BLACKCAT:
+		game_type_sub_text.text = "Supports:\nExtraction, images (PNG)."
+		game_type_selector.select(BLACKCAT)
+		game_type = BLACKCAT
+		var next_scene: PackedScene = load("res://src/scenes/IvyArts.tscn")
 		sceneChanger(next_scene)
 	elif index == COLORFULAQUA:
 		game_type_sub_text.text = "Supports:\nExtraction, images (TM2)."
@@ -2205,6 +2212,7 @@ func initMenuItems() -> void:
 	game_type_selector.add_item("Arcana Heart", ARCANAHEART)
 	game_type_selector.add_item("Asobi ni Iku yo! Chikyuu Pinch no Kon'yaku Sengen", ASOBINIIKUYO)
 	game_type_selector.add_item("Binchou-Tan: Shiawasegoyomi", BINCHOUTAN)
+	game_type_selector.add_item("Black Cat: Kikai-jikake no Tenshi", BLACKCAT)
 	game_type_selector.add_item("Cafe Lindbergh: Summer Season", CAFELINDBERGHSUMMER)
 	game_type_selector.add_item("Cafe Little Wish: Mahou no Recipe", CAFELITTLEWISH)
 	game_type_selector.add_item("Cambrian QTS: Kaseki ni Nattemo", CAMBRIAN)
