@@ -1,28 +1,37 @@
-A simple tool that allows extracting and converting various image formats from PlayStation 2 visual novel games to common formats (PNG, TGA, etc). It will also extract contents from all known archive formats from the game.
+A simple tool that allows extracting and converting various image formats from PlayStation 2 visual novel games to common formats (PNG, TGA, etc). It will also extract contents from all known archive formats from the game. 
+
+Also supports TIM2 and GIM image format conversion (under "TOOLS" in the dropdown menu).
 
 # Supported Games
-* 3LDK - Shiawase ni Narouyo
+* 120 Yen no Haru: 120 Yen Stories
 * 12Riven: The Psi-Climinal of Integral
+* 3LDK - Shiawase ni Narouyo
+* Abarenbou Princess
 * Air
 * Ai Yori Aoshi
 * After... Wasureenu Kizuna
 * Amagami
 * Angel's Feather
 * Angel Wish: Kimi no Egao ni Chu!
+* Aoi Sora no Neosphere: Nanoca Flanka Hatsumei Koubouki 2
+* Aoi Umi no Tristia: Nanoca Flanka Hatsumei Koubouki
 * Ao no Mama de
 * Arabians Lost: The Engagement on Desert
 * Arcana Heart
 * Asobi ni Iku yo! Chikyuu Pinch no Kon'yaku Sengen
 * Binchou-Tan: Shiawasegoyomi
+* Black Cat: Kikai-jikake no Tenshi
 * Cafe Lindbergh: Summer Season
 * Cafe Little Wish: Mahou no Recipe
 * Cambrian QTS: Kaseki ni Nattemo
+* Canaria: Kono Omoi wo Uta ni Nosete
 * Canvas: Sepia-iro no Motif
 * Canvas 2: Akaneiro no Palette
 * Cartagra: Tamashii no Kunou
 * Castle Fantasia: Erencia Senki - Plus Stories
 * Chanter: Kimi no Uta ga Todoitara
 * Cherry Blossom
+* Chobits: Chii dake no Hito
 * Chocolat: Maid Cafe Curio
 * Clover no Kuni no Alice: Wonderful Wonder World
 * Code Geass: Hangyaku no Lelouch - Lost Colors
@@ -35,15 +44,19 @@ A simple tool that allows extracting and converting various image formats from P
 * D.C.P.S.: Da Capo Plus Situation
 * D.C.: The Origin
 * Dear My Friend: Love Like Powdery Snow
+* Desire
 * Di Gi Charat Fantasy: Excellent
 * Doko he Iku no, Anohi
 * Double Reaction! Plus
 * Double Wish (WWish)
 * ef: A Fairy Tale of the Two
+* Eien no Aselia: Kono Daichi no Hate de
 * Elysion: Eien no Sanctuary
 * Erde: Nezu no Ki no Shita de
 * E'tude Prologue: Yureugoku Kokoro no Katachi
+* Eve: Burst Error Plus
 * F: Fanatic
+* Fate-stay night: Realta Nua
 * Festa!! Hyper Girls Party
 * Final Approach
 * Final Approach 2: 1st Priority
@@ -57,6 +70,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Futakoi
 * Futakoi Alternative: Koi to Shoujo to Machine Gun
 * Futakoijima: Koi to Mizugi no Survival
+* Gakuen Utopia: Manabi Straight! KiraKira Happy Festa!
 * Galaxy Angel
 * Galaxy Angel II: Eigou Kaiki no Toki
 * Galaxy Angel II: Mugen Kairou no Kagi
@@ -68,6 +82,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Gift: Prism
 * Gin no Eclipse
 * Girls Bravo: Romance 15's
+* Gokujou Seitokai
 * Guardian Angel
 * Guisard Revolution: Bokura wa Omoi wo Mi ni Matou
 * Hakarena Heart: Kimi ga Tame ni Kagayaki wo
@@ -76,6 +91,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Happy Breeding: Cheerful Party
 * Happiness! De-Lucks
 * Harukaze P.S: Plus Situation
+* Haru no Ashioto: Step of Spring
 * Heart no Kuni no Alice: Wonderful Wonder World
 * Higurashi no Naku Koro ni Matsuri
 * Higurashi no Naku Koro ni Matsuri: Kakera Asobi
@@ -93,6 +109,8 @@ A simple tool that allows extracting and converting various image formats from P
 * Interlude
 * Inuyasha: The Secret of the Cursed Mask
 * Itsuka, Todoku, Ano Sora ni. ~You no Michi to Hi no Tasogare to~
+* Izayoi Renka: Kamifurusato
+* Izumo 2 Takeki Tsurugi no Senki
 * Izumo Zero: Yokohama Ayakashi Emaki
 * Jewels Ocean: Star of Sierra Leone
 * Jigoku Shoujo Mioyosuga
@@ -104,14 +122,21 @@ A simple tool that allows extracting and converting various image formats from P
 * Kazeiro Surf
 * Kidou Shinsengumi: Moe yo Ken
 * Kimi ga Aruji de Shitsuji ga Ore de: Otsukae Nikki
+* Kimi ga Nozomu Eien: Rumbling Hearts
 * KimiKiss
 * KimiSuta: Kimi to Study
 * Kira Kira: Rock 'N' Roll Show
 * Kishin Houkou Demonbane
+* Kita he. Diamond Dust
+* Kita he. Diamond Dust+ Kiss is Beginning.
 * Koi-hime Musou: Doki Otome Darake no Sangokushi Engi
 * Koi suru Otome to Shugo no Tate: The Shield of AIGIS
 * Kokoro no Tobira
+* Komorebi no Namikimichi: Utsurikawaru Kisetsu no Chuu de
 * Kono Aozora ni Yakusoku wo: Melody of the Sun and Sea
+* Kono Hareta Sora no Shita de
+* Kouenji Joshi Soccer
+* Kyuuketsu Hime Yui: Sen'yashou
 * Little Aid
 * Little Busters! Converted Edition
 * L no Kisetsu 2: Invisible Memories
@@ -127,6 +152,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Mahou Sensei Negima! 1-Jikanme ~Okochama Sensei wa Mahoutsukai!~
 * Mahou Sensei Negima! 2-jikanme Tatakau Otome-tachi! Mahora Daiundoukai Special!
 * Mai-HiME: Unmei no Keitouju
+* Maple Colors: Kessen wa Gakuensai!
 * Medical 91
 * Meitantei Evangelion
 * Memories Off 5: Encore
@@ -137,6 +163,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Men at Work! 3: Ai to Seishun no Hunter Gakuen
 * Metal Wolf REV
 * Missing Blue
+* Mizuiro
 * Mizu no Senritsu
 * Mizu no Senritsu 2: Hi no Kioku
 * Moekan: Moekko Company
@@ -164,6 +191,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Osouji Sentai Clean Keeper H
 * Otome no Jijou
 * Otome wa Boku ni Koishiteru
+* Otona no Gal-jong 2:  Koishite Bai Man!
 * Ouka: Kokoro Kagayakaseru Sakura
 * Parfait: Chocolat Second Style
 * Patisserie na Nyanko: Hatsukoi wa Ichigo Aji
@@ -177,6 +205,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Princess Concerto
 * Princess Holiday: Korogaru Ringo Tei Sen'ya Ichiya
 * Princess Lover! Eternal Love for My Lady
+* Princess Maker 2
 * Princess Maker 5
 * Princess Nightmare
 * Princess Princess: Himetachi no Abunai Houkago
@@ -187,6 +216,8 @@ A simple tool that allows extracting and converting various image formats from P
 * Pure x Cure Recovery
 * Que: Ancient Leaf no Yousei
 * Quilt: Anata to Tsumugu Yume to Koi no Dress
+* Ramune: Garasu-bin ni Utsuru Umi
+* Realize: Panorama Luminary
 * Rosario to Vampire Capu 2: Koi to Yume no Rhapsodia
 * Routes PE
 * Rozen Maiden: duellwalzer
@@ -194,20 +225,29 @@ A simple tool that allows extracting and converting various image formats from P
 * Ryuu Koku
 * Saishuu Shiken Kujira: Alive
 * Sakura: Setsugekka
+* Sakura Taisen: Atsuki Chishio Ni
+* Sakura Wars: So Long, My Love
 * Sangoku Rensenki: Otome no Heihou!
+* Scarlet: Nichijou no Kyoukaisen
 * School Love! Koi to Kibou no Metronome
+* School Rumble: Neru Musume wa Sodatsu
 * School Rumble Ni-Gakki
 * Seikai no Senki
 * Sega Ages 2500 Series Vol. 12: Puyo Puyo Tsuu Perfect Set
-* Sengoku-hime 2: En - Hyakka, Senran Tatsukaze no Gotoku
+* Sekirei: Mirai kara no Okurimono
+* Sengoku Hime: Senran ni Mau Otometachi
+* Sengoku Hime 2: En - Hyakka, Senran Tatsukaze no Gotoku
 * Sentimental Prelude
 * Separate Hearts
 * Shakugan no Shana
 * Shine: Kotoba wo Tsumui de
 * Shin Koihime Musou: Otome Ryouran Sangokushi Engi
+* Shinkyouku Soukai Polyphonica
+* Shirachuu Tankenbu
 * Shin Seiki Evangelion: Battle Orchestra
 * Shoujo Mahou Gaku Littlewitch Romanesque: Aria to Kaya to Kuro no Tou
 * Shirogane no Soleil: Contract to the Future - Mirai he no Keiyaku
+* Shirogane no Torikago: The Angels with Strange Wings
 * Shuffle! On the Stage
 * Shuumatsu Shoujo Gensou Alicematic: Apocalypse
 * Skip Beat!
@@ -227,6 +267,7 @@ A simple tool that allows extracting and converting various image formats from P
 * SuiSui Sweet: ~Amai Koi No Mitsukekata~
 * Sumomomo Momomo - Chijou Saikyou no Yome
 * Suzumiya Haruhi no Tomadoi
+* Suzunone Seven! Rebirth Knot
 * Sweet Legacy: Boku to Kanojo no Na mo Nai Okashi
 * Sweet Season
 * Tenohira wo Taiyou ni: Eikyuu no Kizuna
@@ -234,6 +275,7 @@ A simple tool that allows extracting and converting various image formats from P
 * Tentama: 1st Sunny Side
 * Tentama 2: Wins
 * The Magician's Academy
+* Thread Colors: Sayonara no Mukougawa
 * Togainu no Chi: True Blood
 * To Heart
 * To Heart 2
@@ -250,12 +292,15 @@ A simple tool that allows extracting and converting various image formats from P
 * Under the Moon: Crescent
 * Utau * Tumbling Dice
 * WeAre*
+* Wind: A Breath of Heart
 * White Breath: Kizuna
+* White Clarity: And, the Tears Became You
 * White Princess the Second
 * Yamiyo ni Sasayaku: Tantei Sagara Kyouichirou
 * Yatohime Zankikou
 * Yo-Jin-Bo: Unmei no Freude
 * Yoake Mae Yori Ruriiro na: Brighter than Dawning Blue
+* Yotsunoha: A Journey of Sincerity
 * Youkihimeden: Ayakashi Gentoubanashi
 * Your Memories Off: Girl's Style
 * Yuki Gatari: Renewal Edition
